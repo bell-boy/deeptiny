@@ -4,7 +4,7 @@ build/
 *.run
 
 # Editor files
-#.vscode/
+.vscode/
 .cursor/
 
 # Test files
