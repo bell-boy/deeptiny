@@ -80,6 +80,6 @@ class TensorImpl : public TensorImplBase {
 
 class Tensor {
  public:
-  std::shared_ptr<TensorImplBase> tensor_impl;
+  std::shared_ptr<TensorImplBase> tensor_impl_;
 };
 };  // namespace deeptiny
