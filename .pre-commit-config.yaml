@@ -1,0 +1,7 @@
+repos:
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.8   # pick the clang-format version tag you want
+    hooks:
+      - id: clang-format
+        types_or: [c, c++, cuda]
+        args: [-style=file]

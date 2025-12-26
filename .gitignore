@@ -4,10 +4,8 @@ build/
 *.run
 
 # Editor files
-#.vscode/
+.vscode/
 .cursor/
 
 # Test files
-tests/*.result
-tests/*.out
-tests/*.time
+Testing/
