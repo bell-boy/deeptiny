@@ -8,6 +8,4 @@ build/
 .cursor/
 
 # Test files
-tests/*.result
-tests/*.out
-tests/*.time
+Testing/
