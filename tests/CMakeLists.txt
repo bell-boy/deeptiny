@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.23)
 
 add_library(doctest INTERFACE)
-target_include_directories(doctest INTERFACE ${CMAKE_CURRENT_SORUCE_DIR}/doctest)
+target_include_directories(doctest INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/doctest)
 
 file(GLOB TEST_UTIL_SOURCES CONFIGURE_DEPENDS
-  "${CMAKE_CURRENT_SOURCE_DIR}/utils/*.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/test_utils/*.cc"
 )
 
 add_library(test_utils STATIC
@@ -12,9 +12,10 @@ add_library(test_utils STATIC
 )
 
 
-target_include_directories(test_utils PUBLIC ${CMAKE_CURRENT_SORUCE_DIR}/utils)
+target_include_directories(test_utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/utils)
+target_include_directories(test_utils PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(test_utils PUBLIC deeptiny doctest)
-target_compile_features(test_utils PUBLIC cxx_std_20)
+target_compile_features(test_utils PUBLIC cxx_std_23)
 
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/*Test.cc"
@@ -26,6 +27,7 @@ foreach(test_src ${TEST_SOURCES})
   add_executable(${test_name} ${test_src})
   target_link_libraries(${test_name} PRIVATE deeptiny doctest test_utils)
   target_compile_features(${test_name} PRIVATE cxx_std_20)
+  target_include_directories(${test_name} PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
   add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()

@@ -8,9 +8,10 @@ file(GLOB DEEPTINY_SOURCES CONFIGURE_DEPENDS
 
 add_library(deeptiny STATIC
   ${DEEPTINY_SOURCES}
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/cpu/storage.cc"
 )
 
-target_compile_features(deeptiny PUBLIC cxx_std_20)
+target_compile_features(deeptiny PUBLIC cxx_std_23)
 
 target_include_directories(deeptiny
   PUBLIC
