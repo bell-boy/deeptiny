@@ -1,11 +1,11 @@
 #pragma once
-#include "deeptiny/tensorImpl.h"
+#include "tensorImpl.h"
 
 namespace deeptiny {
 
 namespace cpu {
 
-class CPUStorage : public detail::Storage {
+class CPUStorage : public Storage {
   void* buffer = nullptr;
 
  public:
@@ -13,7 +13,7 @@ class CPUStorage : public detail::Storage {
 
   void* get_(uint64_t offset) const override;
 
-  friend detail::Storage;
+  friend Storage;
 };
 
 };  // namespace cpu

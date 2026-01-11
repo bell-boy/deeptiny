@@ -4,7 +4,7 @@ namespace deeptiny {
 
 namespace utils {
 
-std::shared_ptr<detail::TensorImpl> TensorAccessor::GetTensorImpl(Tensor& t) {
+std::shared_ptr<TensorImpl> TensorAccessor::GetTensorImpl(Tensor& t) {
   return t.tensor_impl_;
 }
 

@@ -1,4 +1,4 @@
-#include "deeptiny/tensorImpl.h"
+#include "tensorImpl.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -7,8 +7,6 @@
 #include "utils.h"
 
 namespace deeptiny {
-
-namespace detail {
 
 std::shared_ptr<Storage> Storage::MakeStorage(uint64_t numel, DType dtype,
                                               Device device) {
@@ -107,7 +105,5 @@ std::shared_ptr<TensorImpl> TensorImpl::View(
   return std::make_shared<TensorImpl>(new_shape, new_stride, new_offset,
                                       storage_);
 }
-
-};  // namespace detail
 
 };  // namespace deeptiny

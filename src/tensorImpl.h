@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
@@ -6,28 +7,9 @@
 #include <optional>
 #include <vector>
 
+#include "deeptiny/types.h"
+
 namespace deeptiny {
-
-using Shape = std::vector<uint64_t>;
-using Stride = std::vector<int64_t>;
-
-enum DType { Float32, BFloat16 };
-
-enum Device { CPU, Metal };
-
-struct Slice {
-  using Index = std::optional<int64_t>;
-  Index start;
-  Index end;
-  Index stride;
-
-  Slice(ptrdiff_t x) : start(x), end(x + 1), stride(1) {}
-  Slice(int64_t start, int64_t end) : start(start), end(end), stride(1) {}
-  Slice(int64_t start, int64_t end, int64_t stride)
-      : start(start), end(end), stride(stride) {}
-};
-
-namespace detail {
 
 /**
  * Abstract Base Class for Storage objects.
@@ -102,7 +84,5 @@ class TensorImpl {
 
   void* data() { return storage_->data(offset_); }
 };
-
-}  // namespace detail
 
 }  // namespace deeptiny

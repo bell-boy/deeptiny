@@ -21,8 +21,8 @@ TEST_CASE("Random view forward test.") {
       shape[i] = static_cast<uint64_t>(dim_dist(rng));
     }
 
-    auto t =
-        deeptiny::functional::CreateUniform(shape, deeptiny::DType::Float32);
+    auto t = deeptiny::functional::CreateUniform(shape, deeptiny::Device::CPU,
+                                                 deeptiny::DType::Float32);
     auto t_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(t);
 
     std::array<int64_t, kRank> starts{};

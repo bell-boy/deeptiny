@@ -9,6 +9,7 @@ file(GLOB DEEPTINY_SOURCES CONFIGURE_DEPENDS
 add_library(deeptiny STATIC
   ${DEEPTINY_SOURCES}
   "${CMAKE_CURRENT_SOURCE_DIR}/src/cpu/storage.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/cpu/kernels.cc"
 )
 
 target_compile_features(deeptiny PUBLIC cxx_std_23)

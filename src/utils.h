@@ -4,14 +4,14 @@
 #include <stdint.h>
 
 #include "deeptiny/tensor.h"
-#include "deeptiny/tensorImpl.h"
+#include "tensorImpl.h"
 
 namespace deeptiny {
 
 namespace utils {
 
 struct TensorAccessor {
-  static std::shared_ptr<detail::TensorImpl> GetTensorImpl(Tensor& t);
+  static std::shared_ptr<TensorImpl> GetTensorImpl(Tensor& t);
 };
 
 uint64_t GetTotalSize(Shape shape);
