@@ -28,6 +28,8 @@ class Tensor {
   Tensor(Shape shape, DType dtype, Device device, bool requires_grad);
 
   View operator()(std::initializer_list<Slice> slices);
+  Shape shape() const;
+  DType dtype() const;
 
   /**
    * Creates a tensor on the CPU with the expectation that the bytes are laid

@@ -40,6 +40,13 @@ class Storage {
     return get_(offset);
   }
 
+  virtual void CopyToHost(uint64_t offset, uint64_t numel,
+                          void* buffer) const = 0;
+  // TODO: this is currently dumb, right now the implementer has to remember to
+  // increment the version count, and I don't want that
+  virtual void CopyFromHost(uint64_t offset, uint64_t numel,
+                            const void* buffer) = 0;
+
   const void* data(uint64_t offset) const { return (const void*)get_(offset); }
 
   uint64_t numel() const { return numel_; }
@@ -69,6 +76,14 @@ class TensorImpl {
   TensorImpl(Shape shape, DType dtype, Device device);
 
   std::shared_ptr<TensorImpl> View(std::initializer_list<Slice> slices);
+
+  void CopyToHost(uint64_t offset, uint64_t numel, void* buffer) const {
+    storage_->CopyToHost(offset, numel, buffer);
+  }
+
+  void CopyFromHost(uint64_t offset, uint64_t numel, const void* buffer) const {
+    storage_->CopyFromHost(offset, numel, buffer);
+  }
 
   DType dtype() const { return storage_->dtype(); }
 

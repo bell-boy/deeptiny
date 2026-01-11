@@ -11,7 +11,7 @@ namespace deeptiny {
 namespace utils {
 
 struct TensorAccessor {
-  static std::shared_ptr<TensorImpl> GetTensorImpl(Tensor& t);
+  static std::shared_ptr<TensorImpl> GetTensorImpl(const Tensor& t);
 };
 
 uint64_t GetTotalSize(Shape shape);
