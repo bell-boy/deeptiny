@@ -2,7 +2,7 @@
 #include <memory>
 #include <span>
 
-#include "tensorImpl.h"
+#include "tensor_impl.h"
 
 namespace deeptiny {
 

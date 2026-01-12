@@ -234,3 +234,10 @@ TEST_CASE("View assignment test") {
     }
   }
 }
+
+TEST_CASE("View backward test") {
+  // Create random leaf tensors of upto kRank
+  // Generate a random view of said tensors
+  // Do operations on views resulting in a scalar
+  // Ensure that gradients on leaf matches expected
+}

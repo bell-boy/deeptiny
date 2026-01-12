@@ -3,8 +3,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <optional>
+
 #include "deeptiny/tensor.h"
-#include "tensorImpl.h"
+#include "tensor_impl.h"
 
 namespace deeptiny {
 
@@ -17,6 +19,12 @@ struct TensorAccessor {
 uint64_t GetTotalSize(Shape shape);
 
 Stride GetContinguousStride(Shape shape);
+
+std::optional<Shape> GetBroadcastShape(const Tensor& a, const Tensor& b);
+
+std::optional<Tensor> BroadcastToShape(const Tensor& a, const Shape& shape);
+
+std::pair<Tensor, Tensor> Broadcast(const Tensor& a, const Tensor& b);
 
 };  // namespace utils
 

@@ -69,6 +69,9 @@ class TensorImpl {
   Stride stride_;
   uint64_t offset_;
 
+  void ValidateView(const Shape& shape, const Stride& stride,
+                    uint64_t offset) const;
+
  public:
   TensorImpl(Shape shape, Stride stride, uint64_t offset,
              std::shared_ptr<Storage> storage);
@@ -77,15 +80,9 @@ class TensorImpl {
    */
   TensorImpl(Shape shape, DType dtype, Device device);
 
+  std::shared_ptr<TensorImpl> View(Shape shape, Stride stride,
+                                   uint64_t offset) const;
   std::shared_ptr<TensorImpl> View(std::initializer_list<Slice> slices);
-
-  void CopyToHost(uint64_t offset, uint64_t numel, void* buffer) const {
-    storage_->CopyToHost(offset, numel, buffer);
-  }
-
-  void CopyFromHost(uint64_t offset, uint64_t numel, const void* buffer) const {
-    storage_->CopyFromHost(offset, numel, buffer);
-  }
 
   DType dtype() const { return storage_->dtype(); }
 
@@ -97,7 +94,10 @@ class TensorImpl {
 
   uint64_t offset() const { return offset_; }
 
-  const void* data() const { return storage_->data(offset_); }
+  std::shared_ptr<Storage> storage() { return storage_; }
+  std::shared_ptr<const Storage> storage() const { return storage_; }
+
+  const void* data() const { return storage()->data(offset_); }
 
   void* data() { return storage_->data(offset_); }
 };

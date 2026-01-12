@@ -12,7 +12,7 @@ namespace cpu {
 std::shared_ptr<TensorImpl> FromBuffer(DType dtype, std::span<std::byte> buffer,
                                        Shape shape) {
   uint64_t total_size = utils::GetTotalSize(shape);
-  std::shared_ptr<Storage> result;
+  std::shared_ptr<TensorImpl> result;
   switch (dtype) {
     case DType::Float32:
       if (buffer.size() != total_size * 4) {
@@ -23,18 +23,17 @@ std::shared_ptr<TensorImpl> FromBuffer(DType dtype, std::span<std::byte> buffer,
         }
         err << "} with dtype float32 on CPU. Expected " << total_size
             << " bytes in buffer but only found " << buffer.size();
-        std::runtime_error(err.str());
+        throw std::runtime_error(err.str());
       }
-      result = Storage::MakeStorage(total_size, DType::Float32, Device::CPU);
-      memcpy((void*)buffer.data(), result->data(0), total_size * 4);
+      result = std::make_shared<TensorImpl>(shape, DType::Float32, Device::CPU);
+      result->storage()->CopyFromHost(0, total_size, buffer.data());
       break;
 
     default:
-      std::runtime_error("DType unsupported");
+      throw std::runtime_error("DType unsupported");
       break;
   }
-  return std::make_shared<TensorImpl>(shape, utils::GetContinguousStride(shape),
-                                      0, result);
+  return result;
 }
 
 };  // namespace cpu

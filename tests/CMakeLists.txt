@@ -18,7 +18,7 @@ target_link_libraries(test_utils PUBLIC deeptiny doctest)
 target_compile_features(test_utils PUBLIC cxx_std_23)
 
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS
-  "${CMAKE_CURRENT_SOURCE_DIR}/*Test.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/*_test.cc"
 )
 
 foreach(test_src ${TEST_SOURCES})

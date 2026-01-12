@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "cpu/kernels.h"
-#include "tensorImpl.h"
+#include "tensor_impl.h"
 #include "utils.h"
 
 namespace deeptiny {
@@ -53,7 +53,6 @@ void View::operator=(const Tensor& other) {
   }
   // TODO: fast path for contiguous tensors
   // TODO: fast path for Accelerator -> CPU transfers
-  // TODO: fast path for small ranks
   // TODO: issue, currently i have to tell the tensor accessor to give me a
   // const TensorImpl, this isn't enforced by the tensor being const Need to
   // think about this
@@ -63,8 +62,8 @@ void View::operator=(const Tensor& other) {
   std::vector<std::byte> buf(dtype().size());
   auto Transfer = [my_impl, other_impl, &buf](uint64_t src_offset,
                                               uint64_t dest_offset) {
-    other_impl->CopyToHost(src_offset, 1, buf.data());
-    my_impl->CopyFromHost(dest_offset, 1, buf.data());
+    other_impl->storage()->CopyToHost(src_offset, 1, buf.data());
+    my_impl->storage()->CopyFromHost(dest_offset, 1, buf.data());
   };
 
   Stride other_stride = other_impl->stride();
@@ -173,7 +172,8 @@ Tensor Tensor::FromBuffer(std::span<std::byte> bytes, Shape shape, DType dtype,
     case Device::Metal:
       // TODO: remove this, get's around warnings until we have autogradMeta
       std::cout << requires_grad << std::endl;
-      std::runtime_error("FromBuffer doesn't support Metal at the moment");
+      throw std::runtime_error(
+          "FromBuffer doesn't support Metal at the moment");
       break;
   }
   return Tensor(result);

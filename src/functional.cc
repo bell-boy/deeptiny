@@ -34,8 +34,7 @@ Tensor CreateUniform(Shape shape, Device device, DType dtype) {
     case DType::Float32:
       return _CreateUniform<float>(shape, DType::Float32, device);
     default:
-      std::runtime_error("DType is not supported yet");
-      exit(-1);
+      throw std::runtime_error("DType is not supported yet");
   };
 }
 

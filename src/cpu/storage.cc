@@ -11,8 +11,7 @@ CPUStorage::CPUStorage(uint64_t numel, DType dtype)
       buffer = (void*)(new float[numel]);
       break;
     default:
-      std::runtime_error("Couldn't handle dtype on CPU");
-      exit(-1);
+      throw std::runtime_error("Couldn't handle dtype on CPU");
       break;
   }
 }
