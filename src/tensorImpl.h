@@ -26,6 +26,8 @@ class Storage {
   Device device_;
 
   virtual void* get_(uint64_t offset) const = 0;
+  virtual void CopyFromHost_(uint64_t offset, uint64_t numel,
+                             const void* buffer) = 0;
 
  public:
   Storage(const Storage&) = delete;
@@ -42,10 +44,10 @@ class Storage {
 
   virtual void CopyToHost(uint64_t offset, uint64_t numel,
                           void* buffer) const = 0;
-  // TODO: this is currently dumb, right now the implementer has to remember to
-  // increment the version count, and I don't want that
-  virtual void CopyFromHost(uint64_t offset, uint64_t numel,
-                            const void* buffer) = 0;
+  void CopyFromHost(uint64_t offset, uint64_t numel, const void* buffer) {
+    version_count_++;
+    CopyFromHost_(offset, numel, buffer);
+  }
 
   const void* data(uint64_t offset) const { return (const void*)get_(offset); }
 

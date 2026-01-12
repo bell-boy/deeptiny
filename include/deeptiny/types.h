@@ -16,7 +16,7 @@ class DType {
   /**
    * Size in bytes of the data type
    */
-  uint64_t size() {
+  uint64_t size() const {
     switch (e_) {
       case Float32:
         return 4;
