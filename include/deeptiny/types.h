@@ -1,11 +1,15 @@
 #pragma once
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace deeptiny {
 using Shape = std::vector<uint64_t>;
 using Stride = std::vector<int64_t>;
+
+// Formats a shape as "{ d0, d1, ... }".
+std::string FormatShape(const Shape& shape);
 
 class DType {
  public:

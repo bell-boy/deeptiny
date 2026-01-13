@@ -17,11 +17,8 @@ std::shared_ptr<TensorImpl> FromBuffer(DType dtype, std::span<std::byte> buffer,
     case DType::Float32:
       if (buffer.size() != total_size * 4) {
         std::stringstream err;
-        err << "Failed to create tensor with shape { ";
-        for (const auto& dim : shape) {
-          err << dim << ", ";
-        }
-        err << "} with dtype float32 on CPU. Expected " << total_size
+        err << "Failed to create tensor with shape " << FormatShape(shape)
+            << " with dtype float32 on CPU. Expected " << total_size
             << " bytes in buffer but only found " << buffer.size();
         throw std::runtime_error(err.str());
       }

@@ -27,27 +27,20 @@ View Tensor::operator()(std::initializer_list<Slice> slices) {
 }
 
 void View::operator=(const Tensor& other) {
-  // TODO: handle broadcasting
-  // TODO: handle casting
-  const Shape other_shape = other.shape();
-  const Shape my_shape = shape();
-
-  if (other_shape != my_shape) {
+  auto opt_other = utils::BroadcastToShape(other, shape());
+  if (!opt_other) {
     std::stringstream err;
-    err << "Trying to assign a tensor of shape { ";
-    for (const auto& dim : other_shape) {
-      err << dim << ", ";
-    }
-    err << "} to a View of shape {";
-    for (const auto& dim : my_shape) {
-      err << dim << ", ";
-    }
-    err << "}";
+    err << "Couldn't broadcast tensor of shape" << FormatShape(other.shape())
+        << " to tensor of shape " << FormatShape(shape());
     throw std::runtime_error(err.str());
   }
-  if (other.dtype() != dtype()) {
+  auto other_ = *opt_other;
+  // TODO: handle casting
+  const Shape my_shape = shape();
+
+  if (other_.dtype() != dtype()) {
     std::stringstream err;
-    err << "Trying to copy data of type " << other.dtype().ToString()
+    err << "Trying to copy data of type " << other_.dtype().ToString()
         << " to View of type " << dtype().ToString();
     throw std::runtime_error(err.str());
   }
@@ -57,7 +50,7 @@ void View::operator=(const Tensor& other) {
   // const TensorImpl, this isn't enforced by the tensor being const Need to
   // think about this
   std::shared_ptr<const TensorImpl> other_impl =
-      utils::TensorAccessor::GetTensorImpl(other);
+      utils::TensorAccessor::GetTensorImpl(other_);
   auto my_impl = tensor_impl_;
   std::vector<std::byte> buf(dtype().size());
   auto Transfer = [my_impl, other_impl, &buf](uint64_t src_offset,

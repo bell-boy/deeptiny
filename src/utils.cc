@@ -100,21 +100,9 @@ std::optional<Tensor> BroadcastToShape(const Tensor& a, const Shape& shape) {
 std::pair<Tensor, Tensor> Broadcast(const Tensor& a, const Tensor& b) {
   auto target_shape = GetBroadcastShape(a, b);
   if (!target_shape) {
-    auto format_shape = [](const Shape& shape) {
-      std::ostringstream oss;
-      oss << "{ ";
-      for (size_t i = 0; i < shape.size(); ++i) {
-        oss << shape[i];
-        if (i + 1 < shape.size()) {
-          oss << ", ";
-        }
-      }
-      oss << " }";
-      return oss.str();
-    };
     std::ostringstream err;
-    err << "Cannot broadcast tensors with shapes " << format_shape(a.shape())
-        << " and " << format_shape(b.shape()) << ".";
+    err << "Cannot broadcast tensors with shapes " << FormatShape(a.shape())
+        << " and " << FormatShape(b.shape()) << ".";
     throw std::runtime_error(err.str());
   }
 
@@ -122,14 +110,8 @@ std::pair<Tensor, Tensor> Broadcast(const Tensor& a, const Tensor& b) {
   auto b_broadcast = BroadcastToShape(b, *target_shape);
   if (!a_broadcast || !b_broadcast) {
     std::ostringstream err;
-    err << "Failed to broadcast tensors to shape { ";
-    for (size_t i = 0; i < target_shape->size(); ++i) {
-      err << (*target_shape)[i];
-      if (i + 1 < target_shape->size()) {
-        err << ", ";
-      }
-    }
-    err << " }.";
+    err << "Failed to broadcast tensors to shape " << FormatShape(*target_shape)
+        << ".";
     throw std::runtime_error(err.str());
   }
   return {*a_broadcast, *b_broadcast};
