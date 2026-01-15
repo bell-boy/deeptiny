@@ -1,10 +1,11 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "deeptiny/view.h"
+
 #include <array>
 #include <random>
 #include <vector>
 
 #include "deeptiny/functional.h"
-#include "deeptiny/tensor.h"
 #include "doctest/doctest.h"
 #include "utils.h"
 
@@ -54,7 +55,8 @@ TEST_CASE("Random view forward test.") {
       slices[i] = deeptiny::Slice(start, end, stride);
     }
 
-    auto view = t({slices[0], slices[1], slices[2], slices[3], slices[4]});
+    std::vector<deeptiny::Slice> view_slices(slices.begin(), slices.end());
+    auto view = t(view_slices);
     auto view_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(view);
 
     deeptiny::Shape expected_shape(kRank);
@@ -148,7 +150,8 @@ TEST_CASE("View assignment test") {
       slices[i] = deeptiny::Slice(start, end, stride);
     }
 
-    auto view = t({slices[0], slices[1], slices[2], slices[3], slices[4]});
+    std::vector<deeptiny::Slice> view_slices(slices.begin(), slices.end());
+    auto view = t(view_slices);
     auto view_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(view);
 
     deeptiny::Shape expected_shape(kRank);

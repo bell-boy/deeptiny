@@ -139,8 +139,7 @@ std::shared_ptr<TensorImpl> TensorImpl::View(Shape shape, Stride stride,
       new TensorImpl(std::move(shape), std::move(stride), offset, storage_));
 }
 
-std::shared_ptr<TensorImpl> TensorImpl::View(
-    std::initializer_list<Slice> slices) {
+std::shared_ptr<TensorImpl> TensorImpl::View(const std::vector<Slice>& slices) {
   const size_t rank = shape_.size();
   Shape new_shape;
   Stride new_stride;
@@ -156,7 +155,7 @@ std::shared_ptr<TensorImpl> TensorImpl::View(
     }
 
     const int64_t dim = static_cast<int64_t>(shape_[dim_index]);
-    int64_t slice_stride = slice.stride.value_or(1);
+    int64_t slice_stride = slice.stride;
 
     int64_t start = slice.start.value_or(0);
     int64_t end = slice.end.value_or(dim);

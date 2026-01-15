@@ -1,4 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "broadcast.h"
+
 #include <array>
 #include <random>
 #include <vector>

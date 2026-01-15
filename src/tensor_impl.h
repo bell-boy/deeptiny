@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <initializer_list>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -82,7 +81,7 @@ class TensorImpl {
 
   std::shared_ptr<TensorImpl> View(Shape shape, Stride stride,
                                    uint64_t offset) const;
-  std::shared_ptr<TensorImpl> View(std::initializer_list<Slice> slices);
+  std::shared_ptr<TensorImpl> View(const std::vector<Slice>& slices);
 
   DType dtype() const { return storage_->dtype(); }
 

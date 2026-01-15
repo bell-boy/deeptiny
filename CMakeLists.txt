@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.23)
 
 project(deeptiny)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 file(GLOB DEEPTINY_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc"
 )

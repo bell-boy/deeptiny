@@ -1,8 +1,8 @@
 #pragma once
 #include <cstddef>
-#include <initializer_list>
 #include <memory>
 #include <span>
+#include <vector>
 
 #include "deeptiny/types.h"
 
@@ -13,23 +13,25 @@ struct TensorAccessor;
 };
 
 class TensorImpl;
+class AutogradMeta;
 class View;
 
 class Tensor {
  protected:
   std::shared_ptr<TensorImpl> tensor_impl_;
-  bool requires_grad_;
+  std::shared_ptr<AutogradMeta> autograd_meta_;
 
  public:
-  Tensor(std::shared_ptr<TensorImpl> tensor_impl);
-  /**
-   * Create a a contingous tensor with uninitialized data
-   */
+  // Create a a contingous tensor with uninitialized data
   Tensor(Shape shape, DType dtype, Device device, bool requires_grad);
+  Tensor(std::shared_ptr<TensorImpl> tensor_impl,
+         std::shared_ptr<AutogradMeta> autograd_meta);
 
-  View operator()(std::initializer_list<Slice> slices);
+  View operator()(std::vector<Slice> slices);
+  const View operator()(std::vector<Slice> slices) const;
   Shape shape() const;
   DType dtype() const;
+  Device device() const;
 
   /**
    * Creates a tensor on the CPU with the expectation that the bytes are laid
@@ -41,16 +43,6 @@ class Tensor {
                            bool requires_grad = false);
 
   friend struct utils::TensorAccessor;
-};
-
-class View : public Tensor {
- private:
-  View(std::shared_ptr<TensorImpl> tensor_impl);
-
- public:
-  void operator=(const Tensor& other);
-
-  friend Tensor;
 };
 
 };  // namespace deeptiny
