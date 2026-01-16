@@ -22,6 +22,26 @@ std::shared_ptr<AutogradMeta> TensorAccessor::GetAutogradMeta(const Tensor& t) {
   return t.autograd_meta_;
 }
 
+void CompatabilityCheck(std::initializer_list<Tensor> tensors) {
+  if (tensors.size() == 0) return;
+
+  DType dtype = tensors.begin()->dtype();
+  Device device = tensors.begin()->device();
+  for (const auto& t : tensors) {
+    if (t.dtype() != dtype) {
+      std::stringstream err;
+      err << "Tensor dtype mismatch: one tensor of type " << dtype.ToString()
+          << " but other of type " << t.dtype().ToString();
+      throw std::runtime_error(err.str());
+    }
+    if (t.device() != device) {
+      std::stringstream err;
+      err << "Tensor device mismatch: one tensor on device "
+          << device.ToString() << " but other tensor on device " << t.device();
+      throw std::runtime_error(err.str());
+    }
+  }
+}
 uint64_t GetTotalSize(Shape shape) {
   uint64_t total = 1;
   for (const auto& x : shape) {

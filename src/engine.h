@@ -10,11 +10,20 @@ class Engine;
 
 class Tensor;
 
+extern struct State {
+  bool grad_enabled = true;
+} GradState;
+
 class Function {
+ private:
+  using ParentList = std::vector<std::shared_ptr<AutogradMeta>>;
+  ParentList parents_;
+
  protected:
-  std::vector<std::shared_ptr<AutogradMeta>> parents;
+  const ParentList& getParents() const { return parents_; }
 
  public:
+  Function(ParentList parents) : parents_(std::move(parents)) {}
   virtual void operator()(const Tensor& grad, Engine& engine) = 0;
   virtual ~Function() = default;
 };
@@ -30,9 +39,5 @@ class Engine {
 
   void EnqueueBackward(std::shared_ptr<Function> func);
 };
-
-extern struct State {
-  bool grad_enabled = true;
-} GradState;
 
 };  // namespace deeptiny

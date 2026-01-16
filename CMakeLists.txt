@@ -4,6 +4,7 @@ project(deeptiny)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+
 file(GLOB DEEPTINY_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc"
 )
@@ -23,6 +24,24 @@ target_include_directories(deeptiny
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+find_package(OpenBLAS REQUIRED)
+
+if (TARGET OpenBLAS::OpenBLAS)
+  target_link_libraries(deeptiny
+    PUBLIC OpenBLAS::OpenBLAS
+  )
+else()
+  if (NOT OpenBLAS_INCLUDE_DIRS OR NOT OpenBLAS_LIBRARIES)
+    message(FATAL_ERROR "OpenBLAS found but does not define OpenBLAS::OpenBLAS or required variables.")
+  endif()
+  target_include_directories(deeptiny
+    PUBLIC ${OpenBLAS_INCLUDE_DIRS}
+  )
+  target_link_libraries(deeptiny
+    PUBLIC ${OpenBLAS_LIBRARIES}
+  )
+endif()
 
 if (MSVC)
   target_compile_options(deeptiny PRIVATE /W4)

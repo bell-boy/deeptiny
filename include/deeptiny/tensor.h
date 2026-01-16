@@ -41,6 +41,7 @@ class Tensor {
                            DType dtype = DType::Float32,
                            Device device = Device::CPU,
                            bool requires_grad = false);
+  void operator+=(const Tensor& other);
 
   friend struct utils::TensorAccessor;
 };

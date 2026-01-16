@@ -4,11 +4,11 @@
 
 #include "deeptiny/tensor.h"
 
+namespace deeptiny {
+
 class Engine;
 
 class Function;
-
-namespace deeptiny {
 
 class AutogradMeta : public std::enable_shared_from_this<AutogradMeta> {
  private:
@@ -18,10 +18,9 @@ class AutogradMeta : public std::enable_shared_from_this<AutogradMeta> {
   bool requires_grad_;
 
  public:
-  // TODO: add support for scatter grads
-  void updateGrad(const Tensor& grad, Engine& engine,
-                  std::optional<std::vector<Slice>> slices = std::nullopt);
   AutogradMeta(std::shared_ptr<Function> grad_fn, bool requires_grad);
+  // TODO: add support for scatter grads
+  void updateGrad(const Tensor& grad, Engine& engine);
   void incrementPending();
 };
 

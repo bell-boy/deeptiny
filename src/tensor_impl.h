@@ -98,6 +98,10 @@ class TensorImpl {
 
   const void* data() const { return storage()->data(offset_); }
 
+  std::shared_ptr<TensorImpl> contiguous();
+  bool isContiguous() const;
+  std::shared_ptr<Storage> getContiguousStorage();
+
   void* data() { return storage_->data(offset_); }
 };
 

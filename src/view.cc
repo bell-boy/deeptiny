@@ -14,12 +14,12 @@
 namespace deeptiny {
 
 SliceBackward::SliceBackward(const Tensor& t, std::vector<Slice> slices)
-    : slices_(std::move(slices)), original_shape_(t.shape()) {
-  parents.push_back(utils::TensorAccessor::GetAutogradMeta(t));
-}
+    : Function({utils::TensorAccessor::GetAutogradMeta(t)}),
+      slices_(std::move(slices)),
+      original_shape_(t.shape()) {}
 
 void SliceBackward::operator()(const Tensor& grad, Engine& engine) {
-  parents[0]->updateGrad(
+  getParents()[0]->updateGrad(
       *utils::SliceScatterToShape(grad, original_shape_, slices_), engine);
 }
 

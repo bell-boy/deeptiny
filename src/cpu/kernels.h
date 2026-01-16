@@ -14,6 +14,13 @@ namespace cpu {
 std::shared_ptr<TensorImpl> FromBuffer(DType dtype, std::span<std::byte> buffer,
                                        Shape shape);
 
+/**
+ * Add the two TensorImpls element-wise and store the result in the output
+ * TensorImpl
+ */
+void Add(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+         std::shared_ptr<TensorImpl> out);
+
 };  // namespace cpu
 
 };  // namespace deeptiny

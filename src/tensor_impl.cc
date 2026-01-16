@@ -213,4 +213,151 @@ std::shared_ptr<TensorImpl> TensorImpl::View(const std::vector<Slice>& slices) {
   return View(std::move(new_shape), std::move(new_stride), new_offset);
 }
 
+bool TensorImpl::isContiguous() const {
+  if (shape_.size() != stride_.size()) {
+    return false;
+  }
+  if (shape_.empty()) {
+    return true;
+  }
+
+  int64_t expected_stride = 1;
+  for (size_t i = shape_.size(); i-- > 0;) {
+    const uint64_t dim = shape_[i];
+    if (dim <= 1) {
+      continue;
+    }
+    if (stride_[i] != expected_stride) {
+      return false;
+    }
+    if (expected_stride >
+        std::numeric_limits<int64_t>::max() / static_cast<int64_t>(dim)) {
+      return false;
+    }
+    expected_stride *= static_cast<int64_t>(dim);
+  }
+  return true;
+}
+
+std::shared_ptr<Storage> TensorImpl::getContiguousStorage() {
+  if (!storage_) {
+    throw std::runtime_error(
+        "Cannot create contiguous storage with null storage.");
+  }
+
+  const uint64_t total_size = utils::GetTotalSize(shape_);
+  if (total_size == 0) {
+    return Storage::MakeStorage(0, dtype(), device());
+  }
+
+  if (isContiguous() && offset_ == 0 && storage_->numel() == total_size) {
+    return storage_;
+  }
+
+  auto contiguous_storage = Storage::MakeStorage(total_size, dtype(), device());
+  std::vector<std::byte> buf(dtype().size());
+  auto src_storage = storage_;
+  auto dst_storage = contiguous_storage;
+  auto Transfer = [src_storage, dst_storage, &buf](uint64_t src_offset,
+                                                   uint64_t dst_offset) {
+    src_storage->CopyToHost(src_offset, 1, buf.data());
+    dst_storage->CopyFromHost(dst_offset, 1, buf.data());
+  };
+
+  if (shape_.empty()) {
+    Transfer(offset_, 0);
+    return contiguous_storage;
+  }
+
+  const Shape& shape = shape_;
+  const Stride& src_stride = stride_;
+  const Stride dst_stride = utils::GetContinguousStride(shape_);
+  const size_t rank = shape.size();
+
+  auto AssignFastBlock = [&shape, &src_stride, &dst_stride, &Transfer](
+                             size_t dim, size_t remaining, uint64_t src_base,
+                             uint64_t dst_base) {
+    for (uint64_t i0 = 0; i0 < shape[dim]; ++i0) {
+      const uint64_t src_offset_0 = src_base + i0 * src_stride[dim];
+      const uint64_t dst_offset_0 = dst_base + i0 * dst_stride[dim];
+      if (remaining == 1) {
+        Transfer(src_offset_0, dst_offset_0);
+        continue;
+      }
+      for (uint64_t i1 = 0; i1 < shape[dim + 1]; ++i1) {
+        const uint64_t src_offset_1 = src_offset_0 + i1 * src_stride[dim + 1];
+        const uint64_t dst_offset_1 = dst_offset_0 + i1 * dst_stride[dim + 1];
+        if (remaining == 2) {
+          Transfer(src_offset_1, dst_offset_1);
+          continue;
+        }
+        for (uint64_t i2 = 0; i2 < shape[dim + 2]; ++i2) {
+          const uint64_t src_offset_2 = src_offset_1 + i2 * src_stride[dim + 2];
+          const uint64_t dst_offset_2 = dst_offset_1 + i2 * dst_stride[dim + 2];
+          if (remaining == 3) {
+            Transfer(src_offset_2, dst_offset_2);
+            continue;
+          }
+          for (uint64_t i3 = 0; i3 < shape[dim + 3]; ++i3) {
+            const uint64_t src_offset_3 =
+                src_offset_2 + i3 * src_stride[dim + 3];
+            const uint64_t dst_offset_3 =
+                dst_offset_2 + i3 * dst_stride[dim + 3];
+            if (remaining == 4) {
+              Transfer(src_offset_3, dst_offset_3);
+              continue;
+            }
+            for (uint64_t i4 = 0; i4 < shape[dim + 4]; ++i4) {
+              const uint64_t src_offset_4 =
+                  src_offset_3 + i4 * src_stride[dim + 4];
+              const uint64_t dst_offset_4 =
+                  dst_offset_3 + i4 * dst_stride[dim + 4];
+              Transfer(src_offset_4, dst_offset_4);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  auto AssignRecursive = [rank, &shape, &src_stride, &dst_stride,
+                          &AssignFastBlock](auto&& self, size_t dim,
+                                            uint64_t src_base,
+                                            uint64_t dst_base) -> void {
+    const size_t remaining = rank - dim;
+    if (remaining <= 5) {
+      AssignFastBlock(dim, remaining, src_base, dst_base);
+      return;
+    }
+    for (uint64_t i0 = 0; i0 < shape[dim]; ++i0) {
+      const uint64_t src_offset_0 = src_base + i0 * src_stride[dim];
+      const uint64_t dst_offset_0 = dst_base + i0 * dst_stride[dim];
+      for (uint64_t i1 = 0; i1 < shape[dim + 1]; ++i1) {
+        const uint64_t src_offset_1 = src_offset_0 + i1 * src_stride[dim + 1];
+        const uint64_t dst_offset_1 = dst_offset_0 + i1 * dst_stride[dim + 1];
+        for (uint64_t i2 = 0; i2 < shape[dim + 2]; ++i2) {
+          const uint64_t src_offset_2 = src_offset_1 + i2 * src_stride[dim + 2];
+          const uint64_t dst_offset_2 = dst_offset_1 + i2 * dst_stride[dim + 2];
+          for (uint64_t i3 = 0; i3 < shape[dim + 3]; ++i3) {
+            const uint64_t src_offset_3 =
+                src_offset_2 + i3 * src_stride[dim + 3];
+            const uint64_t dst_offset_3 =
+                dst_offset_2 + i3 * dst_stride[dim + 3];
+            for (uint64_t i4 = 0; i4 < shape[dim + 4]; ++i4) {
+              const uint64_t src_offset_4 =
+                  src_offset_3 + i4 * src_stride[dim + 4];
+              const uint64_t dst_offset_4 =
+                  dst_offset_3 + i4 * dst_stride[dim + 4];
+              self(self, dim + 5, src_offset_4, dst_offset_4);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  AssignRecursive(AssignRecursive, 0, offset_, 0);
+  return contiguous_storage;
+}
+
 };  // namespace deeptiny

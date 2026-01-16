@@ -42,7 +42,24 @@ class DType {
   Enum e_;
 };
 
-enum Device { CPU, Metal };
+class Device {
+ public:
+  enum Enum { CPU, Metal };
+  constexpr Device(Enum e) : e_(e) {}
+  constexpr operator Enum() const { return e_; }
+
+  std::string ToString() const {
+    switch (e_) {
+      case CPU:
+        return "CPU";
+      case Metal:
+        return "Metal";
+    }
+  }
+
+ private:
+  Enum e_;
+};
 
 struct Slice {
   using Index = std::optional<int64_t>;

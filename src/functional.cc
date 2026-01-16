@@ -72,7 +72,7 @@ Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims) {
   auto recursive_reduce = [&res, &x, &dims_set](auto&& self, uint64_t dim_idx,
                                                 std::vector<Slice>& slices) {
     if (slices.size() == x.shape().size()) {
-      // res += x(slices);
+      res += x(slices);
       return;
     }
     if (dims_set.contains(dim_idx)) {

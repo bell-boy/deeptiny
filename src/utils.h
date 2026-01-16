@@ -3,10 +3,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <initializer_list>
 #include <optional>
 #include <vector>
 
 #include "autograd_meta.h"
+#include "broadcast.h"
 #include "deeptiny/tensor.h"
 #include "tensor_impl.h"
 
@@ -18,6 +20,11 @@ struct TensorAccessor {
   static std::shared_ptr<TensorImpl> GetTensorImpl(const Tensor& t);
   static std::shared_ptr<AutogradMeta> GetAutogradMeta(const Tensor& t);
 };
+
+/**
+ * Check that all tensors are on the same device and have the same dtype
+ */
+void CompatabilityCheck(std::initializer_list<Tensor> tensors);
 
 uint64_t GetTotalSize(Shape shape);
 
