@@ -83,4 +83,37 @@ Engine::Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph) {
 
   ready_queue_.push_back(root);
 }
+
+void Engine::Run() {
+  while (!ready_queue_.empty()) {
+    auto node = ready_queue_.front();
+    ready_queue_.pop_front();
+    if (!node || !node->requires_grad_) {
+      continue;
+    }
+    if (!node->grad_fn_) {
+      continue;
+    }
+    if (!node->grad_) {
+      throw std::runtime_error("Backward called with no gradient");
+    }
+    (*node->grad_fn_)(*node->grad_, *this);
+    EnqueueBackward(node->grad_fn_);
+  }
+}
+
+void Engine::EnqueueBackward(std::shared_ptr<Function> func) {
+  if (!func) {
+    return;
+  }
+  for (const auto& parent : func->getParents()) {
+    assert(parent && "EnqueueBackward encountered null parent");
+    assert(parent->pending_ > 0 &&
+           "EnqueueBackward encountered parent with zero pending");
+    parent->pending_ -= 1;
+    if (parent->pending_ == 0 && parent->requires_grad_) {
+      ready_queue_.push_back(parent);
+    }
+  }
+}
 }  // namespace deeptiny

@@ -4,11 +4,13 @@
 
 #include <iostream>
 #include <utility>
+#include <vector>
 
 #include "autograd_meta.h"
 #include "cpu/kernels.h"
 #include "deeptiny/view.h"
 #include "tensor_impl.h"
+#include "utils.h"
 
 namespace deeptiny {
 
@@ -23,6 +25,21 @@ Tensor::Tensor(Shape shape, DType dtype, Device device, bool requires_grad)
 Shape Tensor::shape() const { return tensor_impl_->shape(); }
 DType Tensor::dtype() const { return tensor_impl_->dtype(); }
 Device Tensor::device() const { return tensor_impl_->device(); }
+
+Tensor Tensor::Clone() const {
+  Tensor result(shape(), dtype(), device(), false);
+  auto src_impl = utils::TensorAccessor::GetTensorImpl(*this);
+  auto dst_impl = utils::TensorAccessor::GetTensorImpl(result);
+  auto src_storage = src_impl->getContiguousStorage();
+  const uint64_t numel = src_storage->numel();
+  if (numel == 0) {
+    return result;
+  }
+  std::vector<std::byte> host_buf(numel * dtype().size());
+  src_storage->CopyToHost(0, numel, host_buf.data());
+  dst_impl->storage()->CopyFromHost(0, numel, host_buf.data());
+  return result;
+}
 
 Tensor Tensor::FromBuffer(std::span<std::byte> bytes, Shape shape, DType dtype,
                           Device device, bool requires_grad) {
