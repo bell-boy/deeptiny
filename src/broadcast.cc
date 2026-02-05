@@ -42,7 +42,8 @@ void BroadcastBackward::operator()(const Tensor& grad, Engine& engine) {
     }
   }
 
-  Tensor reduced = reduce_dims.empty() ? grad : Reduce(grad, reduce_dims, true);
+  Tensor reduced =
+      reduce_dims.empty() ? grad : functional::Reduce(grad, reduce_dims, true);
 
   Tensor grad_in = reduced;
   if (rank_diff > 0) {
@@ -129,7 +130,7 @@ std::optional<Tensor> BroadcastToShape(const Tensor& a, const Shape& shape) {
   auto parent_meta = TensorAccessor::GetAutogradMeta(a);
   const bool requires_grad = parent_meta && parent_meta->requires_grad();
   auto grad_meta = std::make_shared<AutogradMeta>(backward, requires_grad);
-  return Tensor(new_tensor_impl, grad_meta);
+  return TensorAccessor::MakeTensor(new_tensor_impl, grad_meta);
 }
 
 std::pair<Tensor, Tensor> Broadcast(const Tensor& a, const Tensor& b) {

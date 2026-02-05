@@ -5,6 +5,7 @@
 #include <optional>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
 
 #include "deeptiny/functional.h"
 #include "deeptiny/tensor.h"
@@ -20,6 +21,16 @@ std::shared_ptr<TensorImpl> TensorAccessor::GetTensorImpl(const Tensor& t) {
 
 std::shared_ptr<AutogradMeta> TensorAccessor::GetAutogradMeta(const Tensor& t) {
   return t.autograd_meta_;
+}
+
+Tensor TensorAccessor::MakeTensor(std::shared_ptr<TensorImpl> tensor_impl,
+                                  std::shared_ptr<AutogradMeta> autograd_meta) {
+  return Tensor(std::move(tensor_impl), std::move(autograd_meta));
+}
+
+View TensorAccessor::MakeView(std::shared_ptr<TensorImpl> tensor_impl,
+                              std::shared_ptr<AutogradMeta> autograd_meta) {
+  return View(std::move(tensor_impl), std::move(autograd_meta));
 }
 
 void CompatabilityCheck(std::initializer_list<Tensor> tensors) {

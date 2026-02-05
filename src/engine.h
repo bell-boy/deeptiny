@@ -11,10 +11,6 @@ class Engine;
 
 class Tensor;
 
-extern struct State {
-  bool grad_enabled = true;
-} GradState;
-
 class Function {
  private:
   using ParentList = std::vector<std::shared_ptr<AutogradMeta>>;

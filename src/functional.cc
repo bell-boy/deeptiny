@@ -27,8 +27,9 @@ Tensor _CreateUniform(Shape shape, DType dtype, Device device) {
     buf[i] = static_cast<T>(detail::uniform_double(detail::gen));
   }
   return Tensor::FromBuffer(
-      std::span<std::byte>{(std::byte*)buf, total_size * sizeof(T)}, shape,
-      dtype, device);
+      std::span<const std::byte>{reinterpret_cast<const std::byte*>(buf),
+                                 total_size * sizeof(T)},
+      shape, dtype, device);
 }
 
 /**
@@ -57,8 +58,6 @@ Tensor Zeros(Shape shape, Device device, DType dtype) {
       throw std::runtime_error("DType is not supported yet");
   };
 }
-
-}  // namespace functional
 
 namespace {
 template <typename DimContainer>
@@ -118,7 +117,8 @@ Tensor ReduceImpl(const Tensor& x, const DimContainer& dims, bool keep_dims) {
 
   auto squeezed_impl = res_impl->View(
       Shape(reduced_shape), std::move(squeezed_stride), res_impl->offset());
-  return Tensor(squeezed_impl, utils::TensorAccessor::GetAutogradMeta(res));
+  return utils::TensorAccessor::MakeTensor(
+      squeezed_impl, utils::TensorAccessor::GetAutogradMeta(res));
 }
 }  // namespace
 
@@ -133,4 +133,6 @@ Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
               bool keep_dims) {
   return ReduceImpl(x, dims, keep_dims);
 }
+}  // namespace functional
+
 };  // namespace deeptiny

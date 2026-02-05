@@ -12,7 +12,8 @@ namespace deeptiny {
 
 namespace cpu {
 
-std::shared_ptr<TensorImpl> FromBuffer(DType dtype, std::span<std::byte> buffer,
+std::shared_ptr<TensorImpl> FromBuffer(DType dtype,
+                                       std::span<const std::byte> buffer,
                                        Shape shape) {
   uint64_t total_size = utils::GetTotalSize(shape);
   std::shared_ptr<TensorImpl> result;

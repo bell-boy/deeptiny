@@ -8,6 +8,7 @@
 #include "broadcast.h"
 #include "deeptiny/functional.h"
 #include "doctest/doctest.h"
+#include "engine.h"
 #include "utils.h"
 
 namespace {
@@ -239,6 +240,73 @@ TEST_CASE("View assignment test") {
   }
 }
 
+TEST_CASE("View assignment guards and autograd metadata") {
+  SUBCASE("View assignment installs new autograd metadata") {
+    deeptiny::Tensor t({2, 3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       false);
+    auto view = t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)});
+    auto before = deeptiny::utils::TensorAccessor::GetAutogradMeta(view);
+    REQUIRE(before != nullptr);
+
+    deeptiny::Tensor rhs({2, 3}, deeptiny::DType::Float32,
+                         deeptiny::Device::CPU, true);
+    view = rhs;
+    auto after = deeptiny::utils::TensorAccessor::GetAutogradMeta(view);
+    REQUIRE(after != nullptr);
+    CHECK(after.get() != before.get());
+  }
+
+  SUBCASE("View assignment forbids zero-stride views") {
+    deeptiny::Tensor base({2, 1}, deeptiny::DType::Float32,
+                          deeptiny::Device::CPU, false);
+    auto broadcasted = deeptiny::utils::BroadcastToShape(base, {2, 3});
+    REQUIRE(broadcasted.has_value());
+    auto view = (*broadcasted)({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)});
+
+    deeptiny::Tensor rhs({2, 3}, deeptiny::DType::Float32,
+                         deeptiny::Device::CPU, false);
+    CHECK_THROWS_WITH(
+        view = rhs,
+        doctest::Contains("Cannot assign to a view with zero stride"));
+  }
+
+  SUBCASE("View assignment backward propagates to RHS") {
+    deeptiny::Tensor t({2, 3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       false);
+    auto view = t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)});
+
+    deeptiny::Tensor rhs({2, 3}, deeptiny::DType::Float32,
+                         deeptiny::Device::CPU, true);
+    view = rhs;
+
+    deeptiny::Tensor grad({2, 3}, deeptiny::DType::Float32,
+                          deeptiny::Device::CPU, false);
+    auto grad_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(grad);
+    auto* grad_data = static_cast<float*>(grad_impl->data());
+    for (uint64_t i = 0; i < 6; ++i) {
+      grad_data[i] = static_cast<float>(i) + 1.0f;
+    }
+
+    auto view_meta = deeptiny::utils::TensorAccessor::GetAutogradMeta(view);
+    REQUIRE(view_meta != nullptr);
+
+    deeptiny::Engine engine(view_meta);
+    view_meta->updateGrad(grad, engine);
+    engine.Run();
+
+    auto rhs_grad = rhs.grad();
+    REQUIRE(rhs_grad.has_value());
+
+    auto rhs_grad_impl =
+        deeptiny::utils::TensorAccessor::GetTensorImpl(*rhs_grad);
+    const auto* rhs_grad_data =
+        static_cast<const float*>(rhs_grad_impl->data());
+    for (uint64_t i = 0; i < 6; ++i) {
+      CHECK(rhs_grad_data[i] == grad_data[i]);
+    }
+  }
+}
+
 TEST_CASE("View backward test") {
   SUBCASE("Strided view scatter matches expected gradient") {
     deeptiny::Tensor t({4, 5}, deeptiny::DType::Float32, deeptiny::Device::CPU,
@@ -255,7 +323,7 @@ TEST_CASE("View backward test") {
         deeptiny::Slice(0, 5, 2),
     };
     auto view = t(slices);
-    auto loss = deeptiny::Reduce(view, {0, 1});
+    auto loss = deeptiny::functional::Reduce(view, {0, 1});
     loss.Backward();
 
     auto grad_opt = t.grad();
@@ -290,7 +358,7 @@ TEST_CASE("View backward test") {
     auto broadcasted = deeptiny::utils::BroadcastToShape(view, {2, 4});
     REQUIRE(broadcasted.has_value());
 
-    auto loss = deeptiny::Reduce(*broadcasted, {0, 1});
+    auto loss = deeptiny::functional::Reduce(*broadcasted, {0, 1});
     loss.Backward();
 
     auto grad_opt = t.grad();

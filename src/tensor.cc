@@ -14,6 +14,7 @@
 #include "engine.h"
 #include "tensor_impl.h"
 #include "utils.h"
+#include "view_backward.h"
 
 namespace deeptiny {
 
@@ -63,7 +64,7 @@ class SqueezeBackward : public Function {
 
     auto view_impl = grad_impl->View(
         Shape(original_shape_), std::move(new_stride), grad_impl->offset());
-    Tensor grad_in(view_impl, nullptr);
+    auto grad_in = utils::TensorAccessor::MakeTensor(view_impl, nullptr);
     parent->updateGrad(grad_in, engine);
   }
 };
@@ -142,7 +143,7 @@ Tensor Tensor::Squeeze(const std::vector<uint64_t>& dims) {
   auto backward =
       std::make_shared<SqueezeBackward>(*this, std::move(squeeze_mask));
   auto grad_meta = std::make_shared<AutogradMeta>(backward);
-  return Tensor(std::move(view_impl), grad_meta);
+  return utils::TensorAccessor::MakeTensor(std::move(view_impl), grad_meta);
 }
 
 bool Tensor::requires_grad() const {
@@ -188,8 +189,8 @@ void Tensor::Backward(bool keep_graph) {
   engine.Run();
 }
 
-Tensor Tensor::FromBuffer(std::span<std::byte> bytes, Shape shape, DType dtype,
-                          Device device, bool requires_grad) {
+Tensor Tensor::FromBuffer(std::span<const std::byte> bytes, Shape shape,
+                          DType dtype, Device device, bool requires_grad) {
   std::shared_ptr<TensorImpl> result;
   switch (device) {
     case Device::CPU:
@@ -200,21 +201,23 @@ Tensor Tensor::FromBuffer(std::span<std::byte> bytes, Shape shape, DType dtype,
           "FromBuffer doesn't support Metal at the moment");
       break;
   }
-  return Tensor(result, std::make_shared<AutogradMeta>(nullptr, requires_grad));
+  return utils::TensorAccessor::MakeTensor(
+      result, std::make_shared<AutogradMeta>(nullptr, requires_grad));
 }
 
 View Tensor::operator()(std::vector<Slice> slices) {
   auto view_impl = tensor_impl_->View(slices);
   auto backward = std::make_shared<SliceBackward>(*this, std::move(slices));
   auto grad_meta = std::make_shared<AutogradMeta>(backward);
-  return View(std::move(view_impl), grad_meta);
+  return utils::TensorAccessor::MakeView(std::move(view_impl), grad_meta);
 }
 
 const View Tensor::operator()(std::vector<Slice> slices) const {
   auto view_impl = tensor_impl_->View(slices);
   auto backward = std::make_shared<SliceBackward>(*this, std::move(slices));
   auto grad_meta = std::make_shared<AutogradMeta>(backward);
-  return (const View)View(std::move(view_impl), grad_meta);
+  return (const View)utils::TensorAccessor::MakeView(std::move(view_impl),
+                                                     grad_meta);
 }
 
 };  // namespace deeptiny

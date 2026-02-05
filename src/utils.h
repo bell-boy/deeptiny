@@ -19,6 +19,10 @@ namespace utils {
 struct TensorAccessor {
   static std::shared_ptr<TensorImpl> GetTensorImpl(const Tensor& t);
   static std::shared_ptr<AutogradMeta> GetAutogradMeta(const Tensor& t);
+  static Tensor MakeTensor(std::shared_ptr<TensorImpl> tensor_impl,
+                           std::shared_ptr<AutogradMeta> autograd_meta);
+  static View MakeView(std::shared_ptr<TensorImpl> tensor_impl,
+                       std::shared_ptr<AutogradMeta> autograd_meta);
 };
 
 /**

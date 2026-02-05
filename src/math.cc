@@ -8,9 +8,26 @@
 #include "autograd_meta.h"
 #include "cpu/kernels.h"
 #include "deeptiny/types.h"
+#include "engine.h"
 #include "utils.h"
 
 namespace deeptiny {
+namespace math {
+
+class AddBackward : public Function {
+ public:
+  AddBackward(const Tensor& a, const Tensor& b)
+      : Function({utils::TensorAccessor::GetAutogradMeta(a),
+                  utils::TensorAccessor::GetAutogradMeta(b)}) {}
+  void operator()(const Tensor& grad, Engine& engine) override {
+    for (const auto& t : getParents()) {
+      t->updateGrad(grad, engine);
+    }
+  }
+};
+
+}  // namespace math
+
 void Tensor::operator+=(const Tensor& other) {
   utils::CompatabilityCheck({*this, other});
   auto broadcasted_other = utils::BroadcastToShape(other, shape());
@@ -36,15 +53,4 @@ void Tensor::operator+=(const Tensor& other) {
   auto new_autograd_meta = std::make_shared<AutogradMeta>(backward);
   autograd_meta_ = new_autograd_meta;
 }
-namespace math {
-AddBackward::AddBackward(const Tensor& a, const Tensor& b)
-    : Function({utils::TensorAccessor::GetAutogradMeta(a),
-                utils::TensorAccessor::GetAutogradMeta(b)}) {}
-void AddBackward::operator()(const Tensor& grad, Engine& engine) {
-  for (const auto& t : getParents()) {
-    t->updateGrad(grad, engine);
-  }
-}
-
-};  // namespace math
 };  // namespace deeptiny

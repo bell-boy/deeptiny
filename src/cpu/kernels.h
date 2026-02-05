@@ -11,7 +11,8 @@ namespace cpu {
 /**
  * Copy the data from the buffer into a TensorImpl on CPU
  */
-std::shared_ptr<TensorImpl> FromBuffer(DType dtype, std::span<std::byte> buffer,
+std::shared_ptr<TensorImpl> FromBuffer(DType dtype,
+                                       std::span<const std::byte> buffer,
                                        Shape shape);
 
 /**

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "autograd_meta.h"
+#include "deeptiny/autograd.h"
 
 namespace deeptiny {
 

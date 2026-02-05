@@ -10,6 +10,7 @@
 #include "broadcast.h"
 #include "tensor_impl.h"
 #include "utils.h"
+#include "view_backward.h"
 
 namespace deeptiny {
 
@@ -21,6 +22,15 @@ SliceBackward::SliceBackward(const Tensor& t, std::vector<Slice> slices)
 void SliceBackward::operator()(const Tensor& grad, Engine& engine) {
   getParents()[0]->updateGrad(
       *utils::SliceScatterToShape(grad, original_shape_, slices_), engine);
+}
+
+ViewAssignBackward::ViewAssignBackward(const Tensor& src)
+    : Function({utils::TensorAccessor::GetAutogradMeta(src)}) {}
+
+void ViewAssignBackward::operator()(const Tensor& grad, Engine& engine) {
+  for (const auto& t : getParents()) {
+    t->updateGrad(grad, engine);
+  }
 }
 
 View::View(std::shared_ptr<TensorImpl> tensor_impl,
@@ -63,6 +73,12 @@ void View::operator=(const Tensor& other) {
 
   Stride other_stride = other_impl->stride();
   Stride my_stride = my_impl->stride();
+  for (const auto& stride : my_stride) {
+    if (stride == 0) {
+      throw std::runtime_error(
+          "Cannot assign to a view with zero stride (broadcasted view).");
+    }
+  }
 
   if (my_shape.empty()) {
     Transfer(other_impl->offset(), my_impl->offset());
@@ -155,6 +171,9 @@ void View::operator=(const Tensor& other) {
   };
 
   AssignRecursive(AssignRecursive, 0, other_impl->offset(), my_impl->offset());
+
+  auto backward = std::make_shared<ViewAssignBackward>(other);
+  autograd_meta_ = std::make_shared<AutogradMeta>(backward);
 }
 
 };  // namespace deeptiny

@@ -22,11 +22,12 @@ class Tensor {
   std::shared_ptr<TensorImpl> tensor_impl_;
   std::shared_ptr<AutogradMeta> autograd_meta_;
 
+  Tensor(std::shared_ptr<TensorImpl> tensor_impl,
+         std::shared_ptr<AutogradMeta> autograd_meta);
+
  public:
   // Create a a contingous tensor with uninitialized data
   Tensor(Shape shape, DType dtype, Device device, bool requires_grad);
-  Tensor(std::shared_ptr<TensorImpl> tensor_impl,
-         std::shared_ptr<AutogradMeta> autograd_meta);
 
   View operator()(std::vector<Slice> slices);
   const View operator()(std::vector<Slice> slices) const;
@@ -44,7 +45,7 @@ class Tensor {
    * Creates a tensor on the CPU with the expectation that the bytes are laid
    * out in row-major order
    */
-  static Tensor FromBuffer(std::span<std::byte> bytes, Shape shape,
+  static Tensor FromBuffer(std::span<const std::byte> bytes, Shape shape,
                            DType dtype = DType::Float32,
                            Device device = Device::CPU,
                            bool requires_grad = false);

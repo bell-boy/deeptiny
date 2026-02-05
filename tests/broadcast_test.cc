@@ -249,7 +249,7 @@ TEST_CASE("Broadcast Backward Test") {
     sum += a_b;
     sum += b_b;
 
-    auto loss = deeptiny::Reduce(sum, {0, 1, 2});
+    auto loss = deeptiny::functional::Reduce(sum, {0, 1, 2});
     loss.Backward();
 
     auto a_grad = a.grad();
@@ -273,7 +273,7 @@ TEST_CASE("Broadcast Backward Test") {
     deeptiny::Tensor sum = b_b;
     sum += a_b;
 
-    auto loss = deeptiny::Reduce(sum, {0, 1});
+    auto loss = deeptiny::functional::Reduce(sum, {0, 1});
     loss.Backward();
 
     auto a_grad = a.grad();
