@@ -60,9 +60,9 @@ Tensor Zeros(Shape shape, Device device, DType dtype) {
 
 }  // namespace functional
 
-// TODO: make this not suck
-// TODO: support for inplace add
-Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims) {
+namespace {
+template <typename DimContainer>
+Tensor ReduceImpl(const Tensor& x, const DimContainer& dims, bool keep_dims) {
   std::unordered_set<uint64_t> dims_set(dims.begin(), dims.end());
   const auto& x_shape = x.shape();
   const uint64_t rank = x_shape.size();
@@ -103,7 +103,7 @@ Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims) {
   std::vector<Slice> slices;
   recursive_reduce(recursive_reduce, 0, slices);
 
-  if (reduced_shape == keep_shape) {
+  if (keep_dims || reduced_shape == keep_shape) {
     return res;
   }
 
@@ -119,5 +119,18 @@ Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims) {
   auto squeezed_impl = res_impl->View(
       Shape(reduced_shape), std::move(squeezed_stride), res_impl->offset());
   return Tensor(squeezed_impl, utils::TensorAccessor::GetAutogradMeta(res));
+}
+}  // namespace
+
+// TODO: make this not suck
+// TODO: support for inplace add
+Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims,
+              bool keep_dims) {
+  return ReduceImpl(x, dims, keep_dims);
+}
+
+Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
+              bool keep_dims) {
+  return ReduceImpl(x, dims, keep_dims);
 }
 };  // namespace deeptiny

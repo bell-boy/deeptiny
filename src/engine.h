@@ -35,6 +35,7 @@ class Engine {
   std::deque<std::shared_ptr<AutogradMeta>> ready_queue_;
 
  public:
+  // pending_ is owned by Engine and AutogradMeta::updateGrad.
   Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph = false);
 
   void Run();

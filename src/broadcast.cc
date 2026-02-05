@@ -14,46 +14,6 @@ namespace deeptiny {
 
 namespace utils {
 
-namespace {
-template <typename Fn>
-void ForEachIndex(const Shape& shape, Fn&& fn) {
-  if (shape.empty()) {
-    fn(std::vector<uint64_t>{});
-    return;
-  }
-  for (auto dim : shape) {
-    if (dim == 0) {
-      return;
-    }
-  }
-  std::vector<uint64_t> index(shape.size(), 0);
-  while (true) {
-    fn(index);
-    size_t dim = shape.size();
-    while (dim > 0) {
-      --dim;
-      index[dim] += 1;
-      if (index[dim] < shape[dim]) {
-        break;
-      }
-      index[dim] = 0;
-      if (dim == 0) {
-        return;
-      }
-    }
-  }
-}
-
-int64_t OffsetForIndex(const Stride& stride,
-                       const std::vector<uint64_t>& index) {
-  int64_t offset = 0;
-  for (size_t i = 0; i < stride.size(); ++i) {
-    offset += static_cast<int64_t>(index[i]) * stride[i];
-  }
-  return offset;
-}
-}  // namespace
-
 BroadcastBackward::BroadcastBackward(const Tensor& t)
     : Function({utils::TensorAccessor::GetAutogradMeta(t)}),
       original_shape_(t.shape()) {}
@@ -67,40 +27,40 @@ void BroadcastBackward::operator()(const Tensor& grad, Engine& engine) {
     throw std::runtime_error("BroadcastBackward received invalid grad shape");
   }
 
-  Tensor grad_in =
-      functional::Zeros(original_shape_, grad.device(), grad.dtype());
-  auto grad_in_impl = TensorAccessor::GetTensorImpl(grad_in);
-  auto grad_out_impl = TensorAccessor::GetTensorImpl(grad);
-
-  if (grad.dtype() != DType::Float32 || grad.device() != Device::CPU) {
-    throw std::runtime_error("BroadcastBackward only supports CPU Float32");
-  }
-
-  const auto* out_data = static_cast<const float*>(grad_out_impl->data());
-  auto* in_data = static_cast<float*>(grad_in_impl->data());
-
-  const auto& out_stride = grad_out_impl->stride();
-  const auto& in_stride = grad_in_impl->stride();
   const size_t rank_diff = out_rank - in_rank;
 
-  ForEachIndex(out_shape, [&](const std::vector<uint64_t>& out_index) {
-    std::vector<uint64_t> in_index(in_rank, 0);
-    for (size_t i = 0; i < in_rank; ++i) {
-      const uint64_t out_i = out_index[rank_diff + i];
-      in_index[i] = (original_shape_[i] == 1) ? 0 : out_i;
+  std::vector<uint64_t> reduce_dims;
+  reduce_dims.reserve(out_rank);
+  for (uint64_t i = 0; i < out_rank; ++i) {
+    if (i < rank_diff) {
+      reduce_dims.push_back(i);
+      continue;
     }
-    const int64_t out_offset = OffsetForIndex(out_stride, out_index);
-    const int64_t in_offset = OffsetForIndex(in_stride, in_index);
-    in_data[static_cast<size_t>(in_offset)] +=
-        out_data[static_cast<size_t>(out_offset)];
-  });
+    const uint64_t in_i = i - rank_diff;
+    if (original_shape_[in_i] == 1 && out_shape[i] != 1) {
+      reduce_dims.push_back(i);
+    }
+  }
+
+  Tensor reduced = reduce_dims.empty() ? grad : Reduce(grad, reduce_dims, true);
+
+  Tensor grad_in = reduced;
+  if (out_rank != in_rank) {
+    auto reduced_impl = TensorAccessor::GetTensorImpl(reduced);
+    Stride view_stride;
+    view_stride.reserve(in_rank);
+    for (uint64_t i = 0; i < in_rank; ++i) {
+      view_stride.push_back(reduced_impl->stride()[rank_diff + i]);
+    }
+    auto view_impl = reduced_impl->View(
+        Shape(original_shape_), std::move(view_stride), reduced_impl->offset());
+    grad_in =
+        Tensor(view_impl, utils::TensorAccessor::GetAutogradMeta(reduced));
+  }
 
   auto parent = getParents()[0];
   if (!parent) {
     return;
-  }
-  if (parent->pending() == 0) {
-    parent->incrementPending();
   }
   parent->updateGrad(grad_in, engine);
 }

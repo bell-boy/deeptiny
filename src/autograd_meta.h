@@ -21,9 +21,10 @@ class AutogradMeta : public std::enable_shared_from_this<AutogradMeta> {
  public:
   AutogradMeta(std::shared_ptr<Function> grad_fn, bool requires_grad = false);
   // TODO: add support for scatter grads
+  // Contract: updateGrad owns pending_ updates and triggers backward when
+  // ready.
   void updateGrad(const Tensor& grad, Engine& engine);
   void incrementPending();
-  uint64_t pending() const { return pending_; }
   bool requires_grad() const { return requires_grad_; }
   std::optional<Tensor> grad() const {
     if (!grad_) {
