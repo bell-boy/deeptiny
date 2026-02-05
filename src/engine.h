@@ -1,5 +1,6 @@
 #pragma once
 #include <deque>
+#include <memory>
 #include <vector>
 
 namespace deeptiny {
@@ -18,6 +19,7 @@ class Function {
  private:
   using ParentList = std::vector<std::shared_ptr<AutogradMeta>>;
   ParentList parents_;
+  friend class Engine;
 
  protected:
   const ParentList& getParents() const { return parents_; }
