@@ -18,7 +18,7 @@ AutogradMeta::AutogradMeta(std::shared_ptr<Function> grad_fn,
 
 void AutogradMeta::updateGrad(const Tensor& grad, Engine& engine) {
   (void)engine;
-  if (!requires_grad_ || !GradState.grad_enabled) {
+  if (!requires_grad_) {
     return;
   }
   if (!grad_) {

@@ -10,6 +10,7 @@
 
 #include "autograd_meta.h"
 #include "cpu/kernels.h"
+#include "deeptiny/autograd.h"
 #include "deeptiny/view.h"
 #include "engine.h"
 #include "tensor_impl.h"
@@ -183,6 +184,13 @@ void Tensor::Backward(bool keep_graph) {
     }
     default:
       throw std::runtime_error("Backward only supports Float32 gradients");
+  }
+
+  if (!keep_graph) {
+    GradMode guard(false);
+    autograd_meta_->updateGrad(grad, engine);
+    engine.Run();
+    return;
   }
 
   autograd_meta_->updateGrad(grad, engine);
