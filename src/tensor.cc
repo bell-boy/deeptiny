@@ -17,6 +17,58 @@
 
 namespace deeptiny {
 
+namespace {
+class SqueezeBackward : public Function {
+ private:
+  Shape original_shape_;
+  std::vector<uint8_t> squeeze_mask_;
+
+ public:
+  SqueezeBackward(const Tensor& t, std::vector<uint8_t> squeeze_mask)
+      : Function({utils::TensorAccessor::GetAutogradMeta(t)}),
+        original_shape_(t.shape()),
+        squeeze_mask_(std::move(squeeze_mask)) {}
+
+  void operator()(const Tensor& grad, Engine& engine) override {
+    auto parent = getParents()[0];
+    if (!parent) {
+      return;
+    }
+
+    const auto& grad_shape = grad.shape();
+    const size_t out_rank = grad_shape.size();
+    const size_t in_rank = original_shape_.size();
+    size_t squeezed = 0;
+    for (uint8_t v : squeeze_mask_) {
+      if (v != 0) {
+        squeezed += 1;
+      }
+    }
+    if (out_rank + squeezed != in_rank) {
+      throw std::runtime_error("SqueezeBackward received invalid grad shape");
+    }
+
+    auto grad_impl = utils::TensorAccessor::GetTensorImpl(grad);
+    Stride new_stride;
+    new_stride.reserve(in_rank);
+    size_t out_dim = 0;
+    for (size_t i = 0; i < in_rank; ++i) {
+      if (squeeze_mask_[i]) {
+        new_stride.push_back(0);
+      } else {
+        new_stride.push_back(grad_impl->stride()[out_dim]);
+        out_dim += 1;
+      }
+    }
+
+    auto view_impl = grad_impl->View(
+        Shape(original_shape_), std::move(new_stride), grad_impl->offset());
+    Tensor grad_in(view_impl, nullptr);
+    parent->updateGrad(grad_in, engine);
+  }
+};
+}  // namespace
+
 Tensor::Tensor(std::shared_ptr<TensorImpl> tensor_impl,
                std::shared_ptr<AutogradMeta> autograd_meta)
     : tensor_impl_(tensor_impl), autograd_meta_(autograd_meta) {}
@@ -42,6 +94,51 @@ Tensor Tensor::Clone() const {
   src_storage->CopyToHost(0, numel, host_buf.data());
   dst_impl->storage()->CopyFromHost(0, numel, host_buf.data());
   return result;
+}
+
+Tensor Tensor::Squeeze(std::initializer_list<uint64_t> dims) {
+  const auto& shape = tensor_impl_->shape();
+  const auto& stride = tensor_impl_->stride();
+  const size_t rank = shape.size();
+  if (dims.size() == 0 || rank == 0) {
+    return *this;
+  }
+
+  std::vector<uint8_t> squeeze_mask(rank, 0);
+  for (uint64_t dim : dims) {
+    if (dim >= rank) {
+      throw std::runtime_error("Squeeze dim out of range");
+    }
+    if (squeeze_mask[dim] != 0) {
+      throw std::runtime_error("Squeeze dims must be unique");
+    }
+    if (shape[dim] != 1) {
+      throw std::runtime_error("Squeeze dim must be size 1");
+    }
+    squeeze_mask[dim] = 1;
+  }
+
+  Shape new_shape;
+  Stride new_stride;
+  new_shape.reserve(rank);
+  new_stride.reserve(rank);
+  for (size_t i = 0; i < rank; ++i) {
+    if (squeeze_mask[i] == 0) {
+      new_shape.push_back(shape[i]);
+      new_stride.push_back(stride[i]);
+    }
+  }
+
+  if (new_shape.size() == rank) {
+    return *this;
+  }
+
+  auto view_impl = tensor_impl_->View(Shape(new_shape), std::move(new_stride),
+                                      tensor_impl_->offset());
+  auto backward =
+      std::make_shared<SqueezeBackward>(*this, std::move(squeeze_mask));
+  auto grad_meta = std::make_shared<AutogradMeta>(backward);
+  return Tensor(std::move(view_impl), grad_meta);
 }
 
 bool Tensor::requires_grad() const {
