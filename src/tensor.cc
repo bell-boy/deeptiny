@@ -97,10 +97,14 @@ Tensor Tensor::Clone() const {
 }
 
 Tensor Tensor::Squeeze(std::initializer_list<uint64_t> dims) {
+  return Squeeze(std::vector<uint64_t>(dims));
+}
+
+Tensor Tensor::Squeeze(const std::vector<uint64_t>& dims) {
   const auto& shape = tensor_impl_->shape();
   const auto& stride = tensor_impl_->stride();
   const size_t rank = shape.size();
-  if (dims.size() == 0 || rank == 0) {
+  if (dims.empty() || rank == 0) {
     return *this;
   }
 

@@ -45,17 +45,13 @@ void BroadcastBackward::operator()(const Tensor& grad, Engine& engine) {
   Tensor reduced = reduce_dims.empty() ? grad : Reduce(grad, reduce_dims, true);
 
   Tensor grad_in = reduced;
-  if (out_rank != in_rank) {
-    auto reduced_impl = TensorAccessor::GetTensorImpl(reduced);
-    Stride view_stride;
-    view_stride.reserve(in_rank);
-    for (uint64_t i = 0; i < in_rank; ++i) {
-      view_stride.push_back(reduced_impl->stride()[rank_diff + i]);
+  if (rank_diff > 0) {
+    std::vector<uint64_t> squeeze_dims;
+    squeeze_dims.reserve(rank_diff);
+    for (uint64_t i = 0; i < rank_diff; ++i) {
+      squeeze_dims.push_back(i);
     }
-    auto view_impl = reduced_impl->View(
-        Shape(original_shape_), std::move(view_stride), reduced_impl->offset());
-    grad_in =
-        Tensor(view_impl, utils::TensorAccessor::GetAutogradMeta(reduced));
+    grad_in = reduced.Squeeze(squeeze_dims);
   }
 
   auto parent = getParents()[0];
@@ -92,7 +88,6 @@ std::optional<Shape> GetBroadcastShape(const Tensor& a, const Tensor& b) {
   return new_shape;
 }
 
-// TODO: handle backward
 std::optional<Tensor> BroadcastToShape(const Tensor& a, const Shape& shape) {
   // check that the shape works
   Shape a_shape = a.shape();

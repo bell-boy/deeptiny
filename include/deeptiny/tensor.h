@@ -35,6 +35,7 @@ class Tensor {
   Device device() const;
   Tensor Clone() const;
   Tensor Squeeze(std::initializer_list<uint64_t> dims);
+  Tensor Squeeze(const std::vector<uint64_t>& dims);
   bool requires_grad() const;
   std::optional<Tensor> grad() const;
   void Backward(bool keep_graph = false);
