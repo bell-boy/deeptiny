@@ -255,7 +255,7 @@ TEST_CASE("View backward test") {
         deeptiny::Slice(0, 5, 2),
     };
     auto view = t(slices);
-    auto loss = deeptiny::functional::Reduce(view, {0, 1});
+    auto loss = deeptiny::Reduce(view, {0, 1});
     loss.Backward();
 
     auto grad_opt = t.grad();
@@ -290,7 +290,7 @@ TEST_CASE("View backward test") {
     auto broadcasted = deeptiny::utils::BroadcastToShape(view, {2, 4});
     REQUIRE(broadcasted.has_value());
 
-    auto loss = deeptiny::functional::Reduce(*broadcasted, {0, 1});
+    auto loss = deeptiny::Reduce(*broadcasted, {0, 1});
     loss.Backward();
 
     auto grad_opt = t.grad();

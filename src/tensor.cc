@@ -62,11 +62,13 @@ void Tensor::Backward(bool keep_graph) {
   if (!autograd_meta_) {
     throw std::runtime_error("Tensor has no autograd metadata");
   }
-  if (!requires_grad()) {
-    throw std::runtime_error("Cannot call Backward on tensor without grad");
-  }
   if (!shape().empty()) {
     throw std::runtime_error("Backward requires a scalar (empty shape) tensor");
+  }
+
+  Engine engine(autograd_meta_, keep_graph);
+  if (!autograd_meta_->requires_grad()) {
+    throw std::runtime_error("Cannot call Backward on tensor without grad");
   }
 
   Tensor grad({}, dtype(), device(), false);
@@ -81,7 +83,6 @@ void Tensor::Backward(bool keep_graph) {
       throw std::runtime_error("Backward only supports Float32 gradients");
   }
 
-  Engine engine(autograd_meta_, keep_graph);
   autograd_meta_->updateGrad(grad, engine);
   engine.Run();
 }

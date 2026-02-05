@@ -1,4 +1,3 @@
-#pragma once
 #include "deeptiny/math.h"
 
 #include <memory>

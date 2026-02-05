@@ -58,12 +58,20 @@ Tensor Zeros(Shape shape, Device device, DType dtype) {
   };
 }
 
+}  // namespace functional
+
 // TODO: make this not suck
 // TODO: support for inplace add
 Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims) {
   std::unordered_set<uint64_t> dims_set(dims.begin(), dims.end());
   const auto& x_shape = x.shape();
   const uint64_t rank = x_shape.size();
+
+  Shape keep_shape;
+  keep_shape.reserve(rank);
+  for (uint64_t i = 0; i < rank; ++i) {
+    keep_shape.push_back(dims_set.contains(i) ? 1 : x_shape[i]);
+  }
 
   Shape reduced_shape;
   reduced_shape.reserve(rank);
@@ -73,75 +81,43 @@ Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims) {
     }
   }
 
-  Tensor res = Zeros(reduced_shape, x.device(), x.dtype());
+  Tensor res = functional::Zeros(keep_shape, x.device(), x.dtype());
+  auto recursive_reduce = [&res, &x, &dims_set](auto&& self, uint64_t dim_idx,
+                                                std::vector<Slice>& slices) {
+    if (slices.size() == x.shape().size()) {
+      res += x(slices);
+      return;
+    }
+    if (dims_set.contains(dim_idx)) {
+      for (uint64_t i = 0; i < x.shape()[dim_idx]; ++i) {
+        slices.push_back(Slice(i));
+        self(self, dim_idx + 1, slices);
+        slices.pop_back();
+      }
+    } else {
+      slices.push_back(Slice(std::nullopt, std::nullopt));
+      self(self, dim_idx + 1, slices);
+      slices.pop_back();
+    }
+  };
+  std::vector<Slice> slices;
+  recursive_reduce(recursive_reduce, 0, slices);
 
-  if (x.dtype() != DType::Float32 || x.device() != Device::CPU) {
-    throw std::runtime_error("Reduce only supports CPU Float32 for now");
-  }
-
-  auto x_impl = utils::TensorAccessor::GetTensorImpl(x);
-  auto res_impl = utils::TensorAccessor::GetTensorImpl(res);
-  const auto& x_stride = x_impl->stride();
-  const auto& res_stride = res_impl->stride();
-
-  const auto* x_data = static_cast<const float*>(x_impl->data());
-  auto* res_data = static_cast<float*>(res_impl->data());
-
-  if (rank == 0) {
-    res_data[0] += x_data[0];
+  if (reduced_shape == keep_shape) {
     return res;
   }
 
-  std::vector<uint64_t> index(rank, 0);
-  const uint64_t out_rank = reduced_shape.size();
-  std::vector<uint64_t> out_index(out_rank, 0);
-
-  auto compute_offsets = [&](const std::vector<uint64_t>& idx) {
-    int64_t x_offset = static_cast<int64_t>(x_impl->offset());
-    for (uint64_t i = 0; i < rank; ++i) {
-      x_offset += static_cast<int64_t>(idx[i]) * x_stride[i];
-    }
-    return x_offset;
-  };
-
-  auto compute_out_offset = [&](const std::vector<uint64_t>& out_idx) {
-    int64_t out_offset = static_cast<int64_t>(res_impl->offset());
-    for (uint64_t i = 0; i < out_rank; ++i) {
-      out_offset += static_cast<int64_t>(out_idx[i]) * res_stride[i];
-    }
-    return out_offset;
-  };
-
-  while (true) {
-    uint64_t out_dim = 0;
-    for (uint64_t i = 0; i < rank; ++i) {
-      if (!dims_set.contains(i)) {
-        out_index[out_dim++] = index[i];
-      }
-    }
-
-    const int64_t x_offset = compute_offsets(index);
-    const int64_t out_offset =
-        out_rank == 0 ? 0 : compute_out_offset(out_index);
-
-    res_data[static_cast<size_t>(out_offset)] +=
-        x_data[static_cast<size_t>(x_offset)];
-
-    uint64_t dim = rank;
-    while (dim > 0) {
-      --dim;
-      index[dim] += 1;
-      if (index[dim] < x_shape[dim]) {
-        break;
-      }
-      index[dim] = 0;
-      if (dim == 0) {
-        return res;
-      }
+  auto res_impl = utils::TensorAccessor::GetTensorImpl(res);
+  Stride squeezed_stride;
+  squeezed_stride.reserve(reduced_shape.size());
+  for (uint64_t i = 0; i < rank; ++i) {
+    if (!dims_set.contains(i)) {
+      squeezed_stride.push_back(res_impl->stride()[i]);
     }
   }
+
+  auto squeezed_impl = res_impl->View(
+      Shape(reduced_shape), std::move(squeezed_stride), res_impl->offset());
+  return Tensor(squeezed_impl, utils::TensorAccessor::GetAutogradMeta(res));
 }
-
-};  // namespace functional
-
 };  // namespace deeptiny
