@@ -4,10 +4,20 @@
 #include <utility>
 
 #include "deeptiny/tensor.h"
+#include "engine.h"
 
 namespace deeptiny {
 
 namespace utils {
+
+class BroadcastBackward : public Function {
+ private:
+  Shape original_shape_;
+
+ public:
+  explicit BroadcastBackward(const Tensor& t);
+  void operator()(const Tensor& grad, Engine& engine) override;
+};
 
 std::optional<Shape> GetBroadcastShape(const Tensor& a, const Tensor& b);
 

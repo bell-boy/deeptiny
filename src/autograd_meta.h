@@ -23,6 +23,7 @@ class AutogradMeta : public std::enable_shared_from_this<AutogradMeta> {
   // TODO: add support for scatter grads
   void updateGrad(const Tensor& grad, Engine& engine);
   void incrementPending();
+  uint64_t pending() const { return pending_; }
   bool requires_grad() const { return requires_grad_; }
   std::optional<Tensor> grad() const {
     if (!grad_) {
