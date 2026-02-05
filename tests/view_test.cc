@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "broadcast.h"
 #include "deeptiny/functional.h"
 #include "doctest/doctest.h"
 #include "utils.h"
@@ -239,8 +240,87 @@ TEST_CASE("View assignment test") {
 }
 
 TEST_CASE("View backward test") {
-  // Create random leaf tensors of upto kRank
-  // Generate a random view of said tensors
-  // Do operations on views resulting in a scalar
-  // Ensure that gradients on leaf matches expected
+  SUBCASE("Strided view scatter matches expected gradient") {
+    deeptiny::Tensor t({4, 5}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       true);
+    auto t_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(t);
+    auto* t_data = static_cast<float*>(t_impl->data());
+    const uint64_t total_size = deeptiny::utils::GetTotalSize(t.shape());
+    for (uint64_t i = 0; i < total_size; ++i) {
+      t_data[i] = static_cast<float>(i);
+    }
+
+    std::vector<deeptiny::Slice> slices{
+        deeptiny::Slice(1, 4, 2),
+        deeptiny::Slice(0, 5, 2),
+    };
+    auto view = t(slices);
+    auto loss = deeptiny::functional::Reduce(view, {0, 1});
+    loss.Backward();
+
+    auto grad_opt = t.grad();
+    REQUIRE(grad_opt.has_value());
+    auto grad_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(*grad_opt);
+    const auto* grad_data = static_cast<const float*>(grad_impl->data());
+
+    std::vector<float> expected(total_size, 0.0f);
+    const auto& stride = t_impl->stride();
+    for (int64_t i0 = 0; i0 < 2; ++i0) {
+      for (int64_t i1 = 0; i1 < 3; ++i1) {
+        const int64_t src_i0 = 1 + i0 * 2;
+        const int64_t src_i1 = 0 + i1 * 2;
+        const int64_t src_offset = src_i0 * stride[0] + src_i1 * stride[1];
+        expected[static_cast<size_t>(src_offset)] += 1.0f;
+      }
+    }
+
+    for (uint64_t i = 0; i < total_size; ++i) {
+      CHECK(grad_data[i] == expected[i]);
+    }
+  }
+
+  SUBCASE("View + broadcast chain accumulates gradients") {
+    deeptiny::Tensor t({2, 3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       true);
+    std::vector<deeptiny::Slice> slices{
+        deeptiny::Slice(0, 2, 1),
+        deeptiny::Slice(0, 1, 1),
+    };
+    auto view = t(slices);
+    auto broadcasted = deeptiny::utils::BroadcastToShape(view, {2, 4});
+    REQUIRE(broadcasted.has_value());
+
+    auto loss = deeptiny::functional::Reduce(*broadcasted, {0, 1});
+    loss.Backward();
+
+    auto grad_opt = t.grad();
+    REQUIRE(grad_opt.has_value());
+    auto grad_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(*grad_opt);
+    const auto* grad_data = static_cast<const float*>(grad_impl->data());
+
+    const auto& stride = grad_impl->stride();
+    std::vector<float> expected(6, 0.0f);
+    for (int64_t i0 = 0; i0 < 2; ++i0) {
+      const int64_t offset = i0 * stride[0] + 0 * stride[1];
+      expected[static_cast<size_t>(offset)] = 4.0f;
+    }
+
+    for (size_t i = 0; i < expected.size(); ++i) {
+      CHECK(grad_data[i] == expected[i]);
+    }
+  }
+}
+
+TEST_CASE("Backward input validation") {
+  SUBCASE("Backward fails on non-scalar") {
+    deeptiny::Tensor t({2, 2}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       true);
+    CHECK_THROWS(t.Backward());
+  }
+
+  SUBCASE("Backward fails when requires_grad is false") {
+    deeptiny::Tensor t({}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       false);
+    CHECK_THROWS(t.Backward());
+  }
 }

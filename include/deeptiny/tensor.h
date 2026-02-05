@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -33,6 +34,9 @@ class Tensor {
   DType dtype() const;
   Device device() const;
   Tensor Clone() const;
+  bool requires_grad() const;
+  std::optional<Tensor> grad() const;
+  void Backward(bool keep_graph = false);
 
   /**
    * Creates a tensor on the CPU with the expectation that the bytes are laid

@@ -20,6 +20,15 @@ void FillSequential(deeptiny::Tensor& t, float base) {
   }
 }
 
+void CheckAllEqual(const deeptiny::Tensor& t, float expected) {
+  auto impl = deeptiny::utils::TensorAccessor::GetTensorImpl(t);
+  const uint64_t total = deeptiny::utils::GetTotalSize(impl->shape());
+  const auto* data = static_cast<const float*>(impl->data());
+  for (uint64_t i = 0; i < total; ++i) {
+    CHECK(data[i] == expected);
+  }
+}
+
 int64_t OffsetForIndex(const deeptiny::Stride& stride,
                        const std::vector<uint64_t>& index) {
   int64_t offset = 0;
@@ -225,4 +234,52 @@ TEST_CASE("Broadcast Forward Test") {
   }
 }
 
-TEST_CASE("Broadcast Backward Test") {}
+TEST_CASE("Broadcast Backward Test") {
+  SUBCASE("Singleton expansion accumulates gradients") {
+    deeptiny::Tensor a({2, 1, 3}, deeptiny::DType::Float32,
+                       deeptiny::Device::CPU, true);
+    deeptiny::Tensor b({1, 4, 1}, deeptiny::DType::Float32,
+                       deeptiny::Device::CPU, true);
+    FillSequential(a, 0.0f);
+    FillSequential(b, 10.0f);
+
+    auto [a_b, b_b] = deeptiny::utils::Broadcast(a, b);
+    deeptiny::Tensor sum = a_b;
+    sum += b_b;
+
+    auto loss = deeptiny::functional::Reduce(sum, {0, 1, 2});
+    loss.Backward();
+
+    auto a_grad = a.grad();
+    auto b_grad = b.grad();
+    REQUIRE(a_grad.has_value());
+    REQUIRE(b_grad.has_value());
+
+    CheckAllEqual(*a_grad, 4.0f);
+    CheckAllEqual(*b_grad, 6.0f);
+  }
+
+  SUBCASE("Rank expansion accumulates gradients") {
+    deeptiny::Tensor a({3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       true);
+    deeptiny::Tensor b({2, 3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       true);
+    FillSequential(a, 1.0f);
+    FillSequential(b, 2.0f);
+
+    auto [a_b, b_b] = deeptiny::utils::Broadcast(a, b);
+    deeptiny::Tensor sum = a_b;
+    sum += b_b;
+
+    auto loss = deeptiny::functional::Reduce(sum, {0, 1});
+    loss.Backward();
+
+    auto a_grad = a.grad();
+    auto b_grad = b.grad();
+    REQUIRE(a_grad.has_value());
+    REQUIRE(b_grad.has_value());
+
+    CheckAllEqual(*a_grad, 2.0f);
+    CheckAllEqual(*b_grad, 1.0f);
+  }
+}

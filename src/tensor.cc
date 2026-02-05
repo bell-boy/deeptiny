@@ -3,12 +3,15 @@
 #include <sys/resource.h>
 
 #include <iostream>
+#include <optional>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
 #include "autograd_meta.h"
 #include "cpu/kernels.h"
 #include "deeptiny/view.h"
+#include "engine.h"
 #include "tensor_impl.h"
 #include "utils.h"
 
@@ -39,6 +42,48 @@ Tensor Tensor::Clone() const {
   src_storage->CopyToHost(0, numel, host_buf.data());
   dst_impl->storage()->CopyFromHost(0, numel, host_buf.data());
   return result;
+}
+
+bool Tensor::requires_grad() const {
+  if (!autograd_meta_) {
+    return false;
+  }
+  return autograd_meta_->requires_grad();
+}
+
+std::optional<Tensor> Tensor::grad() const {
+  if (!autograd_meta_) {
+    return std::nullopt;
+  }
+  return autograd_meta_->grad();
+}
+
+void Tensor::Backward(bool keep_graph) {
+  if (!autograd_meta_) {
+    throw std::runtime_error("Tensor has no autograd metadata");
+  }
+  if (!requires_grad()) {
+    throw std::runtime_error("Cannot call Backward on tensor without grad");
+  }
+  if (!shape().empty()) {
+    throw std::runtime_error("Backward requires a scalar (empty shape) tensor");
+  }
+
+  Tensor grad({}, dtype(), device(), false);
+  auto grad_impl = utils::TensorAccessor::GetTensorImpl(grad);
+  switch (dtype()) {
+    case DType::Float32: {
+      auto* grad_data = static_cast<float*>(grad_impl->data());
+      grad_data[0] = 1.0f;
+      break;
+    }
+    default:
+      throw std::runtime_error("Backward only supports Float32 gradients");
+  }
+
+  Engine engine(autograd_meta_, keep_graph);
+  autograd_meta_->updateGrad(grad, engine);
+  engine.Run();
 }
 
 Tensor Tensor::FromBuffer(std::span<std::byte> bytes, Shape shape, DType dtype,
