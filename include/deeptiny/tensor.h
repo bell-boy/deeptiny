@@ -32,6 +32,7 @@ class Tensor {
   Shape shape() const;
   DType dtype() const;
   Device device() const;
+  Tensor Clone() const;
 
   /**
    * Creates a tensor on the CPU with the expectation that the bytes are laid

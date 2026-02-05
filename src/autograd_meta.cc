@@ -1,10 +1,8 @@
 #include "autograd_meta.h"
 
 #include <utility>
-#include <vector>
 
 #include "engine.h"
-#include "utils.h"
 
 namespace deeptiny {
 
@@ -24,17 +22,7 @@ void AutogradMeta::updateGrad(const Tensor& grad, Engine& engine) {
     return;
   }
   if (!grad_) {
-    Tensor grad_copy(grad.shape(), grad.dtype(), grad.device(), false);
-    auto src_impl = utils::TensorAccessor::GetTensorImpl(grad);
-    auto dst_impl = utils::TensorAccessor::GetTensorImpl(grad_copy);
-    auto src_storage = src_impl->getContiguousStorage();
-    const uint64_t numel = src_storage->numel();
-    if (numel > 0) {
-      std::vector<std::byte> host_buf(numel * grad.dtype().size());
-      src_storage->CopyToHost(0, numel, host_buf.data());
-      dst_impl->storage()->CopyFromHost(0, numel, host_buf.data());
-    }
-    grad_ = std::make_shared<Tensor>(std::move(grad_copy));
+    grad_ = std::make_shared<Tensor>(grad.Clone());
     return;
   }
   *grad_ += grad;
