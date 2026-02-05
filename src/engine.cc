@@ -107,12 +107,9 @@ void Engine::EnqueueBackward(std::shared_ptr<Function> func) {
     return;
   }
   for (const auto& parent : func->getParents()) {
-    if (!parent) {
-      continue;
-    }
-    if (parent->pending_ == 0) {
-      continue;
-    }
+    assert(parent && "EnqueueBackward encountered null parent");
+    assert(parent->pending_ > 0 &&
+           "EnqueueBackward encountered parent with zero pending");
     parent->pending_ -= 1;
     if (parent->pending_ == 0 && parent->requires_grad_) {
       ready_queue_.push_back(parent);
