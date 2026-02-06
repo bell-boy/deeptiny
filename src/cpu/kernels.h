@@ -21,6 +21,12 @@ std::shared_ptr<TensorImpl> FromBuffer(DType dtype,
  */
 void Add(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
          std::shared_ptr<TensorImpl> out);
+void Sub(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+         std::shared_ptr<TensorImpl> out);
+void Mul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+         std::shared_ptr<TensorImpl> out);
+void Div(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+         std::shared_ptr<TensorImpl> out);
 
 };  // namespace cpu
 

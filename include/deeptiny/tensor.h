@@ -50,6 +50,9 @@ class Tensor {
                            Device device = Device::CPU,
                            bool requires_grad = false);
   void operator+=(const Tensor& other);
+  void operator-=(const Tensor& other);
+  void operator*=(const Tensor& other);
+  void operator/=(const Tensor& other);
 
   friend struct utils::TensorAccessor;
 };
