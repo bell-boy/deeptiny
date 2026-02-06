@@ -28,6 +28,16 @@ void Mul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
 void Div(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
          std::shared_ptr<TensorImpl> out);
 
+/**
+ * Batched matrix multiply.
+ * Expects matching leading batch dimensions and:
+ *   a: (..., n, k), b: (..., k, m), out: (..., n, m)
+ * Transposition flags are applied per-batch matrix before multiplication.
+ */
+void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+                   std::shared_ptr<TensorImpl> out, bool transpose_a = false,
+                   bool transpose_b = false);
+
 };  // namespace cpu
 
 };  // namespace deeptiny

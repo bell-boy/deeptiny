@@ -9,8 +9,10 @@ views, broadcasting, elementwise math, and reverse-mode backpropagation.
 - Tensor views and slicing via `deeptiny::Slice`
 - Broadcasting utilities used by math kernels
 - Elementwise math: `+`, `-`, `*`, `/` (out-of-place and in-place)
+- Batched matrix multiply: `math::BatchedMatMul(a, b, transpose_a, transpose_b)`
 - Reverse-mode autograd for elementwise ops, views, and reduction
 - Reduction via `functional::Reduce`
+- View-only `Tensor::Reshape` and `Tensor::Squeeze`
 
 ## Requirements
 
@@ -152,4 +154,6 @@ int main() {
 
 - `Tensor::Backward()` requires a scalar tensor and `requires_grad=true`.
 - In-place math on zero-stride (broadcasted) destinations is rejected.
+- `math::BatchedMatMul` broadcasts leading batch dims only; matrix inner dims (after transpose flags) must match.
+- `Tensor::Reshape` requires contiguous input and matching element count.
 - Current compute kernels are CPU-first and Float32-focused.
