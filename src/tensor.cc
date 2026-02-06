@@ -141,7 +141,7 @@ Tensor Tensor::Reshape(const Shape& shape) {
       Shape(shape), utils::GetContinguousStride(shape), tensor_impl_->offset());
   auto backward = std::make_shared<ReshapeBackward>(*this);
   auto grad_meta = std::make_shared<AutogradMeta>(backward);
-  return utils::TensorAccessor::MakeTensor(std::move(reshaped_impl), grad_meta);
+  return utils::TensorAccessor::MakeTensor(reshaped_impl, grad_meta);
 }
 
 Tensor Tensor::Squeeze(const std::vector<uint64_t>& dims) {
