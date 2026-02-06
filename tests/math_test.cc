@@ -3,9 +3,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <span>
-#include <stdexcept>
-#include <vector>
 
 #include "autograd_meta.h"
 #include "deeptiny/functional.h"
@@ -14,39 +11,8 @@
 #include "test_utils.h"
 #include "utils.h"
 
-namespace {
-deeptiny::Tensor MakeTensor(const deeptiny::Shape& shape,
-                            const std::vector<float>& values,
-                            bool requires_grad = false) {
-  if (values.size() != deeptiny::utils::GetTotalSize(shape)) {
-    throw std::runtime_error(
-        "MakeTensor received mismatched values/shape size");
-  }
-  return deeptiny::Tensor::FromBuffer(
-      std::span<const std::byte>(
-          reinterpret_cast<const std::byte*>(values.data()),
-          values.size() * sizeof(float)),
-      shape, deeptiny::DType::Float32, deeptiny::Device::CPU, requires_grad);
-}
-
-std::vector<float> ToVector(const deeptiny::Tensor& t) {
-  auto impl = deeptiny::utils::TensorAccessor::GetTensorImpl(t);
-  auto contiguous = impl->getContiguousStorage();
-  const auto n = contiguous->numel();
-  std::vector<float> out(static_cast<size_t>(n), 0.0f);
-  contiguous->CopyToHost(0, n, out.data());
-  return out;
-}
-
-void CheckTensorData(const deeptiny::Tensor& t,
-                     const std::vector<float>& expected) {
-  const auto actual = ToVector(t);
-  REQUIRE(actual.size() == expected.size());
-  for (size_t i = 0; i < expected.size(); ++i) {
-    CHECK(actual[i] == deeptiny::test_utils::Approx(expected[i]));
-  }
-}
-}  // namespace
+using deeptiny::test_utils::CheckTensorData;
+using deeptiny::test_utils::MakeTensor;
 
 TEST_CASE("Elementary out-of-place forward") {
   deeptiny::Tensor a = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6});

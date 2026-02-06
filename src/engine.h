@@ -20,6 +20,7 @@ class Context {
     uint64_t version;
   };
   std::unordered_map<uint64_t, SavedTensor> saved_tensors_;
+  uint64_t GetStorageVersion(const Tensor& tensor) const;
 
  public:
   void Set(uint64_t id, const Tensor& tensor);

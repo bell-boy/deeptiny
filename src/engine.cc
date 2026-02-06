@@ -15,8 +15,7 @@ namespace deeptiny {
 
 State GradState;
 
-namespace {
-uint64_t GetStorageVersion(const Tensor& tensor) {
+uint64_t Context::GetStorageVersion(const Tensor& tensor) const {
   auto impl = utils::TensorAccessor::GetTensorImpl(tensor);
   if (!impl) {
     throw std::runtime_error("Context cannot access null TensorImpl");
@@ -27,7 +26,6 @@ uint64_t GetStorageVersion(const Tensor& tensor) {
   }
   return storage->version();
 }
-}  // namespace
 
 void Context::Set(uint64_t id, const Tensor& tensor) {
   saved_tensors_.insert_or_assign(
@@ -75,9 +73,8 @@ Engine::Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph) {
     nodes.push_back(node);
     if (node->grad_fn_) {
       for (const auto& parent : node->grad_fn_->getParents()) {
-        if (parent) {
-          stack.push_back(parent);
-        }
+        assert(parent && "Function parent must not be null");
+        stack.push_back(parent);
       }
     }
   }
@@ -92,9 +89,8 @@ Engine::Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph) {
       continue;
     }
     for (const auto& parent : node->grad_fn_->getParents()) {
-      if (parent) {
-        parent->pending_ += 1;
-      }
+      assert(parent && "Function parent must not be null");
+      parent->pending_ += 1;
     }
   }
 
@@ -112,6 +108,7 @@ Engine::Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph) {
     }
     bool requires_grad = false;
     for (const auto& parent : node->grad_fn_->getParents()) {
+      assert(parent && "Function parent must not be null");
       if (compute_requires(parent)) {
         requires_grad = true;
       }
