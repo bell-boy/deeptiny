@@ -2,6 +2,15 @@
 
 Standalone CMake demo that consumes Deep Tiny via `FetchContent`.
 
+This demo includes transformer modules under `src/modules`:
+
+- `Linear` and `LlamaMLP` demo modules
+- `Embedding` with PyTorch-style lookup via `Embedding::operator()(indices, shape)`
+- `Embedding::operator()(indices, shape)` expects
+  `indices.size() == product(shape)`
+- Embedding output shape is `shape + {embedding_dim}`
+- Invalid embedding indices (`< 0` or `>= num_embeddings`) throw
+
 ## Configure
 
 ```bash
@@ -31,10 +40,11 @@ If you configured with `dev-local-openblas`, build with:
 cmake --build --preset dev-local-openblas
 ```
 
-Build the module smoke test target:
+Build demo test targets:
 
 ```bash
 cmake --build build --target modules_smoke
+cmake --build build --target transfomer_demo_embedding_test
 ```
 
 ## Run

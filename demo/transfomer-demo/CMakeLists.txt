@@ -10,7 +10,7 @@ option(TRANSFOMER_DEMO_BUILD_TESTS "Build transfomer-demo tests" ON)
 
 set(DEEPTINY_GIT_REPOSITORY "https://github.com/bell-boy/deeptiny.git" CACHE STRING
     "Git repository for Deep Tiny")
-set(DEEPTINY_GIT_TAG "04d92a7abd1a4932e642ae5ff2a3cfd9f4fa0abd" CACHE STRING
+set(DEEPTINY_GIT_TAG "154acc95dc69a20646377d3e7059b6f46f8b9a18" CACHE STRING
     "Pinned Deep Tiny commit")
 
 # Keep the demo isolated from Deep Tiny's internal test suite.
@@ -44,6 +44,7 @@ set(BUILD_TESTING "${_demo_build_testing}" CACHE BOOL
 add_library(transfomer_modules STATIC
   src/modules/linear.cc
   src/modules/llama_mlp.cc
+  src/modules/embedding.cc
 )
 target_compile_features(transfomer_modules PUBLIC cxx_std_23)
 target_include_directories(transfomer_modules PUBLIC
@@ -58,9 +59,21 @@ target_link_libraries(transfomer_demo PRIVATE transfomer_modules)
 
 if(TRANSFOMER_DEMO_BUILD_TESTS)
   enable_testing()
+
   add_executable(modules_smoke tests/modules_smoke.cc)
   target_compile_features(modules_smoke PRIVATE cxx_std_23)
   target_link_libraries(modules_smoke PRIVATE transfomer_modules)
   target_include_directories(modules_smoke PRIVATE ${deeptiny_SOURCE_DIR}/src)
   add_test(NAME modules_smoke COMMAND modules_smoke)
+
+  add_executable(transfomer_demo_embedding_test tests/embedding_test.cc)
+  target_compile_features(transfomer_demo_embedding_test PRIVATE cxx_std_23)
+  target_link_libraries(transfomer_demo_embedding_test PRIVATE transfomer_modules)
+  target_include_directories(transfomer_demo_embedding_test PRIVATE
+    ${deeptiny_SOURCE_DIR}/src
+  )
+  add_test(
+    NAME transfomer_demo_embedding_test
+    COMMAND transfomer_demo_embedding_test
+  )
 endif()
