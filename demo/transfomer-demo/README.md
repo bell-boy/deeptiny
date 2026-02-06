@@ -8,6 +8,9 @@ Standalone CMake demo that consumes Deep Tiny via `FetchContent`.
 cmake --preset dev
 ```
 
+When this demo lives inside a Deep Tiny checkout, it auto-uses the local
+source tree via `FETCHCONTENT_SOURCE_DIR_DEEPTINY`.
+
 If OpenBLAS is not discoverable by default, create a local user preset:
 
 ```bash
@@ -28,10 +31,22 @@ If you configured with `dev-local-openblas`, build with:
 cmake --build --preset dev-local-openblas
 ```
 
+Build the module smoke test target:
+
+```bash
+cmake --build build --target modules_smoke
+```
+
 ## Run
 
 ```bash
 ./build/transfomer_demo
+```
+
+Run demo tests:
+
+```bash
+ctest --test-dir build --output-on-failure
 ```
 
 Override the pinned Deep Tiny commit:

@@ -12,6 +12,10 @@ namespace functional {
  */
 Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
               bool keep_dims = false);
+/**
+ * Element-wise ReLU activation.
+ */
+Tensor ReLU(const Tensor& x);
 }  // namespace functional
 
 };  // namespace deeptiny

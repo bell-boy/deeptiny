@@ -27,6 +27,10 @@ void Mul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
          std::shared_ptr<TensorImpl> out);
 void Div(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
          std::shared_ptr<TensorImpl> out);
+void ReLU(std::shared_ptr<TensorImpl> x, std::shared_ptr<TensorImpl> out);
+void ReLUBackward(std::shared_ptr<TensorImpl> x,
+                  std::shared_ptr<TensorImpl> grad_out,
+                  std::shared_ptr<TensorImpl> grad_x);
 
 /**
  * Batched matrix multiply.
