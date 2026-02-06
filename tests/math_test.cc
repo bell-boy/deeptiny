@@ -6,7 +6,6 @@
 
 #include "autograd_meta.h"
 #include "deeptiny/functional.h"
-#include "deeptiny/view.h"
 #include "doctest/doctest.h"
 #include "engine.h"
 #include "test_utils.h"
@@ -365,8 +364,10 @@ TEST_CASE("Reshape forward/backward and guards") {
 
   SUBCASE("Reshape rejects non-contiguous input") {
     deeptiny::Tensor t = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6});
-    auto view = t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3, 2)});
-    CHECK_THROWS_WITH(view.Reshape({4}), doctest::Contains("contiguous"));
+    auto slice = t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3, 2)});
+    deeptiny::Tensor view_tensor = slice;
+    CHECK_THROWS_WITH(view_tensor.Reshape({4}),
+                      doctest::Contains("contiguous"));
   }
 
   SUBCASE("Reshape rejects element-count mismatch") {
