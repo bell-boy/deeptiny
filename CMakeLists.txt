@@ -9,6 +9,9 @@ include(GNUInstallDirs)
 
 set(DEEPTINY_PACKAGE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/deeptiny")
 set(DEEPTINY_PACKAGE_VERSION "0.0.0")
+option(DEEPTINY_BUILD_TESTS "Build deeptiny tests" ${PROJECT_IS_TOP_LEVEL})
+option(DEEPTINY_ENABLE_WERROR "Treat warnings as errors for deeptiny"
+       ${PROJECT_IS_TOP_LEVEL})
 
 file(GLOB DEEPTINY_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc"
@@ -51,8 +54,14 @@ endif()
 
 if (MSVC)
   target_compile_options(deeptiny PRIVATE /W4)
+  if (DEEPTINY_ENABLE_WERROR)
+    target_compile_options(deeptiny PRIVATE /WX)
+  endif()
 else()
-  target_compile_options(deeptiny PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  target_compile_options(deeptiny PRIVATE -Wall -Wextra -Wpedantic)
+  if (DEEPTINY_ENABLE_WERROR)
+    target_compile_options(deeptiny PRIVATE -Werror)
+  endif()
 endif()
 
 configure_package_config_file(
@@ -91,7 +100,7 @@ install(FILES
   DESTINATION "${DEEPTINY_PACKAGE_INSTALL_DIR}"
 )
 
-include(CTest)
-if(BUILD_TESTING)
+if(DEEPTINY_BUILD_TESTS)
+  enable_testing()
   add_subdirectory(tests)
 endif()

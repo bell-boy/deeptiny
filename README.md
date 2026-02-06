@@ -58,7 +58,8 @@ cmake --build --preset release-local-openblas -j
 
 ## Run tests
 
-Use a dev preset for tests. The `release` preset sets `BUILD_TESTING=OFF`.
+Use a dev preset for tests. The `release` preset sets
+`DEEPTINY_BUILD_TESTS=OFF`.
 
 ```bash
 ctest --test-dir build --output-on-failure
@@ -72,21 +73,44 @@ ctest --test-dir build -R math_test --output-on-failure
 
 ## Use deeptiny in your own CMake project
 
-### Option A: Vendor as a subdirectory
-
-If you keep `deeptiny` inside your source tree (for example
-`external/deeptiny`):
+### FetchContent (recommended)
 
 ```cmake
-add_subdirectory(external/deeptiny)
+include(FetchContent)
+
+FetchContent_Declare(
+  deeptiny
+  GIT_REPOSITORY https://github.com/bell-boy/deeptiny.git
+  GIT_TAG 9b23455dbe567a87cf8d8e7ff3f58be413f465d8
+)
+FetchContent_MakeAvailable(deeptiny)
 
 add_executable(my_app main.cc)
-target_link_libraries(my_app PRIVATE deeptiny)
+target_link_libraries(my_app PRIVATE deeptiny::deeptiny)
 ```
 
-### Option B: Install and consume with `find_package`
+Configure the consumer project with OpenBLAS discoverable:
 
-1. Build and install `deeptiny` to a prefix:
+```bash
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/openblas
+cmake --build build -j
+```
+
+If your OpenBLAS package provides `OpenBLASConfig.cmake`, you can also set
+`-DOpenBLAS_DIR=/path/to/openblas/cmake`.
+
+When used as a subproject (including FetchContent), deeptiny defaults to:
+
+- `DEEPTINY_BUILD_TESTS=OFF`
+- `DEEPTINY_ENABLE_WERROR=OFF`
+
+You can override either from the parent configure command:
+
+```bash
+cmake -S . -B build -DDEEPTINY_BUILD_TESTS=ON -DDEEPTINY_ENABLE_WERROR=ON
+```
+
+### Alternative: Install and consume with `find_package`
 
 ```bash
 cmake --preset release-local-openblas
@@ -94,25 +118,12 @@ cmake --build --preset release-local-openblas -j
 cmake --install build/release --prefix /path/to/deeptiny-install
 ```
 
-2. In the consumer project's `CMakeLists.txt`:
+Then in the consumer:
 
 ```cmake
 find_package(deeptiny CONFIG REQUIRED)
-
-add_executable(my_app main.cc)
 target_link_libraries(my_app PRIVATE deeptiny::deeptiny)
 ```
-
-3. Configure the consumer project with both deeptiny and OpenBLAS discoverable:
-
-```bash
-cmake -S . -B build \
-  -DCMAKE_PREFIX_PATH="/path/to/deeptiny-install;/opt/homebrew/opt/openblas"
-cmake --build build -j
-```
-
-If deeptiny is installed to a standard system prefix, `CMAKE_PREFIX_PATH`
-usually does not need the deeptiny install path.
 
 ## Minimal autograd example
 

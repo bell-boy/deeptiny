@@ -23,7 +23,7 @@
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "BUILD_TESTING": "OFF",
+        "DEEPTINY_BUILD_TESTS": "OFF",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF"
       }
     }
