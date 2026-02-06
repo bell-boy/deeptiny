@@ -1,8 +1,16 @@
 #include "deeptiny/functional.h"
 
+#include <cassert>
+#include <cstdint>
+#include <memory>
 #include <optional>
+#include <sstream>
+#include <stdexcept>
 #include <unordered_set>
 
+#include "autograd_meta.h"
+#include "cpu/kernels.h"
+#include "engine.h"
 #include "utils.h"
 
 namespace deeptiny {
@@ -10,6 +18,68 @@ namespace deeptiny {
 namespace functional {
 
 namespace {
+void DispatchReLUKernel(const Tensor& x, Tensor& out) {
+  switch (out.device()) {
+    case Device::CPU: {
+      auto x_impl = utils::TensorAccessor::GetTensorImpl(x);
+      auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
+      cpu::ReLU(x_impl, out_impl);
+      return;
+    }
+    default: {
+      std::stringstream err;
+      err << "ReLU does not support " << out.device().ToString();
+      throw std::runtime_error(err.str());
+    }
+  }
+}
+
+void DispatchReLUBackwardKernel(const Tensor& x, const Tensor& grad_out,
+                                Tensor& grad_x) {
+  switch (grad_x.device()) {
+    case Device::CPU: {
+      auto x_impl = utils::TensorAccessor::GetTensorImpl(x);
+      auto grad_out_impl = utils::TensorAccessor::GetTensorImpl(grad_out);
+      auto grad_x_impl = utils::TensorAccessor::GetTensorImpl(grad_x);
+      cpu::ReLUBackward(x_impl, grad_out_impl, grad_x_impl);
+      return;
+    }
+    default: {
+      std::stringstream err;
+      err << "ReLU backward does not support " << grad_x.device().ToString();
+      throw std::runtime_error(err.str());
+    }
+  }
+}
+
+class ReLUBackward : public Function {
+ public:
+  enum struct ContextObjects : uint64_t {
+    SAVED_X = 0,
+  };
+
+  explicit ReLUBackward(const Tensor& parent_x, const Tensor& saved_x)
+      : Function({utils::TensorAccessor::GetAutogradMeta(parent_x)}) {
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_X), saved_x);
+  }
+
+  void operator()(const Tensor& grad) override {
+    Tensor saved_x =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_X));
+    const auto& parents = getParents();
+    assert(parents.size() == 1 && "ReLUBackward must have exactly 1 parent");
+    assert(parents[0] && "ReLUBackward parent must not be null");
+
+    if (grad.shape() != saved_x.shape()) {
+      throw std::runtime_error("ReLUBackward received invalid grad shape");
+    }
+
+    Tensor grad_x(saved_x.shape(), saved_x.dtype(), saved_x.device(), false);
+    DispatchReLUBackwardKernel(saved_x, grad, grad_x);
+    parents[0]->updateGrad(grad_x);
+  }
+};
+
 template <typename DimContainer>
 Tensor ReduceImpl(const Tensor& x, const DimContainer& dims, bool keep_dims) {
   std::unordered_set<uint64_t> dims_set(dims.begin(), dims.end());
@@ -75,6 +145,16 @@ Tensor ReduceImpl(const Tensor& x, const DimContainer& dims, bool keep_dims) {
 Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
               bool keep_dims) {
   return ReduceImpl(x, dims, keep_dims);
+}
+
+Tensor ReLU(const Tensor& x) {
+  Tensor out(x.shape(), x.dtype(), x.device(), false);
+  DispatchReLUKernel(x, out);
+
+  auto backward = std::make_shared<ReLUBackward>(x, x);
+  auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
+  auto out_meta = std::make_shared<AutogradMeta>(backward);
+  return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
 }
 }  // namespace functional
 

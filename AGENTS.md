@@ -16,6 +16,7 @@
 - For backward functions that save tensors, use `Context` and `ContextObjects` enum keys:
   - `enum struct ContextObjects : uint64_t { ... }`
 - Keep storage-version lookup encapsulated on `Context` (member helper), not as a free-floating helper.
+- Keep kernel read paths version-safe: when inputs are read-only, access storage through const pointers so read access does not bump storage version counters used by `Context` checks.
 - Treat Function parent presence as an invariant: assert parents exist in backward/graph traversal paths instead of silently skipping nulls.
 - Reuse shared helpers in `tests/test_utils` (e.g., tensor construction/data assertions) instead of adding ad-hoc per-test utilities when the helpers are broadly reusable.
 - For elementary math changes, maintain forward/backward/in-place test coverage and guard tests for invalid mutation/version behavior.

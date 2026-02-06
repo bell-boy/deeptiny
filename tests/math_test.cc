@@ -97,6 +97,27 @@ TEST_CASE("Elementary out-of-place backward") {
   }
 }
 
+TEST_CASE("Functional ReLU forward/backward") {
+  SUBCASE("Forward") {
+    deeptiny::Tensor x =
+        MakeTensor({2, 3}, {-1.0f, 0.0f, 2.0f, 3.0f, -4.0f, 5.0f});
+    auto out = deeptiny::functional::ReLU(x);
+    CheckTensorData(out, {0.0f, 0.0f, 2.0f, 3.0f, 0.0f, 5.0f});
+  }
+
+  SUBCASE("Backward") {
+    deeptiny::Tensor x =
+        MakeTensor({2, 3}, {-1.0f, 0.0f, 2.0f, 3.0f, -4.0f, 5.0f}, true);
+    auto loss =
+        deeptiny::functional::Reduce(deeptiny::functional::ReLU(x), {0, 1});
+    loss.Backward();
+
+    auto grad = x.grad();
+    REQUIRE(grad.has_value());
+    CheckTensorData(*grad, {0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f});
+  }
+}
+
 TEST_CASE("Elementary in-place forward") {
   SUBCASE("Add") {
     deeptiny::Tensor a = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6});
@@ -340,6 +361,22 @@ TEST_CASE("BatchedMatMul backward") {
     REQUIRE(b_grad.has_value());
     CheckTensorData(*a_grad, {10, 10, 26, 26, 42, 42});
     CheckTensorData(*b_grad, {3, 3, 3, 3, 7, 7, 7, 7, 11, 11, 11, 11});
+  }
+
+  SUBCASE("Shared inputs across multiple matmuls do not trip version checks") {
+    deeptiny::Tensor x = MakeTensor({1, 2, 3}, {1, 2, 3, 4, 5, 6}, true);
+    deeptiny::Tensor w1 = MakeTensor({1, 3, 2}, {1, 1, 1, 1, 1, 1}, true);
+    deeptiny::Tensor w2 = MakeTensor({1, 3, 2}, {2, 2, 2, 2, 2, 2}, true);
+
+    auto y1 = deeptiny::math::BatchedMatMul(x, w1);
+    auto y2 = deeptiny::math::BatchedMatMul(x, w2);
+    auto loss = deeptiny::functional::Reduce(y1 + y2, {0, 1, 2});
+
+    CHECK_NOTHROW(loss.Backward());
+
+    auto x_grad = x.grad();
+    REQUIRE(x_grad.has_value());
+    CheckTensorData(*x_grad, {6, 6, 6, 6, 6, 6});
   }
 }
 

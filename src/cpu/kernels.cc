@@ -28,13 +28,15 @@ void ValidateElementwiseBinaryOpInputs(const std::shared_ptr<TensorImpl>& a,
   assert(a->shape() == out->shape());
   assert(a->dtype() == b->dtype());
   assert(a->dtype() == out->dtype());
+}
 
-  if (a->shape() != b->shape() || a->shape() != out->shape()) {
-    throw std::runtime_error("Elementwise op requires matching tensor shapes");
+void ValidateElementwiseUnaryOpInputs(const std::shared_ptr<TensorImpl>& x,
+                                      const std::shared_ptr<TensorImpl>& out) {
+  if (!x || !out) {
+    throw std::runtime_error("Elementwise op received null TensorImpl");
   }
-  if (a->dtype() != b->dtype() || a->dtype() != out->dtype()) {
-    throw std::runtime_error("Elementwise op requires matching tensor dtypes");
-  }
+  assert(x->shape() == out->shape());
+  assert(x->dtype() == out->dtype());
 }
 
 template <typename Op>
@@ -90,6 +92,151 @@ void ApplyElementwiseBinaryOp(const std::shared_ptr<TensorImpl>& a,
     out_data[static_cast<size_t>(out_offset)] =
         op(a_data[static_cast<size_t>(a_offset)],
            b_data[static_cast<size_t>(b_offset)]);
+
+    size_t dim = shape.size();
+    while (dim > 0) {
+      --dim;
+      index[dim] += 1;
+      if (index[dim] < shape[dim]) {
+        break;
+      }
+      index[dim] = 0;
+      if (dim == 0) {
+        return;
+      }
+    }
+  }
+}
+
+template <typename Op>
+void ApplyElementwiseUnaryOp(const std::shared_ptr<TensorImpl>& x,
+                             const std::shared_ptr<TensorImpl>& out,
+                             const char* op_name, Op&& op) {
+  ValidateElementwiseUnaryOpInputs(x, out);
+
+  if (x->dtype() != DType::Float32) {
+    std::stringstream err;
+    err << "Only Float32 dtype is supported in " << op_name;
+    throw std::runtime_error(err.str());
+  }
+
+  const auto x_storage = static_cast<const TensorImpl&>(*x).storage();
+  auto out_storage = out->storage();
+
+  const auto* x_data = static_cast<const float*>(x_storage->data(0));
+  auto* out_data = static_cast<float*>(out_storage->data(0));
+
+  const int64_t x_base = static_cast<int64_t>(x->offset());
+  const int64_t out_base = static_cast<int64_t>(out->offset());
+
+  const auto& shape = out->shape();
+  const auto& x_stride = x->stride();
+  const auto& out_stride = out->stride();
+
+  if (shape.empty()) {
+    out_data[static_cast<size_t>(out_base)] =
+        op(x_data[static_cast<size_t>(x_base)]);
+    return;
+  }
+
+  std::vector<uint64_t> index(shape.size(), 0);
+  while (true) {
+    int64_t x_offset = x_base;
+    int64_t out_offset = out_base;
+
+    for (size_t dim = 0; dim < shape.size(); ++dim) {
+      const int64_t i = static_cast<int64_t>(index[dim]);
+      x_offset += i * x_stride[dim];
+      out_offset += i * out_stride[dim];
+    }
+
+    out_data[static_cast<size_t>(out_offset)] =
+        op(x_data[static_cast<size_t>(x_offset)]);
+
+    size_t dim = shape.size();
+    while (dim > 0) {
+      --dim;
+      index[dim] += 1;
+      if (index[dim] < shape[dim]) {
+        break;
+      }
+      index[dim] = 0;
+      if (dim == 0) {
+        return;
+      }
+    }
+  }
+}
+
+void ValidateElementwiseUnaryGradOpInputs(
+    const std::shared_ptr<TensorImpl>& x,
+    const std::shared_ptr<TensorImpl>& grad_out,
+    const std::shared_ptr<TensorImpl>& grad_x) {
+  if (!x || !grad_out || !grad_x) {
+    throw std::runtime_error(
+        "Elementwise backward op received null TensorImpl");
+  }
+  assert(x->shape() == grad_out->shape());
+  assert(x->shape() == grad_x->shape());
+  assert(x->dtype() == grad_out->dtype());
+  assert(x->dtype() == grad_x->dtype());
+}
+
+template <typename Op>
+void ApplyElementwiseUnaryGradOp(const std::shared_ptr<TensorImpl>& x,
+                                 const std::shared_ptr<TensorImpl>& grad_out,
+                                 const std::shared_ptr<TensorImpl>& grad_x,
+                                 const char* op_name, Op&& op) {
+  ValidateElementwiseUnaryGradOpInputs(x, grad_out, grad_x);
+
+  if (x->dtype() != DType::Float32) {
+    std::stringstream err;
+    err << "Only Float32 dtype is supported in " << op_name;
+    throw std::runtime_error(err.str());
+  }
+
+  const auto x_storage = static_cast<const TensorImpl&>(*x).storage();
+  const auto grad_out_storage =
+      static_cast<const TensorImpl&>(*grad_out).storage();
+  auto grad_x_storage = grad_x->storage();
+
+  const auto* x_data = static_cast<const float*>(x_storage->data(0));
+  const auto* grad_out_data =
+      static_cast<const float*>(grad_out_storage->data(0));
+  auto* grad_x_data = static_cast<float*>(grad_x_storage->data(0));
+
+  const int64_t x_base = static_cast<int64_t>(x->offset());
+  const int64_t grad_out_base = static_cast<int64_t>(grad_out->offset());
+  const int64_t grad_x_base = static_cast<int64_t>(grad_x->offset());
+
+  const auto& shape = grad_x->shape();
+  const auto& x_stride = x->stride();
+  const auto& grad_out_stride = grad_out->stride();
+  const auto& grad_x_stride = grad_x->stride();
+
+  if (shape.empty()) {
+    grad_x_data[static_cast<size_t>(grad_x_base)] =
+        op(x_data[static_cast<size_t>(x_base)],
+           grad_out_data[static_cast<size_t>(grad_out_base)]);
+    return;
+  }
+
+  std::vector<uint64_t> index(shape.size(), 0);
+  while (true) {
+    int64_t x_offset = x_base;
+    int64_t grad_out_offset = grad_out_base;
+    int64_t grad_x_offset = grad_x_base;
+
+    for (size_t dim = 0; dim < shape.size(); ++dim) {
+      const int64_t i = static_cast<int64_t>(index[dim]);
+      x_offset += i * x_stride[dim];
+      grad_out_offset += i * grad_out_stride[dim];
+      grad_x_offset += i * grad_x_stride[dim];
+    }
+
+    grad_x_data[static_cast<size_t>(grad_x_offset)] =
+        op(x_data[static_cast<size_t>(x_offset)],
+           grad_out_data[static_cast<size_t>(grad_out_offset)]);
 
     size_t dim = shape.size();
     while (dim > 0) {
@@ -232,6 +379,21 @@ void Div(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
                            [](float x, float y) { return x / y; });
 }
 
+void ReLU(std::shared_ptr<TensorImpl> x, std::shared_ptr<TensorImpl> out) {
+  ApplyElementwiseUnaryOp(x, out, "ReLU", [](float x_value) {
+    return x_value > 0.0f ? x_value : 0.0f;
+  });
+}
+
+void ReLUBackward(std::shared_ptr<TensorImpl> x,
+                  std::shared_ptr<TensorImpl> grad_out,
+                  std::shared_ptr<TensorImpl> grad_x) {
+  ApplyElementwiseUnaryGradOp(x, grad_out, grad_x, "ReLUBackward",
+                              [](float x_value, float grad_out_value) {
+                                return x_value > 0.0f ? grad_out_value : 0.0f;
+                              });
+}
+
 void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
                    std::shared_ptr<TensorImpl> out, bool transpose_a,
                    bool transpose_b) {
@@ -242,8 +404,8 @@ void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
     return;
   }
 
-  auto a_storage = a->getContiguousStorage();
-  auto b_storage = b->getContiguousStorage();
+  std::shared_ptr<const Storage> a_storage = a->getContiguousStorage();
+  std::shared_ptr<const Storage> b_storage = b->getContiguousStorage();
   auto out_storage = out->storage();
 
   const auto* a_data = static_cast<const float*>(a_storage->data(0));
