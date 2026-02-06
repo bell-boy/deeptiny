@@ -172,6 +172,13 @@ void ValidateBatchedMatMulInputs(const std::shared_ptr<TensorImpl>& a,
          "BatchedMatMul kernel output rows mismatch");
   assert(out_shape[rank - 1] == b_cols &&
          "BatchedMatMul kernel output cols mismatch");
+
+  assert(out->isContiguous() &&
+         "BatchedMatMul kernel requires contiguous output tensor");
+  assert(out->offset() == 0 &&
+         "BatchedMatMul kernel requires output tensor offset == 0");
+  assert(out->storage()->numel() == utils::GetTotalSize(out_shape) &&
+         "BatchedMatMul kernel requires output storage size to match shape");
 }
 
 }  // namespace
