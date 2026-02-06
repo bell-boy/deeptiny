@@ -27,3 +27,4 @@
 - Keep CMake presets split by intent: `dev` for debug/testing, and `release` for optimized builds with `DEEPTINY_BUILD_TESTS=OFF` (output in `build/release`).
 - Keep deeptiny as a pure FetchContent integration target; do not add install/export package metadata for `find_package`.
 - Embedded use should default `DEEPTINY_BUILD_TESTS=OFF` and `DEEPTINY_ENABLE_WERROR=OFF` unless the parent explicitly enables them.
+- Keep standalone demos under `demo/<name>` as independent CMake projects that consume Deep Tiny via a configurable source path.
