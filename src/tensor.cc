@@ -2,8 +2,8 @@
 
 #include <sys/resource.h>
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <optional>
 #include <random>
@@ -258,7 +258,8 @@ Tensor Tensor::FromBuffer(std::span<const std::byte> bytes, Shape shape,
       result, std::make_shared<AutogradMeta>(nullptr, requires_grad));
 }
 
-Tensor Tensor::CreateUniform(Shape shape, Device device, DType dtype) {
+Tensor Tensor::CreateUniform(Shape shape, Device device, DType dtype,
+                             bool requires_grad) {
   switch (dtype) {
     case DType::Float32: {
       const size_t total_size = utils::GetTotalSize(shape);
@@ -266,17 +267,19 @@ Tensor Tensor::CreateUniform(Shape shape, Device device, DType dtype) {
       for (size_t i = 0; i < total_size; ++i) {
         values[i] = static_cast<float>(uniform_dist(uniform_gen));
       }
-      return Tensor::FromVector(values, std::move(shape), device, false);
+      return Tensor::FromVector(values, std::move(shape), device,
+                                requires_grad);
     }
     default:
       throw std::runtime_error("DType is not supported yet");
   };
 }
 
-Tensor Tensor::Zeros(Shape shape, Device device, DType dtype) {
+Tensor Tensor::Zeros(Shape shape, Device device, DType dtype,
+                     bool requires_grad) {
   switch (dtype) {
     case DType::Float32: {
-      Tensor result(shape, DType::Float32, device, false);
+      Tensor result(shape, DType::Float32, device, requires_grad);
       auto impl = utils::TensorAccessor::GetTensorImpl(result);
       const size_t total_size = utils::GetTotalSize(shape);
       auto* data = static_cast<float*>(impl->data());
