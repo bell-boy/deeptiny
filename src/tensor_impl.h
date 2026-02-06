@@ -51,6 +51,7 @@ class Storage {
   const void* data(uint64_t offset) const { return (const void*)get_(offset); }
 
   uint64_t numel() const { return numel_; }
+  uint64_t version() const { return version_count_; }
 
   DType dtype() const { return dtype_; }
 

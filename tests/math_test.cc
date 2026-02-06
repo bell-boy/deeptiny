@@ -10,6 +10,7 @@
 #include "autograd_meta.h"
 #include "deeptiny/functional.h"
 #include "doctest/doctest.h"
+#include "engine.h"
 #include "test_utils.h"
 #include "utils.h"
 
@@ -265,5 +266,51 @@ TEST_CASE("Elementary in-place ops reject zero-stride destination") {
     REQUIRE(dst.has_value());
     deeptiny::Tensor rhs = MakeTensor({2, 3}, {1, 1, 1, 1, 1, 1});
     CHECK_THROWS_WITH((*dst) /= rhs, doctest::Contains("zero stride"));
+  }
+}
+
+TEST_CASE("Context set/get and version checks") {
+  SUBCASE("Set and Get round trip") {
+    deeptiny::Context ctx;
+    deeptiny::Tensor t = MakeTensor({2}, {1, 2});
+    ctx.Set(11, t);
+    CheckTensorData(ctx.Get(11), {1, 2});
+  }
+
+  SUBCASE("Get throws when key is missing") {
+    deeptiny::Context ctx;
+    CHECK_THROWS_WITH(ctx.Get(99), doctest::Contains("Context key not found"));
+  }
+
+  SUBCASE("Get throws when storage version changed") {
+    deeptiny::Context ctx;
+    deeptiny::Tensor t = MakeTensor({2}, {1, 2});
+    ctx.Set(7, t);
+    auto impl = deeptiny::utils::TensorAccessor::GetTensorImpl(t);
+    auto* data = static_cast<float*>(impl->data());
+    data[0] += 1.0f;
+    CHECK_THROWS_WITH(ctx.Get(7), doctest::Contains("version mismatch"));
+  }
+}
+
+TEST_CASE("Backward fails when saved tensors are modified after forward") {
+  SUBCASE("Mul backward detects saved tensor mutation") {
+    deeptiny::Tensor a = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6}, true);
+    deeptiny::Tensor b = MakeTensor({1, 3}, {1, 2, 4}, true);
+    auto loss = deeptiny::functional::Reduce(a * b, {0, 1});
+    auto a_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(a);
+    auto* a_data = static_cast<float*>(a_impl->data());
+    a_data[0] += 1.0f;
+    CHECK_THROWS_WITH(loss.Backward(), doctest::Contains("modified in-place"));
+  }
+
+  SUBCASE("Div backward detects saved tensor mutation") {
+    deeptiny::Tensor a = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6}, true);
+    deeptiny::Tensor b = MakeTensor({1, 3}, {1, 2, 4}, true);
+    auto loss = deeptiny::functional::Reduce(a / b, {0, 1});
+    auto b_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(b);
+    auto* b_data = static_cast<float*>(b_impl->data());
+    b_data[0] += 1.0f;
+    CHECK_THROWS_WITH(loss.Backward(), doctest::Contains("modified in-place"));
   }
 }

@@ -119,53 +119,65 @@ class SubBackward : public Function {
 
 class MulBackward : public Function {
  public:
+  enum struct ContextObjects : uint64_t {
+    SAVED_A = 0,
+    SAVED_B = 1,
+  };
+
   MulBackward(const Tensor& parent_a, const Tensor& parent_b, Tensor saved_a,
               Tensor saved_b)
       : Function({utils::TensorAccessor::GetAutogradMeta(parent_a),
-                  utils::TensorAccessor::GetAutogradMeta(parent_b)}),
-        saved_a_(std::move(saved_a)),
-        saved_b_(std::move(saved_b)) {}
-
-  void operator()(const Tensor& grad, Engine& engine) override {
-    const auto& parents = getParents();
-    if (parents[0]) {
-      parents[0]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_b_), engine);
-    }
-    if (parents[1]) {
-      parents[1]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_a_), engine);
-    }
+                  utils::TensorAccessor::GetAutogradMeta(parent_b)}) {
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_A), saved_a);
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_B), saved_b);
   }
 
- private:
-  Tensor saved_a_;
-  Tensor saved_b_;
+  void operator()(const Tensor& grad, Engine& engine) override {
+    Tensor saved_a =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_A));
+    Tensor saved_b =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_B));
+    const auto& parents = getParents();
+    if (parents[0]) {
+      parents[0]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_b), engine);
+    }
+    if (parents[1]) {
+      parents[1]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_a), engine);
+    }
+  }
 };
 
 class DivBackward : public Function {
  public:
+  enum struct ContextObjects : uint64_t {
+    SAVED_A = 0,
+    SAVED_B = 1,
+  };
+
   DivBackward(const Tensor& parent_a, const Tensor& parent_b, Tensor saved_a,
               Tensor saved_b)
       : Function({utils::TensorAccessor::GetAutogradMeta(parent_a),
-                  utils::TensorAccessor::GetAutogradMeta(parent_b)}),
-        saved_a_(std::move(saved_a)),
-        saved_b_(std::move(saved_b)) {}
+                  utils::TensorAccessor::GetAutogradMeta(parent_b)}) {
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_A), saved_a);
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_B), saved_b);
+  }
 
   void operator()(const Tensor& grad, Engine& engine) override {
+    Tensor saved_a =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_A));
+    Tensor saved_b =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_B));
     const auto& parents = getParents();
     if (parents[0]) {
-      parents[0]->updateGrad(BinaryOut(BinaryOp::Div, grad, saved_b_), engine);
+      parents[0]->updateGrad(BinaryOut(BinaryOp::Div, grad, saved_b), engine);
     }
     if (parents[1]) {
-      Tensor numerator = BinaryOut(BinaryOp::Mul, grad, saved_a_);
-      Tensor denominator = BinaryOut(BinaryOp::Mul, saved_b_, saved_b_);
+      Tensor numerator = BinaryOut(BinaryOp::Mul, grad, saved_a);
+      Tensor denominator = BinaryOut(BinaryOp::Mul, saved_b, saved_b);
       parents[1]->updateGrad(
           Negate(BinaryOut(BinaryOp::Div, numerator, denominator)), engine);
     }
   }
-
- private:
-  Tensor saved_a_;
-  Tensor saved_b_;
 };
 
 std::shared_ptr<Function> MakeBackward(BinaryOp op, const Tensor& parent_a,

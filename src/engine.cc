@@ -2,16 +2,56 @@
 
 #include <cassert>
 #include <functional>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_set>
 #include <vector>
 
 #include "autograd_meta.h"
 #include "deeptiny/autograd.h"
+#include "utils.h"
 
 namespace deeptiny {
 
 State GradState;
+
+namespace {
+uint64_t GetStorageVersion(const Tensor& tensor) {
+  auto impl = utils::TensorAccessor::GetTensorImpl(tensor);
+  if (!impl) {
+    throw std::runtime_error("Context cannot access null TensorImpl");
+  }
+  auto storage = impl->storage();
+  if (!storage) {
+    throw std::runtime_error("Context cannot access null tensor storage");
+  }
+  return storage->version();
+}
+}  // namespace
+
+void Context::Set(uint64_t id, const Tensor& tensor) {
+  saved_tensors_.insert_or_assign(
+      id, SavedTensor{tensor, GetStorageVersion(tensor)});
+}
+
+Tensor Context::Get(uint64_t id) const {
+  auto it = saved_tensors_.find(id);
+  if (it == saved_tensors_.end()) {
+    std::stringstream err;
+    err << "Context key not found: " << id;
+    throw std::runtime_error(err.str());
+  }
+  const uint64_t current_version = GetStorageVersion(it->second.tensor);
+  if (current_version != it->second.version) {
+    std::stringstream err;
+    err << "Context tensor version mismatch for key " << id
+        << ": expected storage version " << it->second.version << " but got "
+        << current_version
+        << ". Tensor used in backward was modified in-place.";
+    throw std::runtime_error(err.str());
+  }
+  return it->second.tensor;
+}
 
 Engine::Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph) {
   (void)keep_graph;
