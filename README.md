@@ -70,6 +70,50 @@ Run a specific suite:
 ctest --test-dir build -R math_test --output-on-failure
 ```
 
+## Use deeptiny in your own CMake project
+
+### Option A: Vendor as a subdirectory
+
+If you keep `deeptiny` inside your source tree (for example
+`external/deeptiny`):
+
+```cmake
+add_subdirectory(external/deeptiny)
+
+add_executable(my_app main.cc)
+target_link_libraries(my_app PRIVATE deeptiny)
+```
+
+### Option B: Install and consume with `find_package`
+
+1. Build and install `deeptiny` to a prefix:
+
+```bash
+cmake --preset release-local-openblas
+cmake --build --preset release-local-openblas -j
+cmake --install build/release --prefix /path/to/deeptiny-install
+```
+
+2. In the consumer project's `CMakeLists.txt`:
+
+```cmake
+find_package(deeptiny CONFIG REQUIRED)
+
+add_executable(my_app main.cc)
+target_link_libraries(my_app PRIVATE deeptiny::deeptiny)
+```
+
+3. Configure the consumer project with both deeptiny and OpenBLAS discoverable:
+
+```bash
+cmake -S . -B build \
+  -DCMAKE_PREFIX_PATH="/path/to/deeptiny-install;/opt/homebrew/opt/openblas"
+cmake --build build -j
+```
+
+If deeptiny is installed to a standard system prefix, `CMAKE_PREFIX_PATH`
+usually does not need the deeptiny install path.
+
 ## Minimal autograd example
 
 ```cpp
