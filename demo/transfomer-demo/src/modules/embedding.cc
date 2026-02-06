@@ -105,10 +105,8 @@ deeptiny::Tensor Embedding::operator()(const std::vector<int64_t>& indices,
 
   deeptiny::Shape output_shape = shape;
   output_shape.push_back(embedding_dim_);
-  deeptiny::Tensor output =
-      deeptiny::Tensor::Zeros(output_shape, device_, dtype_);
-  deeptiny::Tensor flat_output =
-      output.Reshape({expected_count, embedding_dim_});
+  deeptiny::Tensor flat_output = deeptiny::Tensor::Zeros(
+      {expected_count, embedding_dim_}, device_, dtype_);
 
   const int64_t end_col = ToSliceIndex(embedding_dim_, "embedding_dim");
   for (uint64_t i = 0; i < expected_count; ++i) {
