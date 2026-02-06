@@ -1,0 +1,25 @@
+{
+  "version": 6,
+  "include": [
+    "CMakePresets.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "dev-local-openblas",
+      "displayName": "Dev (Local OpenBLAS)",
+      "inherits": "dev",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/openblas"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev-local-openblas",
+      "configurePreset": "dev-local-openblas",
+      "targets": [
+        "transfomer_demo"
+      ]
+    }
+  ]
+}

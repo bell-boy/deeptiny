@@ -1,7 +1,5 @@
 #include "utils.h"
 
-#include <cstddef>
-#include <span>
 #include <stdexcept>
 #include <vector>
 
@@ -15,11 +13,7 @@ Tensor MakeTensor(const Shape& shape, const std::vector<float>& values,
     throw std::runtime_error(
         "MakeTensor received mismatched values/shape size");
   }
-  return Tensor::FromBuffer(
-      std::span<const std::byte>(
-          reinterpret_cast<const std::byte*>(values.data()),
-          values.size() * sizeof(float)),
-      shape, DType::Float32, Device::CPU, requires_grad);
+  return Tensor::FromVector(values, shape, Device::CPU, requires_grad);
 }
 
 std::vector<float> ToVector(const Tensor& t) {

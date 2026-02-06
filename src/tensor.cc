@@ -3,8 +3,10 @@
 #include <sys/resource.h>
 
 #include <cassert>
+#include <algorithm>
 #include <iostream>
 #include <optional>
+#include <random>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -12,11 +14,9 @@
 #include "autograd_meta.h"
 #include "cpu/kernels.h"
 #include "deeptiny/autograd.h"
-#include "deeptiny/view.h"
 #include "engine.h"
 #include "tensor_impl.h"
 #include "utils.h"
-#include "view_backward.h"
 
 namespace deeptiny {
 
@@ -44,6 +44,9 @@ class ReshapeBackward : public Function {
     parents[0]->updateGrad(grad_view.Reshape(original_shape_));
   }
 };
+std::random_device uniform_rd;
+std::mt19937 uniform_gen(uniform_rd());
+std::uniform_real_distribution<double> uniform_dist(0.0, 1.0);
 
 class SqueezeBackward : public Function {
  private:
@@ -255,19 +258,42 @@ Tensor Tensor::FromBuffer(std::span<const std::byte> bytes, Shape shape,
       result, std::make_shared<AutogradMeta>(nullptr, requires_grad));
 }
 
-View Tensor::operator()(std::vector<Slice> slices) {
-  auto view_impl = tensor_impl_->View(slices);
-  auto backward = std::make_shared<SliceBackward>(*this, std::move(slices));
-  auto grad_meta = std::make_shared<AutogradMeta>(backward);
-  return utils::TensorAccessor::MakeView(std::move(view_impl), grad_meta);
+Tensor Tensor::CreateUniform(Shape shape, Device device, DType dtype) {
+  switch (dtype) {
+    case DType::Float32: {
+      const size_t total_size = utils::GetTotalSize(shape);
+      std::vector<float> values(total_size, 0.0f);
+      for (size_t i = 0; i < total_size; ++i) {
+        values[i] = static_cast<float>(uniform_dist(uniform_gen));
+      }
+      return Tensor::FromVector(values, std::move(shape), device, false);
+    }
+    default:
+      throw std::runtime_error("DType is not supported yet");
+  };
 }
 
-const View Tensor::operator()(std::vector<Slice> slices) const {
-  auto view_impl = tensor_impl_->View(slices);
-  auto backward = std::make_shared<SliceBackward>(*this, std::move(slices));
-  auto grad_meta = std::make_shared<AutogradMeta>(backward);
-  return (const View)utils::TensorAccessor::MakeView(std::move(view_impl),
-                                                     grad_meta);
+Tensor Tensor::Zeros(Shape shape, Device device, DType dtype) {
+  switch (dtype) {
+    case DType::Float32: {
+      Tensor result(shape, DType::Float32, device, false);
+      auto impl = utils::TensorAccessor::GetTensorImpl(result);
+      const size_t total_size = utils::GetTotalSize(shape);
+      auto* data = static_cast<float*>(impl->data());
+      std::fill_n(data, total_size, 0.0f);
+      return result;
+    }
+    default:
+      throw std::runtime_error("DType is not supported yet");
+  };
+}
+
+TensorSliceProxy Tensor::operator()(std::vector<Slice> slices) {
+  return TensorSliceProxy(this, std::move(slices));
+}
+
+Tensor Tensor::operator()(std::vector<Slice> slices) const {
+  return TensorSliceProxy(this, std::move(slices));
 }
 
 };  // namespace deeptiny

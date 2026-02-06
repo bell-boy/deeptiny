@@ -249,7 +249,7 @@ TEST_CASE("Broadcast Backward Test") {
     FillSequential(b, 10.0f);
 
     auto [a_b, b_b] = deeptiny::utils::Broadcast(a, b);
-    deeptiny::Tensor sum = deeptiny::functional::Zeros(
+    deeptiny::Tensor sum = deeptiny::Tensor::Zeros(
         {2, 4, 3}, deeptiny::Device::CPU, deeptiny::DType::Float32);
     sum += a_b;
     sum += b_b;

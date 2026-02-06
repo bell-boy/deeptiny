@@ -22,8 +22,12 @@
 - Keep `math::BatchedMatMul` semantics standard: broadcast leading dims only, and require exact contracted dim match after applying transpose flags.
 - Keep `Tensor::Reshape` differentiable but view-only: require contiguous input and matching element count.
 - Keep `Tensor::Squeeze` API minimal: expose only the `std::vector<uint64_t>` overload and rely on implicit brace-init conversion at call sites.
+- Keep `functional::Reduce` API minimal: expose only the `std::vector<uint64_t>` overload and rely on implicit brace-init conversion at call sites.
+- Keep tensor creation APIs on `Tensor` (`CreateUniform`, `Zeros`, `FromVector`) and keep `functional` focused on transform/reduction ops.
 - Keep autograd pending-count bookkeeping owned by `Engine`; avoid exposing mutators on `AutogradMeta` for `pending_`.
 - Keep autograd interfaces minimal: `updateGrad` only accumulates gradients, and backward `Function` callbacks should not take `Engine` unless it is truly needed.
+- Keep slice semantics explicit: `Tensor::operator()` returns `TensorSliceProxy` for mutable slicing and a read `Tensor` via conversion, and slice assignment autograd must be owned by the destination tensor metadata (not a temporary slice object).
 - Keep CMake presets split by intent: `dev` for debug/testing, and `release` for optimized builds with `DEEPTINY_BUILD_TESTS=OFF` (output in `build/release`).
 - Keep deeptiny as a pure FetchContent integration target; do not add install/export package metadata for `find_package`.
 - Embedded use should default `DEEPTINY_BUILD_TESTS=OFF` and `DEEPTINY_ENABLE_WERROR=OFF` unless the parent explicitly enables them.
+- Keep standalone demos under `demo/<name>` as independent CMake projects that consume Deep Tiny via `FetchContent` with a pinned commit (`DEEPTINY_GIT_TAG`), and allow local override through `FETCHCONTENT_SOURCE_DIR_DEEPTINY` when needed.

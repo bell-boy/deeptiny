@@ -7,9 +7,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include "deeptiny/functional.h"
 #include "deeptiny/tensor.h"
-#include "deeptiny/view.h"
 
 namespace deeptiny {
 
@@ -26,11 +24,6 @@ std::shared_ptr<AutogradMeta> TensorAccessor::GetAutogradMeta(const Tensor& t) {
 Tensor TensorAccessor::MakeTensor(std::shared_ptr<TensorImpl> tensor_impl,
                                   std::shared_ptr<AutogradMeta> autograd_meta) {
   return Tensor(std::move(tensor_impl), std::move(autograd_meta));
-}
-
-View TensorAccessor::MakeView(std::shared_ptr<TensorImpl> tensor_impl,
-                              std::shared_ptr<AutogradMeta> autograd_meta) {
-  return View(std::move(tensor_impl), std::move(autograd_meta));
 }
 
 void CompatabilityCheck(std::initializer_list<Tensor> tensors) {
@@ -73,7 +66,7 @@ Stride GetContinguousStride(Shape shape) {
 
 std::optional<Tensor> SliceScatterToShape(const Tensor& a, const Shape& shape,
                                           const std::vector<Slice>& slices) {
-  Tensor res = functional::Zeros(shape, a.device(), a.dtype());
+  Tensor res = Tensor::Zeros(shape, a.device(), a.dtype());
   try {
     res(slices) = a;
   } catch (...) {
