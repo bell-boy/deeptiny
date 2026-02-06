@@ -19,17 +19,17 @@ SliceBackward::SliceBackward(const Tensor& t, std::vector<Slice> slices)
       slices_(std::move(slices)),
       original_shape_(t.shape()) {}
 
-void SliceBackward::operator()(const Tensor& grad, Engine& engine) {
+void SliceBackward::operator()(const Tensor& grad) {
   getParents()[0]->updateGrad(
-      *utils::SliceScatterToShape(grad, original_shape_, slices_), engine);
+      *utils::SliceScatterToShape(grad, original_shape_, slices_));
 }
 
 ViewAssignBackward::ViewAssignBackward(const Tensor& src)
     : Function({utils::TensorAccessor::GetAutogradMeta(src)}) {}
 
-void ViewAssignBackward::operator()(const Tensor& grad, Engine& engine) {
+void ViewAssignBackward::operator()(const Tensor& grad) {
   for (const auto& t : getParents()) {
-    t->updateGrad(grad, engine);
+    t->updateGrad(grad);
   }
 }
 

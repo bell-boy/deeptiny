@@ -31,7 +31,7 @@ class SqueezeBackward : public Function {
         original_shape_(t.shape()),
         squeeze_mask_(std::move(squeeze_mask)) {}
 
-  void operator()(const Tensor& grad, Engine& engine) override {
+  void operator()(const Tensor& grad) override {
     auto parent = getParents()[0];
     if (!parent) {
       return;
@@ -66,7 +66,7 @@ class SqueezeBackward : public Function {
     auto view_impl = grad_impl->View(
         Shape(original_shape_), std::move(new_stride), grad_impl->offset());
     auto grad_in = utils::TensorAccessor::MakeTensor(view_impl, nullptr);
-    parent->updateGrad(grad_in, engine);
+    parent->updateGrad(grad_in);
   }
 };
 }  // namespace
@@ -184,12 +184,12 @@ void Tensor::Backward(bool keep_graph) {
 
   if (!keep_graph) {
     GradMode guard(false);
-    autograd_meta_->updateGrad(grad, engine);
+    autograd_meta_->updateGrad(grad);
     engine.Run();
     return;
   }
 
-  autograd_meta_->updateGrad(grad, engine);
+  autograd_meta_->updateGrad(grad);
   engine.Run();
 }
 

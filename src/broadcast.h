@@ -16,7 +16,7 @@ class BroadcastBackward : public Function {
 
  public:
   explicit BroadcastBackward(const Tensor& t);
-  void operator()(const Tensor& grad, Engine& engine) override;
+  void operator()(const Tensor& grad) override;
 };
 
 std::optional<Shape> GetBroadcastShape(const Tensor& a, const Tensor& b);

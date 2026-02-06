@@ -18,7 +18,7 @@ BroadcastBackward::BroadcastBackward(const Tensor& t)
     : Function({utils::TensorAccessor::GetAutogradMeta(t)}),
       original_shape_(t.shape()) {}
 
-void BroadcastBackward::operator()(const Tensor& grad, Engine& engine) {
+void BroadcastBackward::operator()(const Tensor& grad) {
   const auto& out_shape = grad.shape();
   const auto out_rank = out_shape.size();
   const auto in_rank = original_shape_.size();
@@ -59,7 +59,7 @@ void BroadcastBackward::operator()(const Tensor& grad, Engine& engine) {
   if (!parent) {
     return;
   }
-  parent->updateGrad(grad_in, engine);
+  parent->updateGrad(grad_in);
 }
 
 std::optional<Shape> GetBroadcastShape(const Tensor& a, const Tensor& b) {

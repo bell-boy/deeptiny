@@ -92,10 +92,10 @@ class AddBackward : public Function {
       : Function({utils::TensorAccessor::GetAutogradMeta(a),
                   utils::TensorAccessor::GetAutogradMeta(b)}) {}
 
-  void operator()(const Tensor& grad, Engine& engine) override {
+  void operator()(const Tensor& grad) override {
     for (const auto& parent : getParents()) {
       assert(parent && "AddBackward parent must not be null");
-      parent->updateGrad(grad, engine);
+      parent->updateGrad(grad);
     }
   }
 };
@@ -106,13 +106,13 @@ class SubBackward : public Function {
       : Function({utils::TensorAccessor::GetAutogradMeta(a),
                   utils::TensorAccessor::GetAutogradMeta(b)}) {}
 
-  void operator()(const Tensor& grad, Engine& engine) override {
+  void operator()(const Tensor& grad) override {
     const auto& parents = getParents();
     assert(parents.size() == 2 && "SubBackward must have exactly 2 parents");
     assert(parents[0] && "SubBackward first parent must not be null");
     assert(parents[1] && "SubBackward second parent must not be null");
-    parents[0]->updateGrad(grad, engine);
-    parents[1]->updateGrad(Negate(grad), engine);
+    parents[0]->updateGrad(grad);
+    parents[1]->updateGrad(Negate(grad));
   }
 };
 
@@ -131,7 +131,7 @@ class MulBackward : public Function {
     context().Set(static_cast<uint64_t>(ContextObjects::SAVED_B), saved_b);
   }
 
-  void operator()(const Tensor& grad, Engine& engine) override {
+  void operator()(const Tensor& grad) override {
     Tensor saved_a =
         context().Get(static_cast<uint64_t>(ContextObjects::SAVED_A));
     Tensor saved_b =
@@ -140,8 +140,8 @@ class MulBackward : public Function {
     assert(parents.size() == 2 && "MulBackward must have exactly 2 parents");
     assert(parents[0] && "MulBackward first parent must not be null");
     assert(parents[1] && "MulBackward second parent must not be null");
-    parents[0]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_b), engine);
-    parents[1]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_a), engine);
+    parents[0]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_b));
+    parents[1]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_a));
   }
 };
 
@@ -160,7 +160,7 @@ class DivBackward : public Function {
     context().Set(static_cast<uint64_t>(ContextObjects::SAVED_B), saved_b);
   }
 
-  void operator()(const Tensor& grad, Engine& engine) override {
+  void operator()(const Tensor& grad) override {
     Tensor saved_a =
         context().Get(static_cast<uint64_t>(ContextObjects::SAVED_A));
     Tensor saved_b =
@@ -169,11 +169,11 @@ class DivBackward : public Function {
     assert(parents.size() == 2 && "DivBackward must have exactly 2 parents");
     assert(parents[0] && "DivBackward first parent must not be null");
     assert(parents[1] && "DivBackward second parent must not be null");
-    parents[0]->updateGrad(BinaryOut(BinaryOp::Div, grad, saved_b), engine);
+    parents[0]->updateGrad(BinaryOut(BinaryOp::Div, grad, saved_b));
     Tensor numerator = BinaryOut(BinaryOp::Mul, grad, saved_a);
     Tensor denominator = BinaryOut(BinaryOp::Mul, saved_b, saved_b);
     parents[1]->updateGrad(
-        Negate(BinaryOut(BinaryOp::Div, numerator, denominator)), engine);
+        Negate(BinaryOut(BinaryOp::Div, numerator, denominator)));
   }
 };
 

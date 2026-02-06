@@ -41,7 +41,7 @@ class Function {
 
  public:
   Function(ParentList parents) : parents_(std::move(parents)) {}
-  virtual void operator()(const Tensor& grad, Engine& engine) = 0;
+  virtual void operator()(const Tensor& grad) = 0;
   virtual ~Function() = default;
 };
 
@@ -50,7 +50,7 @@ class Engine {
   std::deque<std::shared_ptr<AutogradMeta>> ready_queue_;
 
  public:
-  // pending_ is owned by Engine and AutogradMeta::updateGrad.
+  // pending_ is owned by Engine.
   Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph = false);
 
   void Run();

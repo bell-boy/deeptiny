@@ -135,7 +135,7 @@ void Engine::Run() {
     if (!node->grad_) {
       throw std::runtime_error("Backward called with no gradient");
     }
-    (*node->grad_fn_)(*node->grad_, *this);
+    (*node->grad_fn_)(*node->grad_);
     EnqueueBackward(node->grad_fn_);
   }
 }

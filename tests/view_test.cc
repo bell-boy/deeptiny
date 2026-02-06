@@ -294,7 +294,7 @@ TEST_CASE("View assignment guards and autograd metadata") {
     REQUIRE(view_meta != nullptr);
 
     deeptiny::Engine engine(view_meta);
-    view_meta->updateGrad(grad, engine);
+    view_meta->updateGrad(grad);
     engine.Run();
 
     auto rhs_grad = rhs.grad();

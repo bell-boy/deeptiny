@@ -14,13 +14,13 @@ class SliceBackward : public Function {
 
  public:
   SliceBackward(const Tensor& t, std::vector<Slice> slices);
-  void operator()(const Tensor& grad, Engine& engine) override;
+  void operator()(const Tensor& grad) override;
 };
 
 class ViewAssignBackward : public Function {
  public:
   explicit ViewAssignBackward(const Tensor& src);
-  void operator()(const Tensor& grad, Engine& engine) override;
+  void operator()(const Tensor& grad) override;
 };
 
 }  // namespace deeptiny

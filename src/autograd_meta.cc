@@ -16,8 +16,7 @@ AutogradMeta::AutogradMeta(std::shared_ptr<Function> grad_fn,
   requires_grad_ = requires_grad;
 }
 
-void AutogradMeta::updateGrad(const Tensor& grad, Engine& engine) {
-  (void)engine;
+void AutogradMeta::updateGrad(const Tensor& grad) {
   if (!requires_grad_) {
     return;
   }
@@ -27,7 +26,5 @@ void AutogradMeta::updateGrad(const Tensor& grad, Engine& engine) {
   }
   *grad_ += grad;
 }
-
-void AutogradMeta::incrementPending() { pending_ += 1; }
 
 }  // namespace deeptiny
