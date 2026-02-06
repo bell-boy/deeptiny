@@ -143,18 +143,17 @@ void ValidateBatchedMatMulInputs(const std::shared_ptr<TensorImpl>& a,
   const auto& b_shape = b->shape();
   const auto& out_shape = out->shape();
   const size_t rank = a_shape.size();
-  if (rank < 2) {
-    throw std::runtime_error("BatchedMatMul requires rank >= 2 tensors.");
-  }
-  if (b_shape.size() != rank || out_shape.size() != rank) {
-    throw std::runtime_error("BatchedMatMul requires matching tensor ranks.");
-  }
+  assert(rank >= 2 && "BatchedMatMul kernel requires rank >= 2 tensors");
+  assert(b_shape.size() == rank &&
+         "BatchedMatMul kernel requires matching input ranks");
+  assert(out_shape.size() == rank &&
+         "BatchedMatMul kernel requires output rank equal to input rank");
 
   for (size_t dim = 0; dim + 2 < rank; ++dim) {
-    if (a_shape[dim] != b_shape[dim] || a_shape[dim] != out_shape[dim]) {
-      throw std::runtime_error(
-          "BatchedMatMul requires matching leading batch dimensions.");
-    }
+    assert(a_shape[dim] == b_shape[dim] &&
+           "BatchedMatMul kernel requires matching leading batch dimensions");
+    assert(a_shape[dim] == out_shape[dim] &&
+           "BatchedMatMul kernel output batch dimensions mismatch");
   }
 
   const uint64_t a_src_rows = a_shape[rank - 2];
@@ -167,19 +166,12 @@ void ValidateBatchedMatMulInputs(const std::shared_ptr<TensorImpl>& a,
   const uint64_t b_rows = transpose_b ? b_src_cols : b_src_rows;
   const uint64_t b_cols = transpose_b ? b_src_rows : b_src_cols;
 
-  if (a_cols != b_rows) {
-    throw std::runtime_error(
-        "BatchedMatMul requires matching inner dimensions.");
-  }
-  if (out_shape[rank - 2] != a_rows || out_shape[rank - 1] != b_cols) {
-    throw std::runtime_error("BatchedMatMul output shape mismatch.");
-  }
-
-  if (!out->isContiguous() || out->offset() != 0 ||
-      out->storage()->numel() != utils::GetTotalSize(out->shape())) {
-    throw std::runtime_error(
-        "BatchedMatMul requires contiguous output tensor storage.");
-  }
+  assert(a_cols == b_rows &&
+         "BatchedMatMul kernel requires matching inner dimensions");
+  assert(out_shape[rank - 2] == a_rows &&
+         "BatchedMatMul kernel output rows mismatch");
+  assert(out_shape[rank - 1] == b_cols &&
+         "BatchedMatMul kernel output cols mismatch");
 }
 
 void ApplyBatchedMatMul(const std::shared_ptr<TensorImpl>& a,
