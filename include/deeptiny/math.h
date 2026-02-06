@@ -10,7 +10,8 @@ Tensor operator+(const Tensor& a, const Tensor& b);
 Tensor operator-(const Tensor& a, const Tensor& b);
 Tensor operator*(const Tensor& a, const Tensor& b);
 Tensor operator/(const Tensor& a, const Tensor& b);
-Tensor BatchedMatMul(const Tensor& a, const Tensor& b);
+Tensor BatchedMatMul(const Tensor& a, const Tensor& b, bool transpose_a = false,
+                     bool transpose_b = false);
 
 };  // namespace math
 

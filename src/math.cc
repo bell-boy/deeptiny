@@ -291,9 +291,12 @@ class BatchedMatMulBackward : public Function {
     SAVED_B = 1,
   };
 
-  BatchedMatMulBackward(const Tensor& saved_a, const Tensor& saved_b)
+  BatchedMatMulBackward(const Tensor& saved_a, const Tensor& saved_b,
+                        bool transpose_a, bool transpose_b)
       : Function({utils::TensorAccessor::GetAutogradMeta(saved_a),
-                  utils::TensorAccessor::GetAutogradMeta(saved_b)}) {
+                  utils::TensorAccessor::GetAutogradMeta(saved_b)}),
+        transpose_a_(transpose_a),
+        transpose_b_(transpose_b) {
     context().Set(static_cast<uint64_t>(ContextObjects::SAVED_A), saved_a);
     context().Set(static_cast<uint64_t>(ContextObjects::SAVED_B), saved_b);
   }
@@ -306,8 +309,18 @@ class BatchedMatMulBackward : public Function {
 
     Tensor grad_a(saved_a.shape(), grad.dtype(), grad.device(), false);
     Tensor grad_b(saved_b.shape(), grad.dtype(), grad.device(), false);
-    DispatchBatchedMatMulKernel(grad, saved_b, grad_a, false, true);
-    DispatchBatchedMatMulKernel(saved_a, grad, grad_b, true, false);
+
+    if (!transpose_a_) {
+      DispatchBatchedMatMulKernel(grad, saved_b, grad_a, false, !transpose_b_);
+    } else {
+      DispatchBatchedMatMulKernel(saved_b, grad, grad_a, transpose_b_, true);
+    }
+
+    if (!transpose_b_) {
+      DispatchBatchedMatMulKernel(saved_a, grad, grad_b, !transpose_a_, false);
+    } else {
+      DispatchBatchedMatMulKernel(grad, saved_a, grad_b, true, transpose_a_);
+    }
 
     const auto& parents = getParents();
     assert(parents.size() == 2 &&
@@ -318,9 +331,14 @@ class BatchedMatMulBackward : public Function {
     parents[0]->updateGrad(grad_a);
     parents[1]->updateGrad(grad_b);
   }
+
+ private:
+  bool transpose_a_;
+  bool transpose_b_;
 };
 
-Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b) {
+Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b,
+                               bool transpose_a, bool transpose_b) {
   utils::CompatabilityCheck({a, b});
   if (a.shape().size() < 3 || b.shape().size() < 3) {
     throw std::runtime_error("BatchedMatMul requires rank >= 3 inputs");
@@ -328,11 +346,16 @@ Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b) {
 
   const auto& a_shape = a.shape();
   const auto& b_shape = b.shape();
-  const uint64_t n = a_shape[a_shape.size() - 2];
-  const uint64_t k = a_shape[a_shape.size() - 1];
-  const uint64_t rhs_k = b_shape[b_shape.size() - 2];
-  const uint64_t m = b_shape[b_shape.size() - 1];
-  if (k != rhs_k) {
+  const uint64_t a_rows = a_shape[a_shape.size() - 2];
+  const uint64_t a_cols = a_shape[a_shape.size() - 1];
+  const uint64_t b_rows = b_shape[b_shape.size() - 2];
+  const uint64_t b_cols = b_shape[b_shape.size() - 1];
+
+  const uint64_t lhs_rows = transpose_a ? a_cols : a_rows;
+  const uint64_t lhs_cols = transpose_a ? a_rows : a_cols;
+  const uint64_t rhs_rows = transpose_b ? b_cols : b_rows;
+  const uint64_t rhs_cols = transpose_b ? b_rows : b_cols;
+  if (lhs_cols != rhs_rows) {
     throw std::runtime_error(
         "BatchedMatMul requires matching inner dimensions");
   }
@@ -348,11 +371,11 @@ Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b) {
   }
 
   Shape a_target = *out_batch;
-  a_target.push_back(n);
-  a_target.push_back(k);
+  a_target.push_back(a_rows);
+  a_target.push_back(a_cols);
   Shape b_target = *out_batch;
-  b_target.push_back(k);
-  b_target.push_back(m);
+  b_target.push_back(b_rows);
+  b_target.push_back(b_cols);
 
   auto a_broadcast = utils::BroadcastToShape(a, a_target);
   auto b_broadcast = utils::BroadcastToShape(b, b_target);
@@ -364,13 +387,14 @@ Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b) {
   }
 
   Shape out_shape = *out_batch;
-  out_shape.push_back(n);
-  out_shape.push_back(m);
+  out_shape.push_back(lhs_rows);
+  out_shape.push_back(rhs_cols);
   Tensor out(out_shape, a.dtype(), a.device(), false);
-  DispatchBatchedMatMulKernel(*a_broadcast, *b_broadcast, out, false, false);
+  DispatchBatchedMatMulKernel(*a_broadcast, *b_broadcast, out, transpose_a,
+                              transpose_b);
 
-  auto backward =
-      std::make_shared<BatchedMatMulBackward>(*a_broadcast, *b_broadcast);
+  auto backward = std::make_shared<BatchedMatMulBackward>(
+      *a_broadcast, *b_broadcast, transpose_a, transpose_b);
   auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
@@ -393,8 +417,9 @@ Tensor operator/(const Tensor& a, const Tensor& b) {
   return BinaryOutOfPlace(BinaryOp::Div, a, b);
 }
 
-Tensor BatchedMatMul(const Tensor& a, const Tensor& b) {
-  return BatchedMatMulOutOfPlace(a, b);
+Tensor BatchedMatMul(const Tensor& a, const Tensor& b, bool transpose_a,
+                     bool transpose_b) {
+  return BatchedMatMulOutOfPlace(a, b, transpose_a, transpose_b);
 }
 
 std::shared_ptr<AutogradMeta> InplaceAdd(Tensor& self, const Tensor& other) {

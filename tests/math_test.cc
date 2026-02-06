@@ -281,6 +281,17 @@ TEST_CASE("BatchedMatMul forward") {
     CHECK_THROWS_WITH(deeptiny::math::BatchedMatMul(a, b),
                       doctest::Contains("broadcast batch dimensions"));
   }
+
+  SUBCASE("Supports transpose flags") {
+    deeptiny::Tensor a = MakeTensor({1, 3, 2}, {1, 2, 3, 4, 5, 6});
+    deeptiny::Tensor b =
+        MakeTensor({1, 3, 4}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
+    auto out = deeptiny::math::BatchedMatMul(a, b, true, false);
+
+    const deeptiny::Shape expected_shape{1, 2, 4};
+    CHECK(out.shape() == expected_shape);
+    CheckTensorData(out, {61, 70, 79, 88, 76, 88, 100, 112});
+  }
 }
 
 TEST_CASE("BatchedMatMul backward") {
@@ -314,6 +325,22 @@ TEST_CASE("BatchedMatMul backward") {
     REQUIRE(b_grad.has_value());
     CheckTensorData(*a_grad, {33, 45, 33, 45, 33, 45, 33, 45});
     CheckTensorData(*b_grad, {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3});
+  }
+
+  SUBCASE("Transpose flags propagate through backward") {
+    deeptiny::Tensor a = MakeTensor({1, 3, 2}, {1, 2, 3, 4, 5, 6}, true);
+    deeptiny::Tensor b =
+        MakeTensor({1, 3, 4}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, true);
+    auto loss = deeptiny::functional::Reduce(
+        deeptiny::math::BatchedMatMul(a, b, true, false), {0, 1, 2});
+    loss.Backward();
+
+    auto a_grad = a.grad();
+    auto b_grad = b.grad();
+    REQUIRE(a_grad.has_value());
+    REQUIRE(b_grad.has_value());
+    CheckTensorData(*a_grad, {10, 10, 26, 26, 42, 42});
+    CheckTensorData(*b_grad, {3, 3, 3, 3, 7, 7, 7, 7, 11, 11, 11, 11});
   }
 }
 
