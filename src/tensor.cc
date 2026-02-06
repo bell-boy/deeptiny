@@ -98,10 +98,6 @@ Tensor Tensor::Clone() const {
   return result;
 }
 
-Tensor Tensor::Squeeze(std::initializer_list<uint64_t> dims) {
-  return Squeeze(std::vector<uint64_t>(dims));
-}
-
 Tensor Tensor::Squeeze(const std::vector<uint64_t>& dims) {
   const auto& shape = tensor_impl_->shape();
   const auto& stride = tensor_impl_->stride();
