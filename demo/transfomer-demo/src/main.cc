@@ -1,33 +1,31 @@
 #include <iostream>
-#include <span>
 #include <vector>
 
 #include "deeptiny/functional.h"
-#include "deeptiny/math.h"
 #include "deeptiny/tensor.h"
 #include "deeptiny/types.h"
+#include "modules/embedding.h"
 
 int main() {
   using deeptiny::FormatShape;
+  using transfomer_demo::modules::Embedding;
 
-  const std::vector<float> query_values{1.0f, 2.0f, 3.0f, 1.0f, 0.5f, 2.0f};
-  auto query = deeptiny::Tensor::FromBuffer(
-      std::as_bytes(std::span<const float>(query_values)), {2, 3},
-      deeptiny::DType::Float32, deeptiny::Device::CPU, true);
-  const std::vector<float> key_values{0.1f, 0.2f, 0.3f};
-  auto key = deeptiny::Tensor::FromBuffer(
-      std::as_bytes(std::span<const float>(key_values)), {1, 3},
-      deeptiny::DType::Float32, deeptiny::Device::CPU, true);
+  Embedding embedding(/*num_embeddings=*/16, /*embedding_dim=*/8);
+  const std::vector<int64_t> token_ids{1, 4, 8, 1};
+  const deeptiny::Shape token_shape{2, 2};
 
-  auto scores = query * key;
-  auto loss = deeptiny::functional::Reduce(scores, {0, 1});
+  auto embedded = embedding.Forward(token_ids, token_shape);
+  auto loss = deeptiny::functional::Reduce(embedded, {0, 1, 2});
   loss.Backward();
 
-  std::cout << "transfomer-demo is wired to Deep Tiny\n";
-  std::cout << "scores shape: " << FormatShape(scores.shape()) << "\n";
+  std::cout << "transfomer-demo embedding module is wired to Deep Tiny\n";
+  std::cout << "token shape: " << FormatShape(token_shape) << "\n";
+  std::cout << "embedding weight shape: "
+            << FormatShape(embedding.weight().shape()) << "\n";
+  std::cout << "embedded shape: " << FormatShape(embedded.shape()) << "\n";
   std::cout << "loss shape: " << FormatShape(loss.shape()) << "\n";
-  std::cout << "query.grad available: " << std::boolalpha
-            << query.grad().has_value() << "\n";
+  std::cout << "embedding.weight().grad available: " << std::boolalpha
+            << embedding.weight().grad().has_value() << "\n";
 
   return 0;
 }
