@@ -15,8 +15,8 @@ class Embedding {
             deeptiny::Device device = deeptiny::Device::CPU,
             bool requires_grad = true);
 
-  deeptiny::Tensor Forward(const std::vector<int64_t>& indices,
-                           const deeptiny::Shape& shape) const;
+  deeptiny::Tensor operator()(const std::vector<int64_t>& indices,
+                              const deeptiny::Shape& shape) const;
 
   const deeptiny::Tensor& weight() const { return weight_; }
 
