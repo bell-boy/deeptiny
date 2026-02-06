@@ -174,10 +174,60 @@ void ValidateBatchedMatMulInputs(const std::shared_ptr<TensorImpl>& a,
          "BatchedMatMul kernel output cols mismatch");
 }
 
-void BatchedMatMulImpl(const std::shared_ptr<TensorImpl>& a,
-                       const std::shared_ptr<TensorImpl>& b,
-                       const std::shared_ptr<TensorImpl>& out, bool transpose_a,
-                       bool transpose_b) {
+}  // namespace
+
+std::shared_ptr<TensorImpl> FromBuffer(DType dtype,
+                                       std::span<const std::byte> buffer,
+                                       Shape shape) {
+  uint64_t total_size = utils::GetTotalSize(shape);
+  std::shared_ptr<TensorImpl> result;
+  switch (dtype) {
+    case DType::Float32:
+      if (buffer.size() != total_size * 4) {
+        std::stringstream err;
+        err << "Failed to create tensor with shape " << FormatShape(shape)
+            << " with dtype float32 on CPU. Expected " << total_size
+            << " bytes in buffer but only found " << buffer.size();
+        throw std::runtime_error(err.str());
+      }
+      result = std::make_shared<TensorImpl>(shape, DType::Float32, Device::CPU);
+      result->storage()->CopyFromHost(0, total_size, buffer.data());
+      break;
+
+    default:
+      throw std::runtime_error("DType unsupported");
+      break;
+  }
+  return result;
+}
+
+void Add(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+         std::shared_ptr<TensorImpl> out) {
+  ApplyElementwiseBinaryOp(a, b, out, "Add",
+                           [](float x, float y) { return x + y; });
+}
+
+void Sub(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+         std::shared_ptr<TensorImpl> out) {
+  ApplyElementwiseBinaryOp(a, b, out, "Sub",
+                           [](float x, float y) { return x - y; });
+}
+
+void Mul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+         std::shared_ptr<TensorImpl> out) {
+  ApplyElementwiseBinaryOp(a, b, out, "Mul",
+                           [](float x, float y) { return x * y; });
+}
+
+void Div(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+         std::shared_ptr<TensorImpl> out) {
+  ApplyElementwiseBinaryOp(a, b, out, "Div",
+                           [](float x, float y) { return x / y; });
+}
+
+void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
+                   std::shared_ptr<TensorImpl> out, bool transpose_a,
+                   bool transpose_b) {
   ValidateBatchedMatMulInputs(a, b, out, transpose_a, transpose_b);
 
   const auto& out_shape = out->shape();
@@ -235,62 +285,6 @@ void BatchedMatMulImpl(const std::shared_ptr<TensorImpl>& a,
                 cblas_cols, cblas_inner, 1.0f, a_batch, lda, b_batch, ldb, 0.0f,
                 out_batch, ldc);
   }
-}
-}  // namespace
-
-std::shared_ptr<TensorImpl> FromBuffer(DType dtype,
-                                       std::span<const std::byte> buffer,
-                                       Shape shape) {
-  uint64_t total_size = utils::GetTotalSize(shape);
-  std::shared_ptr<TensorImpl> result;
-  switch (dtype) {
-    case DType::Float32:
-      if (buffer.size() != total_size * 4) {
-        std::stringstream err;
-        err << "Failed to create tensor with shape " << FormatShape(shape)
-            << " with dtype float32 on CPU. Expected " << total_size
-            << " bytes in buffer but only found " << buffer.size();
-        throw std::runtime_error(err.str());
-      }
-      result = std::make_shared<TensorImpl>(shape, DType::Float32, Device::CPU);
-      result->storage()->CopyFromHost(0, total_size, buffer.data());
-      break;
-
-    default:
-      throw std::runtime_error("DType unsupported");
-      break;
-  }
-  return result;
-}
-
-void Add(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
-         std::shared_ptr<TensorImpl> out) {
-  ApplyElementwiseBinaryOp(a, b, out, "Add",
-                           [](float x, float y) { return x + y; });
-}
-
-void Sub(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
-         std::shared_ptr<TensorImpl> out) {
-  ApplyElementwiseBinaryOp(a, b, out, "Sub",
-                           [](float x, float y) { return x - y; });
-}
-
-void Mul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
-         std::shared_ptr<TensorImpl> out) {
-  ApplyElementwiseBinaryOp(a, b, out, "Mul",
-                           [](float x, float y) { return x * y; });
-}
-
-void Div(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
-         std::shared_ptr<TensorImpl> out) {
-  ApplyElementwiseBinaryOp(a, b, out, "Div",
-                           [](float x, float y) { return x / y; });
-}
-
-void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
-                   std::shared_ptr<TensorImpl> out, bool transpose_a,
-                   bool transpose_b) {
-  BatchedMatMulImpl(a, b, out, transpose_a, transpose_b);
 }
 
 };  // namespace cpu

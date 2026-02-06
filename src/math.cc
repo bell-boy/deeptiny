@@ -284,6 +284,46 @@ void DispatchBatchedMatMulKernel(const Tensor& a, const Tensor& b, Tensor& out,
   }
 }
 
+Tensor BatchedMatMulOutTensor(const Tensor& a, const Tensor& b,
+                              bool transpose_a, bool transpose_b) {
+  const auto& a_shape = a.shape();
+  const auto& b_shape = b.shape();
+  assert(a_shape.size() >= 2 && "BatchedMatMul requires rank >= 2 tensors");
+  assert(a_shape.size() == b_shape.size() &&
+         "BatchedMatMul requires matching ranks");
+  const size_t rank = a_shape.size();
+
+  Shape out_shape(a_shape.begin(), a_shape.end() - 2);
+  for (size_t dim = 0; dim + 2 < rank; ++dim) {
+    assert(a_shape[dim] == b_shape[dim] &&
+           "BatchedMatMul requires matching leading dimensions");
+  }
+
+  const uint64_t a_rows = a_shape[rank - 2];
+  const uint64_t a_cols = a_shape[rank - 1];
+  const uint64_t b_rows = b_shape[rank - 2];
+  const uint64_t b_cols = b_shape[rank - 1];
+  const uint64_t lhs_rows = transpose_a ? a_cols : a_rows;
+  const uint64_t lhs_cols = transpose_a ? a_rows : a_cols;
+  const uint64_t rhs_rows = transpose_b ? b_cols : b_rows;
+  const uint64_t rhs_cols = transpose_b ? b_rows : b_cols;
+  assert(lhs_cols == rhs_rows &&
+         "BatchedMatMul requires matching inner dimensions");
+
+  out_shape.push_back(lhs_rows);
+  out_shape.push_back(rhs_cols);
+  Tensor out(out_shape, a.dtype(), a.device(), false);
+  DispatchBatchedMatMulKernel(a, b, out, transpose_a, transpose_b);
+  return out;
+}
+
+void BatchedMatMulAndUpdateGrad(const Tensor& a, const Tensor& b,
+                                bool transpose_a, bool transpose_b,
+                                const std::shared_ptr<AutogradMeta>& parent) {
+  assert(parent && "BatchedMatMulAndUpdateGrad parent must not be null");
+  parent->updateGrad(BatchedMatMulOutTensor(a, b, transpose_a, transpose_b));
+}
+
 class BatchedMatMulBackward : public Function {
  public:
   enum struct ContextObjects : uint64_t {
@@ -307,29 +347,26 @@ class BatchedMatMulBackward : public Function {
     Tensor saved_b =
         context().Get(static_cast<uint64_t>(ContextObjects::SAVED_B));
 
-    Tensor grad_a(saved_a.shape(), grad.dtype(), grad.device(), false);
-    Tensor grad_b(saved_b.shape(), grad.dtype(), grad.device(), false);
-
-    if (!transpose_a_) {
-      DispatchBatchedMatMulKernel(grad, saved_b, grad_a, false, !transpose_b_);
-    } else {
-      DispatchBatchedMatMulKernel(saved_b, grad, grad_a, transpose_b_, true);
-    }
-
-    if (!transpose_b_) {
-      DispatchBatchedMatMulKernel(saved_a, grad, grad_b, !transpose_a_, false);
-    } else {
-      DispatchBatchedMatMulKernel(grad, saved_a, grad_b, true, transpose_a_);
-    }
-
     const auto& parents = getParents();
     assert(parents.size() == 2 &&
            "BatchedMatMulBackward must have exactly 2 parents");
     assert(parents[0] && "BatchedMatMulBackward first parent must not be null");
     assert(parents[1] &&
            "BatchedMatMulBackward second parent must not be null");
-    parents[0]->updateGrad(grad_a);
-    parents[1]->updateGrad(grad_b);
+
+    if (!transpose_a_) {
+      BatchedMatMulAndUpdateGrad(grad, saved_b, false, !transpose_b_,
+                                 parents[0]);
+    } else {
+      BatchedMatMulAndUpdateGrad(saved_b, grad, transpose_b_, true, parents[0]);
+    }
+
+    if (!transpose_b_) {
+      BatchedMatMulAndUpdateGrad(saved_a, grad, !transpose_a_, false,
+                                 parents[1]);
+    } else {
+      BatchedMatMulAndUpdateGrad(grad, saved_a, true, transpose_a_, parents[1]);
+    }
   }
 
  private:
@@ -351,10 +388,8 @@ Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b,
   const uint64_t b_rows = b_shape[b_shape.size() - 2];
   const uint64_t b_cols = b_shape[b_shape.size() - 1];
 
-  const uint64_t lhs_rows = transpose_a ? a_cols : a_rows;
   const uint64_t lhs_cols = transpose_a ? a_rows : a_cols;
   const uint64_t rhs_rows = transpose_b ? b_cols : b_rows;
-  const uint64_t rhs_cols = transpose_b ? b_rows : b_cols;
   if (lhs_cols != rhs_rows) {
     throw std::runtime_error(
         "BatchedMatMul requires matching inner dimensions");
@@ -386,12 +421,8 @@ Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b,
     throw std::runtime_error(err.str());
   }
 
-  Shape out_shape = *out_batch;
-  out_shape.push_back(lhs_rows);
-  out_shape.push_back(rhs_cols);
-  Tensor out(out_shape, a.dtype(), a.device(), false);
-  DispatchBatchedMatMulKernel(*a_broadcast, *b_broadcast, out, transpose_a,
-                              transpose_b);
+  Tensor out = BatchedMatMulOutTensor(*a_broadcast, *b_broadcast, transpose_a,
+                                      transpose_b);
 
   auto backward = std::make_shared<BatchedMatMulBackward>(
       *a_broadcast, *b_broadcast, transpose_a, transpose_b);
