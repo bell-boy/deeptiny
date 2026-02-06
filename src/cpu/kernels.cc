@@ -44,13 +44,6 @@ void ValidateElementwiseUnaryOpInputs(const std::shared_ptr<TensorImpl>& x,
   }
   assert(x->shape() == out->shape());
   assert(x->dtype() == out->dtype());
-
-  if (x->shape() != out->shape()) {
-    throw std::runtime_error("Elementwise op requires matching tensor shapes");
-  }
-  if (x->dtype() != out->dtype()) {
-    throw std::runtime_error("Elementwise op requires matching tensor dtypes");
-  }
 }
 
 template <typename Op>
