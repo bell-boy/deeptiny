@@ -8,20 +8,6 @@
 namespace transfomer_demo::modules {
 namespace {
 
-uint64_t Product(const deeptiny::Shape& shape) {
-  uint64_t total = 1;
-  for (const uint64_t dim : shape) {
-    if (dim == 0) {
-      return 0;
-    }
-    if (total > std::numeric_limits<uint64_t>::max() / dim) {
-      throw std::runtime_error("Shape product overflowed uint64_t.");
-    }
-    total *= dim;
-  }
-  return total;
-}
-
 int64_t ToSliceIndex(uint64_t value, const char* label) {
   if (value > static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
     std::stringstream err;
@@ -94,22 +80,21 @@ Embedding::Embedding(uint64_t num_embeddings, uint64_t embedding_dim,
 
 deeptiny::Tensor Embedding::operator()(const std::vector<int64_t>& indices,
                                        const deeptiny::Shape& shape) const {
-  const uint64_t expected_count = Product(shape);
-  if (expected_count != static_cast<uint64_t>(indices.size())) {
-    std::stringstream err;
-    err << "Embedding::operator() expected indices.size() == product(shape), "
-           "got "
-        << indices.size() << " and " << expected_count;
-    throw std::runtime_error(err.str());
-  }
-
+  const uint64_t index_count = static_cast<uint64_t>(indices.size());
   deeptiny::Shape output_shape = shape;
   output_shape.push_back(embedding_dim_);
-  deeptiny::Tensor flat_output = deeptiny::Tensor::Zeros(
-      {expected_count, embedding_dim_}, device_, dtype_);
+  deeptiny::Tensor flat_output =
+      deeptiny::Tensor::Zeros({index_count, embedding_dim_}, device_, dtype_);
+
+  try {
+    (void)flat_output.Reshape(output_shape);
+  } catch (const std::runtime_error&) {
+    throw std::runtime_error(
+        "Embedding::operator() expected indices.size() == product(shape).");
+  }
 
   const int64_t end_col = ToSliceIndex(embedding_dim_, "embedding_dim");
-  for (uint64_t i = 0; i < expected_count; ++i) {
+  for (uint64_t i = 0; i < index_count; ++i) {
     const int64_t token = indices[static_cast<size_t>(i)];
     if (token < 0 || static_cast<uint64_t>(token) >= num_embeddings_) {
       std::stringstream err;
