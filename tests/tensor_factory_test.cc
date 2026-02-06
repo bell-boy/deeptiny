@@ -13,6 +13,15 @@ TEST_CASE("Tensor::Zeros initializes tensor values to zero") {
                                    deeptiny::DType::Float32);
   CHECK(t.shape() == deeptiny::Shape{2, 3});
   CheckTensorData(t, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
+  CHECK(!t.requires_grad());
+}
+
+TEST_CASE("Tensor::Zeros supports requires_grad") {
+  auto t = deeptiny::Tensor::Zeros({2, 3}, deeptiny::Device::CPU,
+                                   deeptiny::DType::Float32, true);
+  CHECK(t.shape() == deeptiny::Shape{2, 3});
+  CHECK(t.requires_grad());
+  CheckTensorData(t, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
 }
 
 TEST_CASE("Tensor::CreateUniform creates Float32 values in [0, 1]") {
@@ -25,6 +34,14 @@ TEST_CASE("Tensor::CreateUniform creates Float32 values in [0, 1]") {
     CHECK(value >= 0.0f);
     CHECK(value <= 1.0f);
   }
+  CHECK(!t.requires_grad());
+}
+
+TEST_CASE("Tensor::CreateUniform supports requires_grad") {
+  auto t = deeptiny::Tensor::CreateUniform({4, 5}, deeptiny::Device::CPU,
+                                           deeptiny::DType::Float32, true);
+  CHECK(t.shape() == deeptiny::Shape{4, 5});
+  CHECK(t.requires_grad());
 }
 
 TEST_CASE("Tensor::FromVector creates tensors and validates shape") {

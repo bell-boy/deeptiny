@@ -1,7 +1,6 @@
 #include "modules/embedding.h"
 
 #include <limits>
-#include <random>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -32,6 +31,36 @@ int64_t ToSliceIndex(uint64_t value, const char* label) {
   return static_cast<int64_t>(value);
 }
 
+template <typename TensorType>
+auto CreateUniformWithRequiresGrad(const deeptiny::Shape& shape,
+                                   deeptiny::Device device,
+                                   deeptiny::DType dtype, bool requires_grad,
+                                   int)
+    -> decltype(TensorType::CreateUniform(shape, device, dtype,
+                                          requires_grad)) {
+  return TensorType::CreateUniform(shape, device, dtype, requires_grad);
+}
+
+template <typename TensorType>
+deeptiny::Tensor CreateUniformWithRequiresGrad(const deeptiny::Shape& shape,
+                                               deeptiny::Device device,
+                                               deeptiny::DType dtype,
+                                               bool requires_grad, long) {
+  deeptiny::Tensor sampled = TensorType::CreateUniform(shape, device, dtype);
+  if (!requires_grad) {
+    return sampled;
+  }
+
+  deeptiny::Tensor tracked(shape, dtype, device, true);
+  std::vector<deeptiny::Slice> slices;
+  slices.reserve(shape.size());
+  for (const uint64_t dim : shape) {
+    slices.emplace_back(0, ToSliceIndex(dim, "shape dimension"));
+  }
+  tracked(slices) = sampled;
+  return tracked;
+}
+
 deeptiny::Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim,
                             deeptiny::DType dtype, deeptiny::Device device,
                             bool requires_grad) {
@@ -46,17 +75,9 @@ deeptiny::Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim,
     throw std::runtime_error("Demo Embedding currently supports only CPU.");
   }
 
-  const uint64_t total =
-      Product(deeptiny::Shape{num_embeddings, embedding_dim});
-  std::vector<float> values(total, 0.0f);
-  std::mt19937 rng(1234);
-  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-  for (uint64_t i = 0; i < total; ++i) {
-    values[static_cast<size_t>(i)] = dist(rng);
-  }
-
-  return deeptiny::Tensor::FromVector(values, {num_embeddings, embedding_dim},
-                                      device, requires_grad);
+  const deeptiny::Shape weight_shape{num_embeddings, embedding_dim};
+  return CreateUniformWithRequiresGrad<deeptiny::Tensor>(
+      weight_shape, device, dtype, requires_grad, 0);
 }
 
 }  // namespace
