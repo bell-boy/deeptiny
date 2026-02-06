@@ -266,104 +266,19 @@ std::optional<Shape> BroadcastLeadingShape(const Shape& a, const Shape& b) {
   return out;
 }
 
-Tensor ReduceGradientToShape(const Tensor& grad, const Shape& target_shape) {
-  const auto& grad_shape = grad.shape();
-  if (grad_shape == target_shape) {
-    return grad;
-  }
-
-  if (grad_shape.size() < target_shape.size()) {
-    std::stringstream err;
-    err << "Cannot reduce gradient of shape " << FormatShape(grad_shape)
-        << " to shape " << FormatShape(target_shape);
-    throw std::runtime_error(err.str());
-  }
-
-  const size_t rank_diff = grad_shape.size() - target_shape.size();
-  std::vector<uint64_t> reduce_dims;
-  reduce_dims.reserve(grad_shape.size());
-  for (size_t i = 0; i < grad_shape.size(); ++i) {
-    if (i < rank_diff) {
-      reduce_dims.push_back(static_cast<uint64_t>(i));
-      continue;
-    }
-    const uint64_t grad_dim = grad_shape[i];
-    const uint64_t target_dim = target_shape[i - rank_diff];
-    if (grad_dim == target_dim) {
-      continue;
-    }
-    if (target_dim == 1) {
-      reduce_dims.push_back(static_cast<uint64_t>(i));
-      continue;
-    }
-    std::stringstream err;
-    err << "Cannot reduce gradient of shape " << FormatShape(grad_shape)
-        << " to shape " << FormatShape(target_shape);
-    throw std::runtime_error(err.str());
-  }
-
-  Tensor reduced =
-      reduce_dims.empty() ? grad : functional::Reduce(grad, reduce_dims, true);
-  if (rank_diff == 0) {
-    return reduced;
-  }
-
-  std::vector<uint64_t> squeeze_dims(rank_diff, 0);
-  for (size_t i = 0; i < rank_diff; ++i) {
-    squeeze_dims[i] = static_cast<uint64_t>(i);
-  }
-  return reduced.Squeeze(squeeze_dims);
-}
-
-void DispatchBatchedMatMulKernel(const Tensor& a, const Tensor& b,
-                                 Tensor& out) {
+void DispatchBatchedMatMulKernel(const Tensor& a, const Tensor& b, Tensor& out,
+                                 bool transpose_a, bool transpose_b) {
   switch (out.device()) {
     case Device::CPU: {
       auto a_impl = utils::TensorAccessor::GetTensorImpl(a);
       auto b_impl = utils::TensorAccessor::GetTensorImpl(b);
       auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
-      cpu::BatchedMatMul(a_impl, b_impl, out_impl);
+      cpu::BatchedMatMul(a_impl, b_impl, out_impl, transpose_a, transpose_b);
       return;
     }
     default: {
       std::stringstream err;
       err << "Operation does not support " << out.device().ToString();
-      throw std::runtime_error(err.str());
-    }
-  }
-}
-
-void DispatchBatchedMatMulGradAKernel(const Tensor& grad_out, const Tensor& b,
-                                      Tensor& grad_a) {
-  switch (grad_a.device()) {
-    case Device::CPU: {
-      auto grad_out_impl = utils::TensorAccessor::GetTensorImpl(grad_out);
-      auto b_impl = utils::TensorAccessor::GetTensorImpl(b);
-      auto grad_a_impl = utils::TensorAccessor::GetTensorImpl(grad_a);
-      cpu::BatchedMatMulGradA(grad_out_impl, b_impl, grad_a_impl);
-      return;
-    }
-    default: {
-      std::stringstream err;
-      err << "Operation does not support " << grad_a.device().ToString();
-      throw std::runtime_error(err.str());
-    }
-  }
-}
-
-void DispatchBatchedMatMulGradBKernel(const Tensor& a, const Tensor& grad_out,
-                                      Tensor& grad_b) {
-  switch (grad_b.device()) {
-    case Device::CPU: {
-      auto a_impl = utils::TensorAccessor::GetTensorImpl(a);
-      auto grad_out_impl = utils::TensorAccessor::GetTensorImpl(grad_out);
-      auto grad_b_impl = utils::TensorAccessor::GetTensorImpl(grad_b);
-      cpu::BatchedMatMulGradB(a_impl, grad_out_impl, grad_b_impl);
-      return;
-    }
-    default: {
-      std::stringstream err;
-      err << "Operation does not support " << grad_b.device().ToString();
       throw std::runtime_error(err.str());
     }
   }
@@ -376,12 +291,9 @@ class BatchedMatMulBackward : public Function {
     SAVED_B = 1,
   };
 
-  BatchedMatMulBackward(const Tensor& parent_a, const Tensor& parent_b,
-                        Tensor saved_a, Tensor saved_b)
-      : Function({utils::TensorAccessor::GetAutogradMeta(parent_a),
-                  utils::TensorAccessor::GetAutogradMeta(parent_b)}),
-        parent_a_shape_(parent_a.shape()),
-        parent_b_shape_(parent_b.shape()) {
+  BatchedMatMulBackward(const Tensor& saved_a, const Tensor& saved_b)
+      : Function({utils::TensorAccessor::GetAutogradMeta(saved_a),
+                  utils::TensorAccessor::GetAutogradMeta(saved_b)}) {
     context().Set(static_cast<uint64_t>(ContextObjects::SAVED_A), saved_a);
     context().Set(static_cast<uint64_t>(ContextObjects::SAVED_B), saved_b);
   }
@@ -394,8 +306,8 @@ class BatchedMatMulBackward : public Function {
 
     Tensor grad_a(saved_a.shape(), grad.dtype(), grad.device(), false);
     Tensor grad_b(saved_b.shape(), grad.dtype(), grad.device(), false);
-    DispatchBatchedMatMulGradAKernel(grad, saved_b, grad_a);
-    DispatchBatchedMatMulGradBKernel(saved_a, grad, grad_b);
+    DispatchBatchedMatMulKernel(grad, saved_b, grad_a, false, true);
+    DispatchBatchedMatMulKernel(saved_a, grad, grad_b, true, false);
 
     const auto& parents = getParents();
     assert(parents.size() == 2 &&
@@ -403,13 +315,9 @@ class BatchedMatMulBackward : public Function {
     assert(parents[0] && "BatchedMatMulBackward first parent must not be null");
     assert(parents[1] &&
            "BatchedMatMulBackward second parent must not be null");
-    parents[0]->updateGrad(ReduceGradientToShape(grad_a, parent_a_shape_));
-    parents[1]->updateGrad(ReduceGradientToShape(grad_b, parent_b_shape_));
+    parents[0]->updateGrad(grad_a);
+    parents[1]->updateGrad(grad_b);
   }
-
- private:
-  Shape parent_a_shape_;
-  Shape parent_b_shape_;
 };
 
 Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b) {
@@ -459,10 +367,10 @@ Tensor BatchedMatMulOutOfPlace(const Tensor& a, const Tensor& b) {
   out_shape.push_back(n);
   out_shape.push_back(m);
   Tensor out(out_shape, a.dtype(), a.device(), false);
-  DispatchBatchedMatMulKernel(*a_broadcast, *b_broadcast, out);
+  DispatchBatchedMatMulKernel(*a_broadcast, *b_broadcast, out, false, false);
 
   auto backward =
-      std::make_shared<BatchedMatMulBackward>(a, b, *a_broadcast, *b_broadcast);
+      std::make_shared<BatchedMatMulBackward>(*a_broadcast, *b_broadcast);
   auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
