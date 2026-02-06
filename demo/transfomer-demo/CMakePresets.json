@@ -8,8 +8,7 @@
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "DEEPTINY_SOURCE_DIR": "${sourceDir}/../.."
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {

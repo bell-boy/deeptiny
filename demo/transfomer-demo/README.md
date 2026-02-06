@@ -1,6 +1,6 @@
 # transfomer-demo
 
-Standalone CMake demo that consumes Deep Tiny from source.
+Standalone CMake demo that consumes Deep Tiny via `FetchContent`.
 
 ## Configure
 
@@ -34,8 +34,14 @@ cmake --build --preset dev-local-openblas
 ./build/transfomer_demo
 ```
 
-If Deep Tiny is not located at `../..` relative to this folder, override it:
+Override the pinned Deep Tiny commit:
 
 ```bash
-cmake --preset dev -DDEEPTINY_SOURCE_DIR=/path/to/deeptiny
+cmake --preset dev -DDEEPTINY_GIT_TAG=<commit-ish>
+```
+
+Point `FetchContent` at a local Deep Tiny checkout:
+
+```bash
+cmake --preset dev -DFETCHCONTENT_SOURCE_DIR_DEEPTINY=/path/to/deeptiny
 ```

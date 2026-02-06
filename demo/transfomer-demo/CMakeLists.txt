@@ -4,18 +4,26 @@ project(transfomer_demo LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(DEEPTINY_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." CACHE PATH
-    "Path to the Deep Tiny source tree")
+include(FetchContent)
 
-if (NOT EXISTS "${DEEPTINY_SOURCE_DIR}/CMakeLists.txt")
-  message(FATAL_ERROR
-          "DEEPTINY_SOURCE_DIR does not point to a Deep Tiny source tree: ${DEEPTINY_SOURCE_DIR}")
-endif()
+set(DEEPTINY_GIT_REPOSITORY "https://github.com/bell-boy/deeptiny.git" CACHE STRING
+    "Git repository for Deep Tiny")
+set(DEEPTINY_GIT_TAG "04d92a7abd1a4932e642ae5ff2a3cfd9f4fa0abd" CACHE STRING
+    "Pinned Deep Tiny commit")
 
 # Keep the demo isolated from Deep Tiny's internal test suite.
 set(BUILD_TESTING OFF CACHE BOOL "Disable Deep Tiny tests for demo builds" FORCE)
+set(DEEPTINY_BUILD_TESTS OFF CACHE BOOL "Disable Deep Tiny tests for demo builds" FORCE)
+set(DEEPTINY_ENABLE_WERROR OFF CACHE BOOL "Disable Werror for embedded demo builds" FORCE)
 
-add_subdirectory("${DEEPTINY_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/_deps/deeptiny")
+FetchContent_Declare(
+  deeptiny
+  GIT_REPOSITORY "${DEEPTINY_GIT_REPOSITORY}"
+  GIT_TAG "${DEEPTINY_GIT_TAG}"
+  GIT_SHALLOW FALSE
+)
+
+FetchContent_MakeAvailable(deeptiny)
 
 add_executable(transfomer_demo src/main.cc)
 

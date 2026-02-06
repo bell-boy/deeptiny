@@ -1,4 +1,5 @@
 #include <iostream>
+#include <span>
 #include <vector>
 
 #include "deeptiny/functional.h"
@@ -9,11 +10,14 @@
 int main() {
   using deeptiny::FormatShape;
 
-  auto query = deeptiny::Tensor::FromVector(
-      std::vector<float>{1.0f, 2.0f, 3.0f, 1.0f, 0.5f, 2.0f}, {2, 3},
-      deeptiny::Device::CPU, true);
-  auto key = deeptiny::Tensor::FromVector(std::vector<float>{0.1f, 0.2f, 0.3f},
-                                          {1, 3}, deeptiny::Device::CPU, true);
+  const std::vector<float> query_values{1.0f, 2.0f, 3.0f, 1.0f, 0.5f, 2.0f};
+  auto query = deeptiny::Tensor::FromBuffer(
+      std::as_bytes(std::span<const float>(query_values)), {2, 3},
+      deeptiny::DType::Float32, deeptiny::Device::CPU, true);
+  const std::vector<float> key_values{0.1f, 0.2f, 0.3f};
+  auto key = deeptiny::Tensor::FromBuffer(
+      std::as_bytes(std::span<const float>(key_values)), {1, 3},
+      deeptiny::DType::Float32, deeptiny::Device::CPU, true);
 
   auto scores = query * key;
   auto loss = deeptiny::functional::Reduce(scores, {0, 1});
