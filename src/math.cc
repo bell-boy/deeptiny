@@ -11,7 +11,6 @@
 
 #include "autograd_meta.h"
 #include "cpu/kernels.h"
-#include "deeptiny/functional.h"
 #include "deeptiny/types.h"
 #include "engine.h"
 #include "utils.h"
@@ -73,7 +72,7 @@ Tensor BinaryOut(BinaryOp op, const Tensor& a, const Tensor& b) {
 }
 
 Tensor Negate(const Tensor& x) {
-  Tensor zeros = functional::Zeros(x.shape(), x.device(), x.dtype());
+  Tensor zeros = Tensor::Zeros(x.shape(), x.device(), x.dtype());
   return BinaryOut(BinaryOp::Sub, zeros, x);
 }
 

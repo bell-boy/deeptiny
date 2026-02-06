@@ -3,6 +3,8 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 #include "deeptiny/types.h"
@@ -49,6 +51,42 @@ class Tensor {
                            DType dtype = DType::Float32,
                            Device device = Device::CPU,
                            bool requires_grad = false);
+  static Tensor CreateUniform(Shape shape, Device device = Device::CPU,
+                              DType dtype = DType::Float32);
+  static Tensor Zeros(Shape shape, Device device = Device::CPU,
+                      DType dtype = DType::Float32);
+
+  template <typename T>
+  static Tensor FromVector(const std::vector<T>& values, Shape shape,
+                           Device device = Device::CPU,
+                           bool requires_grad = false) {
+    static_assert(
+        std::is_same_v<T, float>,
+        "Tensor::FromVector currently only supports std::vector<float>");
+
+    uint64_t total = 1;
+    for (const auto dim : shape) {
+      total *= dim;
+    }
+    if (values.size() != total) {
+      throw std::runtime_error(
+          "FromVector received mismatched values/shape size");
+    }
+
+    return FromBuffer(std::span<const std::byte>(
+                          reinterpret_cast<const std::byte*>(values.data()),
+                          values.size() * sizeof(T)),
+                      std::move(shape), DType::Float32, device, requires_grad);
+  }
+
+  template <typename T>
+  static Tensor FromVector(const std::vector<T>& values,
+                           Device device = Device::CPU,
+                           bool requires_grad = false) {
+    return FromVector(values, Shape{static_cast<uint64_t>(values.size())},
+                      device, requires_grad);
+  }
+
   void operator+=(const Tensor& other);
   void operator-=(const Tensor& other);
   void operator*=(const Tensor& other);
