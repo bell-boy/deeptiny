@@ -6,6 +6,7 @@
 
 #include "autograd_meta.h"
 #include "deeptiny/functional.h"
+#include "deeptiny/view.h"
 #include "doctest/doctest.h"
 #include "engine.h"
 #include "test_utils.h"
@@ -235,6 +236,119 @@ TEST_CASE("Elementary in-place ops reject zero-stride destination") {
   }
 }
 
+TEST_CASE("BatchedMatMul forward") {
+  SUBCASE("No broadcast") {
+    deeptiny::Tensor a =
+        MakeTensor({2, 2, 3}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
+    deeptiny::Tensor b =
+        MakeTensor({2, 3, 2}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
+    auto out = deeptiny::math::BatchedMatMul(a, b);
+
+    const deeptiny::Shape expected_shape{2, 2, 2};
+    CHECK(out.shape() == expected_shape);
+    CheckTensorData(out, {22, 28, 49, 64, 220, 244, 301, 334});
+  }
+
+  SUBCASE("Leading batch dims broadcast") {
+    deeptiny::Tensor a = MakeTensor({1, 2, 2, 2}, {1, 0, 0, 1, 2, 0, 0, 2});
+    deeptiny::Tensor b =
+        MakeTensor({3, 1, 2, 2}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
+    auto out = deeptiny::math::BatchedMatMul(a, b);
+
+    const deeptiny::Shape expected_shape{3, 2, 2, 2};
+    CHECK(out.shape() == expected_shape);
+    CheckTensorData(out, {1,  2,  3,  4,  2, 4,  6,  8,  5,  6,  7,  8,
+                          10, 12, 14, 16, 9, 10, 11, 12, 18, 20, 22, 24});
+  }
+
+  SUBCASE("Rejects rank smaller than 3") {
+    deeptiny::Tensor a = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6});
+    deeptiny::Tensor b = MakeTensor({3, 2}, {1, 2, 3, 4, 5, 6});
+    CHECK_THROWS_WITH(deeptiny::math::BatchedMatMul(a, b),
+                      doctest::Contains("rank >= 3"));
+  }
+
+  SUBCASE("Rejects inner-dim mismatch") {
+    deeptiny::Tensor a = MakeTensor({1, 2, 3}, {1, 2, 3, 4, 5, 6});
+    deeptiny::Tensor b = MakeTensor({1, 4, 2}, {1, 2, 3, 4, 5, 6, 7, 8});
+    CHECK_THROWS_WITH(deeptiny::math::BatchedMatMul(a, b),
+                      doctest::Contains("inner dimensions"));
+  }
+
+  SUBCASE("Rejects non-broadcastable leading dims") {
+    deeptiny::Tensor a = MakeTensor({2, 2, 2, 3}, std::vector<float>(24, 1.0f));
+    deeptiny::Tensor b = MakeTensor({3, 2, 3, 4}, std::vector<float>(72, 1.0f));
+    CHECK_THROWS_WITH(deeptiny::math::BatchedMatMul(a, b),
+                      doctest::Contains("broadcast batch dimensions"));
+  }
+}
+
+TEST_CASE("BatchedMatMul backward") {
+  SUBCASE("No broadcast") {
+    deeptiny::Tensor a = MakeTensor({1, 2, 3}, {1, 2, 3, 4, 5, 6}, true);
+    deeptiny::Tensor b = MakeTensor({1, 3, 2}, {7, 8, 9, 10, 11, 12}, true);
+    auto loss = deeptiny::functional::Reduce(
+        deeptiny::math::BatchedMatMul(a, b), {0, 1, 2});
+    loss.Backward();
+
+    auto a_grad = a.grad();
+    auto b_grad = b.grad();
+    REQUIRE(a_grad.has_value());
+    REQUIRE(b_grad.has_value());
+    CheckTensorData(*a_grad, {15, 19, 23, 15, 19, 23});
+    CheckTensorData(*b_grad, {5, 5, 7, 7, 9, 9});
+  }
+
+  SUBCASE("Broadcasted batch dims reduce gradients") {
+    deeptiny::Tensor a =
+        MakeTensor({1, 2, 2, 2}, {1, 0, 0, 1, 2, 0, 0, 2}, true);
+    deeptiny::Tensor b =
+        MakeTensor({3, 1, 2, 2}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, true);
+    auto loss = deeptiny::functional::Reduce(
+        deeptiny::math::BatchedMatMul(a, b), {0, 1, 2, 3});
+    loss.Backward();
+
+    auto a_grad = a.grad();
+    auto b_grad = b.grad();
+    REQUIRE(a_grad.has_value());
+    REQUIRE(b_grad.has_value());
+    CheckTensorData(*a_grad, {33, 45, 33, 45, 33, 45, 33, 45});
+    CheckTensorData(*b_grad, {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3});
+  }
+}
+
+TEST_CASE("Reshape forward/backward and guards") {
+  SUBCASE("Reshape preserves row-major order for contiguous tensor") {
+    deeptiny::Tensor t = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6});
+    auto reshaped = t.Reshape({3, 2});
+    const deeptiny::Shape expected_shape{3, 2};
+    CHECK(reshaped.shape() == expected_shape);
+    CheckTensorData(reshaped, {1, 2, 3, 4, 5, 6});
+  }
+
+  SUBCASE("Reshape backward maps gradient to original shape") {
+    deeptiny::Tensor t = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6}, true);
+    auto loss = deeptiny::functional::Reduce(t.Reshape({3, 2}), {0, 1});
+    loss.Backward();
+
+    auto grad = t.grad();
+    REQUIRE(grad.has_value());
+    CheckTensorData(*grad, {1, 1, 1, 1, 1, 1});
+  }
+
+  SUBCASE("Reshape rejects non-contiguous input") {
+    deeptiny::Tensor t = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6});
+    auto view = t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3, 2)});
+    CHECK_THROWS_WITH(view.Reshape({4}), doctest::Contains("contiguous"));
+  }
+
+  SUBCASE("Reshape rejects element-count mismatch") {
+    deeptiny::Tensor t = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6});
+    CHECK_THROWS_WITH(t.Reshape({7}),
+                      doctest::Contains("same number of elements"));
+  }
+}
+
 TEST_CASE("Context set/get and version checks") {
   SUBCASE("Set and Get round trip") {
     deeptiny::Context ctx;
@@ -277,6 +391,17 @@ TEST_CASE("Backward fails when saved tensors are modified after forward") {
     auto b_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(b);
     auto* b_data = static_cast<float*>(b_impl->data());
     b_data[0] += 1.0f;
+    CHECK_THROWS_WITH(loss.Backward(), doctest::Contains("modified in-place"));
+  }
+
+  SUBCASE("BatchedMatMul backward detects saved tensor mutation") {
+    deeptiny::Tensor a = MakeTensor({1, 2, 3}, {1, 2, 3, 4, 5, 6}, true);
+    deeptiny::Tensor b = MakeTensor({1, 3, 2}, {1, 2, 3, 4, 5, 6}, true);
+    auto loss = deeptiny::functional::Reduce(
+        deeptiny::math::BatchedMatMul(a, b), {0, 1, 2});
+    auto a_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(a);
+    auto* a_data = static_cast<float*>(a_impl->data());
+    a_data[0] += 1.0f;
     CHECK_THROWS_WITH(loss.Backward(), doctest::Contains("modified in-place"));
   }
 }

@@ -2,6 +2,7 @@
 
 #include <sys/resource.h>
 
+#include <cassert>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
@@ -20,6 +21,36 @@
 namespace deeptiny {
 
 namespace {
+class ReshapeBackward : public Function {
+ private:
+  Shape original_shape_;
+
+ public:
+  explicit ReshapeBackward(const Tensor& t)
+      : Function({utils::TensorAccessor::GetAutogradMeta(t)}),
+        original_shape_(t.shape()) {}
+
+  void operator()(const Tensor& grad) override {
+    const auto& parents = getParents();
+    assert(parents.size() == 1 && "ReshapeBackward must have exactly 1 parent");
+    assert(parents[0] && "ReshapeBackward parent must not be null");
+
+    const uint64_t expected_size = utils::GetTotalSize(original_shape_);
+    const uint64_t grad_size = utils::GetTotalSize(grad.shape());
+    if (grad_size != expected_size) {
+      throw std::runtime_error("ReshapeBackward received invalid grad shape");
+    }
+
+    auto grad_impl = utils::TensorAccessor::GetTensorImpl(grad);
+    auto grad_storage = grad_impl->getContiguousStorage();
+    auto reshaped_impl = std::make_shared<TensorImpl>(
+        Shape(original_shape_), utils::GetContinguousStride(original_shape_), 0,
+        grad_storage);
+    auto grad_in = utils::TensorAccessor::MakeTensor(reshaped_impl, nullptr);
+    parents[0]->updateGrad(grad_in);
+  }
+};
+
 class SqueezeBackward : public Function {
  private:
   Shape original_shape_;
@@ -96,6 +127,27 @@ Tensor Tensor::Clone() const {
   src_storage->CopyToHost(0, numel, host_buf.data());
   dst_impl->storage()->CopyFromHost(0, numel, host_buf.data());
   return result;
+}
+
+Tensor Tensor::Reshape(const Shape& shape) {
+  const uint64_t current_size = utils::GetTotalSize(tensor_impl_->shape());
+  const uint64_t target_size = utils::GetTotalSize(shape);
+  if (current_size != target_size) {
+    throw std::runtime_error(
+        "Reshape requires tensors with the same number of elements");
+  }
+  if (!tensor_impl_->isContiguous()) {
+    throw std::runtime_error("Reshape requires contiguous input tensor");
+  }
+  if (shape == tensor_impl_->shape()) {
+    return *this;
+  }
+
+  auto reshaped_impl = tensor_impl_->View(
+      Shape(shape), utils::GetContinguousStride(shape), tensor_impl_->offset());
+  auto backward = std::make_shared<ReshapeBackward>(*this);
+  auto grad_meta = std::make_shared<AutogradMeta>(backward);
+  return utils::TensorAccessor::MakeTensor(std::move(reshaped_impl), grad_meta);
 }
 
 Tensor Tensor::Squeeze(const std::vector<uint64_t>& dims) {

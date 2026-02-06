@@ -35,6 +35,7 @@ class Tensor {
   DType dtype() const;
   Device device() const;
   Tensor Clone() const;
+  Tensor Reshape(const Shape& shape);
   Tensor Squeeze(const std::vector<uint64_t>& dims);
   bool requires_grad() const;
   std::optional<Tensor> grad() const;
