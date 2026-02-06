@@ -8,10 +8,24 @@ Standalone CMake demo that consumes Deep Tiny from source.
 cmake --preset dev
 ```
 
+If OpenBLAS is not discoverable by default, create a local user preset:
+
+```bash
+cp CMakeUserPresets.json.example CMakeUserPresets.json
+# edit CMAKE_PREFIX_PATH if needed
+cmake --preset dev-local-openblas
+```
+
 ## Build
 
 ```bash
 cmake --build --preset dev
+```
+
+If you configured with `dev-local-openblas`, build with:
+
+```bash
+cmake --build --preset dev-local-openblas
 ```
 
 ## Run
