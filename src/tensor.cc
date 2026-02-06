@@ -40,13 +40,8 @@ class ReshapeBackward : public Function {
     assert(grad_size == expected_size &&
            "ReshapeBackward received invalid grad shape");
 
-    auto grad_impl = utils::TensorAccessor::GetTensorImpl(grad);
-    auto grad_storage = grad_impl->getContiguousStorage();
-    auto reshaped_impl = std::make_shared<TensorImpl>(
-        Shape(original_shape_), utils::GetContinguousStride(original_shape_), 0,
-        grad_storage);
-    auto grad_in = utils::TensorAccessor::MakeTensor(reshaped_impl, nullptr);
-    parents[0]->updateGrad(grad_in);
+    Tensor grad_view = grad;
+    parents[0]->updateGrad(grad_view.Reshape(original_shape_));
   }
 };
 
