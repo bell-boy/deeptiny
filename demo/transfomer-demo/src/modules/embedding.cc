@@ -92,12 +92,13 @@ Embedding::Embedding(uint64_t num_embeddings, uint64_t embedding_dim,
       weight_(MakeWeight(num_embeddings, embedding_dim, dtype, device,
                          requires_grad)) {}
 
-deeptiny::Tensor Embedding::Forward(const std::vector<int64_t>& indices,
-                                    const deeptiny::Shape& shape) const {
+deeptiny::Tensor Embedding::operator()(const std::vector<int64_t>& indices,
+                                       const deeptiny::Shape& shape) const {
   const uint64_t expected_count = Product(shape);
   if (expected_count != static_cast<uint64_t>(indices.size())) {
     std::stringstream err;
-    err << "Embedding::Forward expected indices.size() == product(shape), got "
+    err << "Embedding::operator() expected indices.size() == product(shape), "
+           "got "
         << indices.size() << " and " << expected_count;
     throw std::runtime_error(err.str());
   }
@@ -114,8 +115,8 @@ deeptiny::Tensor Embedding::Forward(const std::vector<int64_t>& indices,
     const int64_t token = indices[static_cast<size_t>(i)];
     if (token < 0 || static_cast<uint64_t>(token) >= num_embeddings_) {
       std::stringstream err;
-      err << "Embedding::Forward received out-of-range index at position " << i
-          << ": " << token;
+      err << "Embedding::operator() received out-of-range index at position "
+          << i << ": " << token;
       throw std::runtime_error(err.str());
     }
 

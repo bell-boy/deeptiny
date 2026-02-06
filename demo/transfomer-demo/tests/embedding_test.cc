@@ -38,7 +38,7 @@ void TestForwardShapeAndLookup() {
   const std::vector<int64_t> indices{2, 1, 5, 0};
   const deeptiny::Shape shape{2, 2};
 
-  deeptiny::Tensor output = embedding.Forward(indices, shape);
+  deeptiny::Tensor output = embedding(indices, shape);
   Require(output.shape() == deeptiny::Shape({2, 2, 4}),
           "Forward output shape should be shape + {D}");
   Require(output.dtype() == deeptiny::DType::Float32,
@@ -72,7 +72,7 @@ void TestBackwardAccumulation() {
   const std::vector<int64_t> indices{1, 3, 1, 1};
   const deeptiny::Shape shape{2, 2};
 
-  auto output = embedding.Forward(indices, shape);
+  auto output = embedding(indices, shape);
   auto loss = deeptiny::functional::Reduce(output, {0, 1, 2});
   loss.Backward();
 
@@ -107,7 +107,7 @@ void TestInvalidIndexGuard() {
 
   bool threw = false;
   try {
-    (void)embedding.Forward({0, 4}, {2});
+    (void)embedding({0, 4}, {2});
   } catch (const std::runtime_error&) {
     threw = true;
   }
@@ -115,7 +115,7 @@ void TestInvalidIndexGuard() {
 
   threw = false;
   try {
-    (void)embedding.Forward({-1, 2}, {2});
+    (void)embedding({-1, 2}, {2});
   } catch (const std::runtime_error&) {
     threw = true;
   }
@@ -128,7 +128,7 @@ void TestShapeContractGuard() {
 
   bool threw = false;
   try {
-    (void)embedding.Forward({1, 2, 3}, {2, 2});
+    (void)embedding({1, 2, 3}, {2, 2});
   } catch (const std::runtime_error&) {
     threw = true;
   }
