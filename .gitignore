@@ -10,3 +10,6 @@ build/
 
 # Test files
 Testing/
+
+# Local CMake preset overrides
+CMakeUserPresets.json

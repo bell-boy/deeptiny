@@ -2,16 +2,19 @@
   "version": 6,
   "configurePresets": [
     {
-      "name": "dev",
-      "displayName": "Dev (OpenBLAS)",
+      "name": "base",
+      "hidden": true,
       "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/build/",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-
-        "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/openblas"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
+    },
+    {
+      "name": "dev",
+      "displayName": "Dev",
+      "inherits": "base"
     }
   ],
   "buildPresets": [

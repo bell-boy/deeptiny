@@ -8,6 +8,11 @@ To build the demo run
 make demos
 ```
 
+For local OpenBLAS/CBLAS paths (for example on macOS with Homebrew), copy
+`CMakeUserPresets.json.example` to `CMakeUserPresets.json` and update
+`CMAKE_PREFIX_PATH` as needed. Keep machine-specific paths in
+`CMakeUserPresets.json` so `CMakePresets.json` stays cross-platform.
+
 To run the demo run
 
 ```bash
