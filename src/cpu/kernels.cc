@@ -28,13 +28,6 @@ void ValidateElementwiseBinaryOpInputs(const std::shared_ptr<TensorImpl>& a,
   assert(a->shape() == out->shape());
   assert(a->dtype() == b->dtype());
   assert(a->dtype() == out->dtype());
-
-  if (a->shape() != b->shape() || a->shape() != out->shape()) {
-    throw std::runtime_error("Elementwise op requires matching tensor shapes");
-  }
-  if (a->dtype() != b->dtype() || a->dtype() != out->dtype()) {
-    throw std::runtime_error("Elementwise op requires matching tensor dtypes");
-  }
 }
 
 void ValidateElementwiseUnaryOpInputs(const std::shared_ptr<TensorImpl>& x,
@@ -187,15 +180,6 @@ void ValidateElementwiseUnaryGradOpInputs(
   assert(x->shape() == grad_x->shape());
   assert(x->dtype() == grad_out->dtype());
   assert(x->dtype() == grad_x->dtype());
-
-  if (x->shape() != grad_out->shape() || x->shape() != grad_x->shape()) {
-    throw std::runtime_error(
-        "Elementwise backward op requires matching tensor shapes");
-  }
-  if (x->dtype() != grad_out->dtype() || x->dtype() != grad_x->dtype()) {
-    throw std::runtime_error(
-        "Elementwise backward op requires matching tensor dtypes");
-  }
 }
 
 template <typename Op>
