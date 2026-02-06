@@ -11,12 +11,24 @@
       "cacheVariables": {
         "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/openblas"
       }
+    },
+    {
+      "name": "release-local-openblas",
+      "displayName": "Release (No Tests, Local OpenBLAS)",
+      "inherits": "release",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/openblas"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "dev-local-openblas",
       "configurePreset": "dev-local-openblas"
+    },
+    {
+      "name": "release-local-openblas",
+      "configurePreset": "release-local-openblas"
     }
   ]
 }

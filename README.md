@@ -29,6 +29,15 @@ cmake --preset dev
 cmake --build --preset dev -j
 ```
 
+### Shared release preset (without tests)
+
+Use this for optimized builds where test targets should not be generated:
+
+```bash
+cmake --preset release
+cmake --build --preset release -j
+```
+
 ### Local OpenBLAS path (macOS/Homebrew example)
 
 Keep machine-specific paths in `CMakeUserPresets.json`:
@@ -40,7 +49,16 @@ cmake --preset dev-local-openblas
 cmake --build --preset dev-local-openblas -j
 ```
 
+Release build with local OpenBLAS path:
+
+```bash
+cmake --preset release-local-openblas
+cmake --build --preset release-local-openblas -j
+```
+
 ## Run tests
+
+Use a dev preset for tests. The `release` preset sets `BUILD_TESTING=OFF`.
 
 ```bash
 ctest --test-dir build --output-on-failure

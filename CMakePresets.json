@@ -15,12 +15,27 @@
       "name": "dev",
       "displayName": "Dev",
       "inherits": "base"
+    },
+    {
+      "name": "release",
+      "displayName": "Release (No Tests)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "dev",
       "configurePreset": "dev"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
     }
   ]
 }

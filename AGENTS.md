@@ -22,3 +22,4 @@
 - Keep `Tensor::Squeeze` API minimal: expose only the `std::vector<uint64_t>` overload and rely on implicit brace-init conversion at call sites.
 - Keep autograd pending-count bookkeeping owned by `Engine`; avoid exposing mutators on `AutogradMeta` for `pending_`.
 - Keep autograd interfaces minimal: `updateGrad` only accumulates gradients, and backward `Function` callbacks should not take `Engine` unless it is truly needed.
+- Keep CMake presets split by intent: `dev` for debug/testing, and `release` for optimized builds with `BUILD_TESTING=OFF` (output in `build/release`).
