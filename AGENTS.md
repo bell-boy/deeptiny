@@ -1,7 +1,7 @@
 # AGENTS Notes
 
 ## Workflow reminders
-- Commit after finishing changes in a task.
+- Commit after finishing changes in a task, then open/update a PR for user review.
 - If needed, rebase off `main` before committing.
 - After each commit, update `AGENTS.md` if there are durable decisions/conventions worth preserving.
 
