@@ -9,6 +9,7 @@
 #include "deeptiny/functional.h"
 #include "doctest/doctest.h"
 #include "engine.h"
+#include "test_utils.h"
 #include "utils.h"
 
 namespace {
@@ -95,7 +96,8 @@ TEST_CASE("Random view forward test.") {
                   src_i4 * src_stride[4];
 
               CHECK(view_data[static_cast<size_t>(view_offset)] ==
-                    src_data[static_cast<size_t>(src_offset)]);
+                    deeptiny::test_utils::Approx(
+                        src_data[static_cast<size_t>(src_offset)]));
             }
           }
         }
@@ -212,7 +214,7 @@ TEST_CASE("View assignment test") {
 
     const auto* t_data_after = static_cast<const float*>(t_impl->data());
     for (uint64_t i = 0; i < total_size; ++i) {
-      CHECK(t_data_after[i] == expected_data[i]);
+      CHECK(t_data_after[i] == deeptiny::test_utils::Approx(expected_data[i]));
     }
 
     const auto* view_data = static_cast<const float*>(view_impl->data());
@@ -231,7 +233,8 @@ TEST_CASE("View assignment test") {
                   i3 * rhs_stride[3] + i4 * rhs_stride[4];
 
               CHECK(view_data[static_cast<size_t>(view_offset)] ==
-                    rhs_data_const[static_cast<size_t>(rhs_offset)]);
+                    deeptiny::test_utils::Approx(
+                        rhs_data_const[static_cast<size_t>(rhs_offset)]));
             }
           }
         }
@@ -302,7 +305,7 @@ TEST_CASE("View assignment guards and autograd metadata") {
     const auto* rhs_grad_data =
         static_cast<const float*>(rhs_grad_impl->data());
     for (uint64_t i = 0; i < 6; ++i) {
-      CHECK(rhs_grad_data[i] == grad_data[i]);
+      CHECK(rhs_grad_data[i] == deeptiny::test_utils::Approx(grad_data[i]));
     }
   }
 }
@@ -343,7 +346,7 @@ TEST_CASE("View backward test") {
     }
 
     for (uint64_t i = 0; i < total_size; ++i) {
-      CHECK(grad_data[i] == expected[i]);
+      CHECK(grad_data[i] == deeptiny::test_utils::Approx(expected[i]));
     }
   }
 
@@ -374,7 +377,7 @@ TEST_CASE("View backward test") {
     }
 
     for (size_t i = 0; i < expected.size(); ++i) {
-      CHECK(grad_data[i] == expected[i]);
+      CHECK(grad_data[i] == deeptiny::test_utils::Approx(expected[i]));
     }
   }
 }

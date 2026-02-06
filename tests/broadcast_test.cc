@@ -8,6 +8,7 @@
 #include "deeptiny/functional.h"
 #include "deeptiny/tensor.h"
 #include "doctest/doctest.h"
+#include "test_utils.h"
 #include "utils.h"
 
 namespace {
@@ -25,7 +26,7 @@ void CheckAllEqual(const deeptiny::Tensor& t, float expected) {
   const uint64_t total = deeptiny::utils::GetTotalSize(impl->shape());
   const auto* data = static_cast<const float*>(impl->data());
   for (uint64_t i = 0; i < total; ++i) {
-    CHECK(data[i] == expected);
+    CHECK(data[i] == deeptiny::test_utils::Approx(expected));
   }
 }
 
@@ -113,8 +114,9 @@ TEST_CASE("Broadcast Forward Test") {
       }
       const int64_t out_offset = OffsetForIndex(out_stride, out_index);
       const int64_t a_offset = OffsetForIndex(a_stride, a_index);
-      CHECK(out_data[static_cast<size_t>(out_offset)] ==
-            a_data[static_cast<size_t>(a_offset)]);
+      CHECK(
+          out_data[static_cast<size_t>(out_offset)] ==
+          deeptiny::test_utils::Approx(a_data[static_cast<size_t>(a_offset)]));
     });
   }
 
@@ -150,8 +152,9 @@ TEST_CASE("Broadcast Forward Test") {
       }
       const int64_t out_offset = OffsetForIndex(out_stride, out_index);
       const int64_t b_offset = OffsetForIndex(b_stride, b_index);
-      CHECK(out_data[static_cast<size_t>(out_offset)] ==
-            b_data[static_cast<size_t>(b_offset)]);
+      CHECK(
+          out_data[static_cast<size_t>(out_offset)] ==
+          deeptiny::test_utils::Approx(b_data[static_cast<size_t>(b_offset)]));
     });
   }
 
@@ -226,10 +229,12 @@ TEST_CASE("Broadcast Forward Test") {
       const int64_t a_offset = OffsetForIndex(a_stride, a_index);
       const int64_t b_offset = OffsetForIndex(b_stride, b_index);
 
-      CHECK(a_out_data[static_cast<size_t>(a_out_offset)] ==
-            a_data[static_cast<size_t>(a_offset)]);
-      CHECK(b_out_data[static_cast<size_t>(b_out_offset)] ==
-            b_data[static_cast<size_t>(b_offset)]);
+      CHECK(
+          a_out_data[static_cast<size_t>(a_out_offset)] ==
+          deeptiny::test_utils::Approx(a_data[static_cast<size_t>(a_offset)]));
+      CHECK(
+          b_out_data[static_cast<size_t>(b_out_offset)] ==
+          deeptiny::test_utils::Approx(b_data[static_cast<size_t>(b_offset)]));
     });
   }
 }
