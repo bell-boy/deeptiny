@@ -11,15 +11,11 @@ LlamaMLP::LlamaMLP(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
       up_proj_(in_dim, hidden_dim, bias, device),
       down_proj_(hidden_dim, out_dim, bias, device) {}
 
-deeptiny::Tensor LlamaMLP::Forward(const deeptiny::Tensor& x) const {
+deeptiny::Tensor LlamaMLP::operator()(const deeptiny::Tensor& x) const {
   deeptiny::Tensor gated = deeptiny::functional::ReLU(gate_proj_(x));
   deeptiny::Tensor up = up_proj_(x);
   deeptiny::Tensor hidden = gated * up;
   return down_proj_(hidden);
-}
-
-deeptiny::Tensor LlamaMLP::operator()(const deeptiny::Tensor& x) const {
-  return Forward(x);
 }
 
 Linear& LlamaMLP::gate_proj() { return gate_proj_; }

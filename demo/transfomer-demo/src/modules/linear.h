@@ -13,7 +13,6 @@ class Linear {
   Linear(uint64_t in_dim, uint64_t out_dim, bool bias = true,
          deeptiny::Device device = deeptiny::Device::CPU);
 
-  deeptiny::Tensor Forward(const deeptiny::Tensor& x) const;
   deeptiny::Tensor operator()(const deeptiny::Tensor& x) const;
 
   deeptiny::Tensor& weight();

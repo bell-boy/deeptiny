@@ -52,7 +52,7 @@ Linear::Linear(uint64_t in_dim, uint64_t out_dim, bool bias,
   }
 }
 
-deeptiny::Tensor Linear::Forward(const deeptiny::Tensor& x) const {
+deeptiny::Tensor Linear::operator()(const deeptiny::Tensor& x) const {
   const auto& input_shape = x.shape();
   if (input_shape.size() < 2) {
     throw std::runtime_error("Linear expects input rank >= 2");
@@ -78,10 +78,6 @@ deeptiny::Tensor Linear::Forward(const deeptiny::Tensor& x) const {
   deeptiny::Shape output_shape(input_shape.begin(), input_shape.end() - 1);
   output_shape.push_back(out_dim_);
   return out.Reshape(output_shape);
-}
-
-deeptiny::Tensor Linear::operator()(const deeptiny::Tensor& x) const {
-  return Forward(x);
 }
 
 deeptiny::Tensor& Linear::weight() { return weight_; }
