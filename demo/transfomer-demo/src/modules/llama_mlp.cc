@@ -22,9 +22,15 @@ deeptiny::Tensor LlamaMLP::operator()(const deeptiny::Tensor& x) const {
   return Forward(x);
 }
 
+Linear& LlamaMLP::gate_proj() { return gate_proj_; }
+
 const Linear& LlamaMLP::gate_proj() const { return gate_proj_; }
 
+Linear& LlamaMLP::up_proj() { return up_proj_; }
+
 const Linear& LlamaMLP::up_proj() const { return up_proj_; }
+
+Linear& LlamaMLP::down_proj() { return down_proj_; }
 
 const Linear& LlamaMLP::down_proj() const { return down_proj_; }
 

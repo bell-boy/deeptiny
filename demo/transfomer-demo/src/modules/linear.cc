@@ -84,7 +84,11 @@ deeptiny::Tensor Linear::operator()(const deeptiny::Tensor& x) const {
   return Forward(x);
 }
 
+deeptiny::Tensor& Linear::weight() { return weight_; }
+
 const deeptiny::Tensor& Linear::weight() const { return weight_; }
+
+std::optional<deeptiny::Tensor>& Linear::bias() { return bias_; }
 
 const std::optional<deeptiny::Tensor>& Linear::bias() const { return bias_; }
 

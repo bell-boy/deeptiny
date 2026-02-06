@@ -16,7 +16,9 @@ class Linear {
   deeptiny::Tensor Forward(const deeptiny::Tensor& x) const;
   deeptiny::Tensor operator()(const deeptiny::Tensor& x) const;
 
+  deeptiny::Tensor& weight();
   const deeptiny::Tensor& weight() const;
+  std::optional<deeptiny::Tensor>& bias();
   const std::optional<deeptiny::Tensor>& bias() const;
 
  private:

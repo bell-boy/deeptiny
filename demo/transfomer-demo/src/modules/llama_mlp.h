@@ -16,8 +16,11 @@ class LlamaMLP {
   deeptiny::Tensor Forward(const deeptiny::Tensor& x) const;
   deeptiny::Tensor operator()(const deeptiny::Tensor& x) const;
 
+  Linear& gate_proj();
   const Linear& gate_proj() const;
+  Linear& up_proj();
   const Linear& up_proj() const;
+  Linear& down_proj();
   const Linear& down_proj() const;
 
  private:
