@@ -37,9 +37,8 @@ class ReshapeBackward : public Function {
 
     const uint64_t expected_size = utils::GetTotalSize(original_shape_);
     const uint64_t grad_size = utils::GetTotalSize(grad.shape());
-    if (grad_size != expected_size) {
-      throw std::runtime_error("ReshapeBackward received invalid grad shape");
-    }
+    assert(grad_size == expected_size &&
+           "ReshapeBackward received invalid grad shape");
 
     auto grad_impl = utils::TensorAccessor::GetTensorImpl(grad);
     auto grad_storage = grad_impl->getContiguousStorage();
