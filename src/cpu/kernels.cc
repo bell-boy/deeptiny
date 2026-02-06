@@ -174,10 +174,10 @@ void ValidateBatchedMatMulInputs(const std::shared_ptr<TensorImpl>& a,
          "BatchedMatMul kernel output cols mismatch");
 }
 
-void ApplyBatchedMatMul(const std::shared_ptr<TensorImpl>& a,
-                        const std::shared_ptr<TensorImpl>& b,
-                        const std::shared_ptr<TensorImpl>& out,
-                        bool transpose_a, bool transpose_b) {
+void BatchedMatMul(const std::shared_ptr<TensorImpl>& a,
+                   const std::shared_ptr<TensorImpl>& b,
+                   const std::shared_ptr<TensorImpl>& out, bool transpose_a,
+                   bool transpose_b) {
   ValidateBatchedMatMulInputs(a, b, out, transpose_a, transpose_b);
 
   const auto& out_shape = out->shape();
@@ -290,7 +290,10 @@ void Div(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
 void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
                    std::shared_ptr<TensorImpl> out, bool transpose_a,
                    bool transpose_b) {
-  ApplyBatchedMatMul(a, b, out, transpose_a, transpose_b);
+  const auto impl = static_cast<void (*)(
+      const std::shared_ptr<TensorImpl>&, const std::shared_ptr<TensorImpl>&,
+      const std::shared_ptr<TensorImpl>&, bool, bool)>(BatchedMatMul);
+  impl(a, b, out, transpose_a, transpose_b);
 }
 
 };  // namespace cpu
