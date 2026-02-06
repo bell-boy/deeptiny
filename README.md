@@ -81,7 +81,7 @@ include(FetchContent)
 FetchContent_Declare(
   deeptiny
   GIT_REPOSITORY https://github.com/bell-boy/deeptiny.git
-  GIT_TAG 9b23455dbe567a87cf8d8e7ff3f58be413f465d8
+  GIT_TAG <pin-a-commit-sha-or-release-tag>
 )
 FetchContent_MakeAvailable(deeptiny)
 
@@ -116,20 +116,8 @@ If enabled from a FetchContent consumer build, run deeptiny tests with:
 ctest --test-dir build/_deps/deeptiny-build --output-on-failure
 ```
 
-### Alternative: Install and consume with `find_package`
-
-```bash
-cmake --preset release-local-openblas
-cmake --build --preset release-local-openblas -j
-cmake --install build/release --prefix /path/to/deeptiny-install
-```
-
-Then in the consumer:
-
-```cmake
-find_package(deeptiny CONFIG REQUIRED)
-target_link_libraries(my_app PRIVATE deeptiny::deeptiny)
-```
+`deeptiny` is intentionally FetchContent-first and does not provide
+install/export package metadata for `find_package`.
 
 ## Minimal autograd example
 

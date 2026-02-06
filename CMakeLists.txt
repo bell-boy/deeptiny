@@ -4,11 +4,6 @@ project(deeptiny)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
-
-set(DEEPTINY_PACKAGE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/deeptiny")
-set(DEEPTINY_PACKAGE_VERSION "0.0.0")
 option(DEEPTINY_BUILD_TESTS "Build deeptiny tests" ${PROJECT_IS_TOP_LEVEL})
 option(DEEPTINY_ENABLE_WERROR "Treat warnings as errors for deeptiny"
        ${PROJECT_IS_TOP_LEVEL})
@@ -29,7 +24,6 @@ target_compile_features(deeptiny PUBLIC cxx_std_23)
 target_include_directories(deeptiny
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -63,42 +57,6 @@ else()
     target_compile_options(deeptiny PRIVATE -Werror)
   endif()
 endif()
-
-configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deeptinyConfig.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/deeptinyConfig.cmake"
-  INSTALL_DESTINATION "${DEEPTINY_PACKAGE_INSTALL_DIR}"
-)
-
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/deeptinyConfigVersion.cmake"
-  VERSION "${DEEPTINY_PACKAGE_VERSION}"
-  COMPATIBILITY SameMajorVersion
-)
-
-install(TARGETS deeptiny
-  EXPORT deeptinyTargets
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-  INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-)
-
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-)
-
-install(EXPORT deeptinyTargets
-  FILE deeptinyTargets.cmake
-  NAMESPACE deeptiny::
-  DESTINATION "${DEEPTINY_PACKAGE_INSTALL_DIR}"
-)
-
-install(FILES
-  "${CMAKE_CURRENT_BINARY_DIR}/deeptinyConfig.cmake"
-  "${CMAKE_CURRENT_BINARY_DIR}/deeptinyConfigVersion.cmake"
-  DESTINATION "${DEEPTINY_PACKAGE_INSTALL_DIR}"
-)
 
 if(DEEPTINY_BUILD_TESTS)
   enable_testing()

@@ -23,5 +23,5 @@
 - Keep autograd pending-count bookkeeping owned by `Engine`; avoid exposing mutators on `AutogradMeta` for `pending_`.
 - Keep autograd interfaces minimal: `updateGrad` only accumulates gradients, and backward `Function` callbacks should not take `Engine` unless it is truly needed.
 - Keep CMake presets split by intent: `dev` for debug/testing, and `release` for optimized builds with `DEEPTINY_BUILD_TESTS=OFF` (output in `build/release`).
-- Keep CMake package/export support working: install must provide `deeptinyConfig.cmake` and exported target `deeptiny::deeptiny` for `find_package(deeptiny CONFIG REQUIRED)`.
-- Prefer FetchContent as the default consumer path; embedded use should default `DEEPTINY_BUILD_TESTS=OFF` and `DEEPTINY_ENABLE_WERROR=OFF` unless the parent explicitly enables them.
+- Keep deeptiny as a pure FetchContent integration target; do not add install/export package metadata for `find_package`.
+- Embedded use should default `DEEPTINY_BUILD_TESTS=OFF` and `DEEPTINY_ENABLE_WERROR=OFF` unless the parent explicitly enables them.
