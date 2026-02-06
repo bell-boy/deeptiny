@@ -1,7 +1,6 @@
 #include "deeptiny/functional.h"
 
 #include <algorithm>
-#include <initializer_list>
 #include <optional>
 #include <random>
 #include <unordered_set>
@@ -121,13 +120,6 @@ Tensor ReduceImpl(const Tensor& x, const DimContainer& dims, bool keep_dims) {
       squeezed_impl, utils::TensorAccessor::GetAutogradMeta(res));
 }
 }  // namespace
-
-// TODO: make this not suck
-// TODO: support for inplace add
-Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims,
-              bool keep_dims) {
-  return ReduceImpl(x, dims, keep_dims);
-}
 
 Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
               bool keep_dims) {

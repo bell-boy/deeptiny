@@ -1,6 +1,5 @@
 #pragma once
 // Common tensor functions
-#include <initializer_list>
 #include <vector>
 
 #include "deeptiny/tensor.h"
@@ -19,8 +18,6 @@ Tensor Zeros(Shape shape, Device device = Device::CPU,
 /**
  * Reduce a tensor along the given dimensions
  */
-Tensor Reduce(const Tensor& x, std::initializer_list<uint64_t> dims,
-              bool keep_dims = false);
 Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
               bool keep_dims = false);
 }  // namespace functional
