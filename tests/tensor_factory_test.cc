@@ -44,6 +44,26 @@ TEST_CASE("Tensor::CreateUniform supports requires_grad") {
   CHECK(t.requires_grad());
 }
 
+TEST_CASE("Tensor::numel returns product of shape dimensions") {
+  SUBCASE("Rank-2 tensor") {
+    auto t = deeptiny::Tensor::Zeros({4, 5}, deeptiny::Device::CPU,
+                                     deeptiny::DType::Float32);
+    CHECK(t.numel() == 20);
+  }
+
+  SUBCASE("Scalar tensor has one element") {
+    auto t = deeptiny::Tensor::Zeros({}, deeptiny::Device::CPU,
+                                     deeptiny::DType::Float32);
+    CHECK(t.numel() == 1);
+  }
+
+  SUBCASE("Any zero dimension yields zero elements") {
+    auto t = deeptiny::Tensor::Zeros({2, 0, 3}, deeptiny::Device::CPU,
+                                     deeptiny::DType::Float32);
+    CHECK(t.numel() == 0);
+  }
+}
+
 TEST_CASE("Tensor::FromVector creates tensors and validates shape") {
   SUBCASE("Round trip with requires_grad") {
     auto t =

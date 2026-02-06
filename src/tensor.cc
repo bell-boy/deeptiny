@@ -108,6 +108,7 @@ Tensor::Tensor(Shape shape, DType dtype, Device device, bool requires_grad)
       autograd_meta_(std::make_shared<AutogradMeta>(nullptr, requires_grad)) {}
 
 Shape Tensor::shape() const { return tensor_impl_->shape(); }
+uint64_t Tensor::numel() const { return utils::GetTotalSize(shape()); }
 DType Tensor::dtype() const { return tensor_impl_->dtype(); }
 Device Tensor::device() const { return tensor_impl_->device(); }
 
