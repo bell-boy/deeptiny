@@ -110,6 +110,12 @@ You can override either from the parent configure command:
 cmake -S . -B build -DDEEPTINY_BUILD_TESTS=ON -DDEEPTINY_ENABLE_WERROR=ON
 ```
 
+If enabled from a FetchContent consumer build, run deeptiny tests with:
+
+```bash
+ctest --test-dir build/_deps/deeptiny-build --output-on-failure
+```
+
 ### Alternative: Install and consume with `find_package`
 
 ```bash
