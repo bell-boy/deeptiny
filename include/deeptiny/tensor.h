@@ -35,6 +35,7 @@ class Tensor {
   TensorSliceProxy operator()(std::vector<Slice> slices);
   Tensor operator()(std::vector<Slice> slices) const;
   Shape shape() const;
+  uint64_t numel() const;
   DType dtype() const;
   Device device() const;
   Tensor Clone() const;
