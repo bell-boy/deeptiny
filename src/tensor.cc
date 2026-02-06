@@ -14,11 +14,9 @@
 #include "autograd_meta.h"
 #include "cpu/kernels.h"
 #include "deeptiny/autograd.h"
-#include "deeptiny/view.h"
 #include "engine.h"
 #include "tensor_impl.h"
 #include "utils.h"
-#include "view_backward.h"
 
 namespace deeptiny {
 
@@ -290,19 +288,12 @@ Tensor Tensor::Zeros(Shape shape, Device device, DType dtype) {
   };
 }
 
-View Tensor::operator()(std::vector<Slice> slices) {
-  auto view_impl = tensor_impl_->View(slices);
-  auto backward = std::make_shared<SliceBackward>(*this, std::move(slices));
-  auto grad_meta = std::make_shared<AutogradMeta>(backward);
-  return utils::TensorAccessor::MakeView(std::move(view_impl), grad_meta);
+TensorSliceProxy Tensor::operator()(std::vector<Slice> slices) {
+  return TensorSliceProxy(this, std::move(slices));
 }
 
-const View Tensor::operator()(std::vector<Slice> slices) const {
-  auto view_impl = tensor_impl_->View(slices);
-  auto backward = std::make_shared<SliceBackward>(*this, std::move(slices));
-  auto grad_meta = std::make_shared<AutogradMeta>(backward);
-  return (const View)utils::TensorAccessor::MakeView(std::move(view_impl),
-                                                     grad_meta);
+Tensor Tensor::operator()(std::vector<Slice> slices) const {
+  return TensorSliceProxy(this, std::move(slices));
 }
 
 };  // namespace deeptiny

@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "deeptiny/tensor_slice_proxy.h"
 #include "deeptiny/types.h"
 
 namespace deeptiny {
@@ -17,7 +18,7 @@ struct TensorAccessor;
 
 class TensorImpl;
 class AutogradMeta;
-class View;
+class TensorSliceProxy;
 
 class Tensor {
  protected:
@@ -31,8 +32,8 @@ class Tensor {
   // Create a a contingous tensor with uninitialized data
   Tensor(Shape shape, DType dtype, Device device, bool requires_grad);
 
-  View operator()(std::vector<Slice> slices);
-  const View operator()(std::vector<Slice> slices) const;
+  TensorSliceProxy operator()(std::vector<Slice> slices);
+  Tensor operator()(std::vector<Slice> slices) const;
   Shape shape() const;
   DType dtype() const;
   Device device() const;
@@ -93,6 +94,7 @@ class Tensor {
   void operator/=(const Tensor& other);
 
   friend struct utils::TensorAccessor;
+  friend class TensorSliceProxy;
 };
 
 };  // namespace deeptiny

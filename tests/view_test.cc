@@ -1,5 +1,4 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "deeptiny/view.h"
 
 #include <array>
 #include <random>
@@ -7,8 +6,8 @@
 
 #include "broadcast.h"
 #include "deeptiny/functional.h"
+#include "deeptiny/tensor.h"
 #include "doctest/doctest.h"
-#include "engine.h"
 #include "test_utils.h"
 #include "utils.h"
 
@@ -16,7 +15,7 @@ namespace {
 constexpr int kRank = 5;
 }  // namespace
 
-TEST_CASE("Random view forward test.") {
+TEST_CASE("Random slice forward test") {
   std::mt19937 rng(12345);
   std::uniform_int_distribution<int64_t> dim_dist(1, 7);
 
@@ -50,7 +49,7 @@ TEST_CASE("Random view forward test.") {
       std::uniform_int_distribution<int64_t> len_dist(1, max_len);
       const int64_t len = len_dist(rng);
 
-      const int64_t end = start + (len - 1) * stride + 1;  // end is exclusive
+      const int64_t end = start + (len - 1) * stride + 1;
 
       starts[i] = start;
       strides[i] = stride;
@@ -59,18 +58,19 @@ TEST_CASE("Random view forward test.") {
     }
 
     std::vector<deeptiny::Slice> view_slices(slices.begin(), slices.end());
-    auto view = t(view_slices);
-    auto view_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(view);
+    deeptiny::Tensor slice_tensor = t(view_slices);
+    auto slice_impl =
+        deeptiny::utils::TensorAccessor::GetTensorImpl(slice_tensor);
 
     deeptiny::Shape expected_shape(kRank);
     for (int i = 0; i < kRank; ++i) {
       expected_shape[i] = static_cast<uint64_t>(lens[i]);
     }
 
-    CHECK(view_impl->shape() == expected_shape);
+    CHECK(slice_impl->shape() == expected_shape);
 
-    const auto* view_data = static_cast<const float*>(view_impl->data());
-    const auto& view_stride = view_impl->stride();
+    const auto* slice_data = static_cast<const float*>(slice_impl->data());
+    const auto& slice_stride = slice_impl->stride();
     const auto* src_data = static_cast<const float*>(t_impl->data());
     const auto& src_stride = t_impl->stride();
 
@@ -79,10 +79,10 @@ TEST_CASE("Random view forward test.") {
         for (int64_t i2 = 0; i2 < lens[2]; ++i2) {
           for (int64_t i3 = 0; i3 < lens[3]; ++i3) {
             for (int64_t i4 = 0; i4 < lens[4]; ++i4) {
-              const int64_t view_offset =
-                  i0 * view_stride[0] + i1 * view_stride[1] +
-                  i2 * view_stride[2] + i3 * view_stride[3] +
-                  i4 * view_stride[4];
+              const int64_t slice_offset =
+                  i0 * slice_stride[0] + i1 * slice_stride[1] +
+                  i2 * slice_stride[2] + i3 * slice_stride[3] +
+                  i4 * slice_stride[4];
 
               const int64_t src_i0 = starts[0] + i0 * strides[0];
               const int64_t src_i1 = starts[1] + i1 * strides[1];
@@ -95,7 +95,7 @@ TEST_CASE("Random view forward test.") {
                   src_i2 * src_stride[2] + src_i3 * src_stride[3] +
                   src_i4 * src_stride[4];
 
-              CHECK(view_data[static_cast<size_t>(view_offset)] ==
+              CHECK(slice_data[static_cast<size_t>(slice_offset)] ==
                     deeptiny::test_utils::Approx(
                         src_data[static_cast<size_t>(src_offset)]));
             }
@@ -106,7 +106,7 @@ TEST_CASE("Random view forward test.") {
   }
 }
 
-TEST_CASE("View assignment test") {
+TEST_CASE("Slice assignment test") {
   std::mt19937 rng(54321);
   std::uniform_int_distribution<int64_t> dim_dist(1, 7);
 
@@ -146,7 +146,7 @@ TEST_CASE("View assignment test") {
       std::uniform_int_distribution<int64_t> len_dist(1, max_len);
       const int64_t len = len_dist(rng);
 
-      const int64_t end = start + (len - 1) * stride + 1;  // end is exclusive
+      const int64_t end = start + (len - 1) * stride + 1;
 
       starts[i] = start;
       strides[i] = stride;
@@ -154,16 +154,18 @@ TEST_CASE("View assignment test") {
       slices[i] = deeptiny::Slice(start, end, stride);
     }
 
-    std::vector<deeptiny::Slice> view_slices(slices.begin(), slices.end());
-    auto view = t(view_slices);
-    auto view_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(view);
+    std::vector<deeptiny::Slice> slice_specs(slices.begin(), slices.end());
+    auto slice_proxy = t(slice_specs);
+    deeptiny::Tensor slice_tensor = static_cast<deeptiny::Tensor>(slice_proxy);
+    auto slice_impl =
+        deeptiny::utils::TensorAccessor::GetTensorImpl(slice_tensor);
 
     deeptiny::Shape expected_shape(kRank);
     for (int i = 0; i < kRank; ++i) {
       expected_shape[i] = static_cast<uint64_t>(lens[i]);
     }
 
-    CHECK(view_impl->shape() == expected_shape);
+    CHECK(slice_impl->shape() == expected_shape);
 
     deeptiny::Tensor rhs(expected_shape, deeptiny::DType::Float32,
                          deeptiny::Device::CPU, false);
@@ -178,7 +180,7 @@ TEST_CASE("View assignment test") {
 
     std::vector<float> expected_data = original_data;
     const auto& src_stride = t_impl->stride();
-    const auto& view_stride = view_impl->stride();
+    const auto& slice_stride = slice_impl->stride();
     const auto& rhs_stride = rhs_impl->stride();
     const auto* rhs_data_const = static_cast<const float*>(rhs_impl->data());
 
@@ -210,29 +212,29 @@ TEST_CASE("View assignment test") {
       }
     }
 
-    view = rhs;
+    slice_proxy = rhs;
 
     const auto* t_data_after = static_cast<const float*>(t_impl->data());
     for (uint64_t i = 0; i < total_size; ++i) {
       CHECK(t_data_after[i] == deeptiny::test_utils::Approx(expected_data[i]));
     }
 
-    const auto* view_data = static_cast<const float*>(view_impl->data());
+    const auto* slice_data = static_cast<const float*>(slice_impl->data());
     for (int64_t i0 = 0; i0 < lens[0]; ++i0) {
       for (int64_t i1 = 0; i1 < lens[1]; ++i1) {
         for (int64_t i2 = 0; i2 < lens[2]; ++i2) {
           for (int64_t i3 = 0; i3 < lens[3]; ++i3) {
             for (int64_t i4 = 0; i4 < lens[4]; ++i4) {
-              const int64_t view_offset =
-                  i0 * view_stride[0] + i1 * view_stride[1] +
-                  i2 * view_stride[2] + i3 * view_stride[3] +
-                  i4 * view_stride[4];
+              const int64_t slice_offset =
+                  i0 * slice_stride[0] + i1 * slice_stride[1] +
+                  i2 * slice_stride[2] + i3 * slice_stride[3] +
+                  i4 * slice_stride[4];
 
               const int64_t rhs_offset =
                   i0 * rhs_stride[0] + i1 * rhs_stride[1] + i2 * rhs_stride[2] +
                   i3 * rhs_stride[3] + i4 * rhs_stride[4];
 
-              CHECK(view_data[static_cast<size_t>(view_offset)] ==
+              CHECK(slice_data[static_cast<size_t>(slice_offset)] ==
                     deeptiny::test_utils::Approx(
                         rhs_data_const[static_cast<size_t>(rhs_offset)]));
             }
@@ -243,75 +245,82 @@ TEST_CASE("View assignment test") {
   }
 }
 
-TEST_CASE("View assignment guards and autograd metadata") {
-  SUBCASE("View assignment installs new autograd metadata") {
+TEST_CASE("Slice assignment guards and autograd metadata") {
+  SUBCASE("Slice assignment installs new metadata on destination tensor") {
     deeptiny::Tensor t({2, 3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
                        false);
-    auto view = t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)});
-    auto before = deeptiny::utils::TensorAccessor::GetAutogradMeta(view);
+    auto before = deeptiny::utils::TensorAccessor::GetAutogradMeta(t);
     REQUIRE(before != nullptr);
 
     deeptiny::Tensor rhs({2, 3}, deeptiny::DType::Float32,
                          deeptiny::Device::CPU, true);
-    view = rhs;
-    auto after = deeptiny::utils::TensorAccessor::GetAutogradMeta(view);
+    t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)}) = rhs;
+
+    auto after = deeptiny::utils::TensorAccessor::GetAutogradMeta(t);
     REQUIRE(after != nullptr);
     CHECK(after.get() != before.get());
   }
 
-  SUBCASE("View assignment forbids zero-stride views") {
+  SUBCASE("Slice assignment forbids zero-stride views") {
     deeptiny::Tensor base({2, 1}, deeptiny::DType::Float32,
                           deeptiny::Device::CPU, false);
     auto broadcasted = deeptiny::utils::BroadcastToShape(base, {2, 3});
     REQUIRE(broadcasted.has_value());
-    auto view = (*broadcasted)({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)});
 
     deeptiny::Tensor rhs({2, 3}, deeptiny::DType::Float32,
                          deeptiny::Device::CPU, false);
     CHECK_THROWS_WITH(
-        view = rhs,
-        doctest::Contains("Cannot assign to a view with zero stride"));
+        (*broadcasted)({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)}) = rhs,
+        doctest::Contains("Cannot assign to a slice with zero stride"));
   }
 
-  SUBCASE("View assignment backward propagates to RHS") {
+  SUBCASE("Temporary assignment path backpropagates to RHS and prior chain") {
     deeptiny::Tensor t({2, 3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
-                       false);
-    auto view = t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)});
+                       true);
+    deeptiny::Tensor t_before = t;
 
-    deeptiny::Tensor rhs({2, 3}, deeptiny::DType::Float32,
+    deeptiny::Tensor rhs({2, 2}, deeptiny::DType::Float32,
                          deeptiny::Device::CPU, true);
-    view = rhs;
+    t({deeptiny::Slice(0, 2), deeptiny::Slice(1, 3)}) = rhs;
 
-    deeptiny::Tensor grad({2, 3}, deeptiny::DType::Float32,
-                          deeptiny::Device::CPU, false);
-    auto grad_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(grad);
-    auto* grad_data = static_cast<float*>(grad_impl->data());
-    for (uint64_t i = 0; i < 6; ++i) {
-      grad_data[i] = static_cast<float>(i) + 1.0f;
-    }
-
-    auto view_meta = deeptiny::utils::TensorAccessor::GetAutogradMeta(view);
-    REQUIRE(view_meta != nullptr);
-
-    deeptiny::Engine engine(view_meta);
-    view_meta->updateGrad(grad);
-    engine.Run();
+    auto loss = deeptiny::functional::Reduce(t, {0, 1});
+    loss.Backward();
 
     auto rhs_grad = rhs.grad();
     REQUIRE(rhs_grad.has_value());
+    deeptiny::test_utils::CheckTensorData(*rhs_grad, {1.0f, 1.0f, 1.0f, 1.0f});
 
-    auto rhs_grad_impl =
-        deeptiny::utils::TensorAccessor::GetTensorImpl(*rhs_grad);
-    const auto* rhs_grad_data =
-        static_cast<const float*>(rhs_grad_impl->data());
-    for (uint64_t i = 0; i < 6; ++i) {
-      CHECK(rhs_grad_data[i] == deeptiny::test_utils::Approx(grad_data[i]));
-    }
+    auto t_before_grad = t_before.grad();
+    REQUIRE(t_before_grad.has_value());
+    deeptiny::test_utils::CheckTensorData(*t_before_grad,
+                                          {1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f});
+  }
+
+  SUBCASE("Broadcasted RHS assignment reduces gradients correctly") {
+    deeptiny::Tensor t({2, 3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
+                       true);
+    deeptiny::Tensor t_before = t;
+
+    deeptiny::Tensor rhs({2, 1}, deeptiny::DType::Float32,
+                         deeptiny::Device::CPU, true);
+    t({deeptiny::Slice(0, 2), deeptiny::Slice(0, 3)}) = rhs;
+
+    auto loss = deeptiny::functional::Reduce(t, {0, 1});
+    loss.Backward();
+
+    auto rhs_grad = rhs.grad();
+    REQUIRE(rhs_grad.has_value());
+    deeptiny::test_utils::CheckTensorData(*rhs_grad, {3.0f, 3.0f});
+
+    auto t_before_grad = t_before.grad();
+    REQUIRE(t_before_grad.has_value());
+    deeptiny::test_utils::CheckTensorData(*t_before_grad,
+                                          {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
   }
 }
 
-TEST_CASE("View backward test") {
-  SUBCASE("Strided view scatter matches expected gradient") {
+TEST_CASE("Slice backward test") {
+  SUBCASE("Strided slice scatter matches expected gradient") {
     deeptiny::Tensor t({4, 5}, deeptiny::DType::Float32, deeptiny::Device::CPU,
                        true);
     auto t_impl = deeptiny::utils::TensorAccessor::GetTensorImpl(t);
@@ -325,8 +334,8 @@ TEST_CASE("View backward test") {
         deeptiny::Slice(1, 4, 2),
         deeptiny::Slice(0, 5, 2),
     };
-    auto view = t(slices);
-    auto loss = deeptiny::functional::Reduce(view, {0, 1});
+    deeptiny::Tensor slice_tensor = t(slices);
+    auto loss = deeptiny::functional::Reduce(slice_tensor, {0, 1});
     loss.Backward();
 
     auto grad_opt = t.grad();
@@ -350,15 +359,15 @@ TEST_CASE("View backward test") {
     }
   }
 
-  SUBCASE("View + broadcast chain accumulates gradients") {
+  SUBCASE("Slice + broadcast chain accumulates gradients") {
     deeptiny::Tensor t({2, 3}, deeptiny::DType::Float32, deeptiny::Device::CPU,
                        true);
     std::vector<deeptiny::Slice> slices{
         deeptiny::Slice(0, 2, 1),
         deeptiny::Slice(0, 1, 1),
     };
-    auto view = t(slices);
-    auto broadcasted = deeptiny::utils::BroadcastToShape(view, {2, 4});
+    deeptiny::Tensor slice_tensor = t(slices);
+    auto broadcasted = deeptiny::utils::BroadcastToShape(slice_tensor, {2, 4});
     REQUIRE(broadcasted.has_value());
 
     auto loss = deeptiny::functional::Reduce(*broadcasted, {0, 1});

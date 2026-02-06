@@ -3,7 +3,6 @@
 #include <optional>
 #include <unordered_set>
 
-#include "deeptiny/view.h"
 #include "utils.h"
 
 namespace deeptiny {
