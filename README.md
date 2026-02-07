@@ -58,6 +58,32 @@ cmake --preset release-local-openblas
 cmake --build --preset release-local-openblas -j
 ```
 
+## Docker dev pipeline (local + CI parity)
+
+Build and run the same dev pipeline used by GitHub Actions:
+
+```bash
+./scripts/docker-dev-test.sh
+```
+
+Run with a different preset:
+
+```bash
+./scripts/docker-dev-test.sh release
+```
+
+Run the pipeline directly (without Docker) on a machine with dependencies installed:
+
+```bash
+./scripts/ci-local.sh dev
+```
+
+The Docker image definition is in `Dockerfile` and installs:
+
+- build tools (`build-essential`, `cmake`, `ninja-build`, `pkg-config`)
+- Python tooling (`python3`, `python3-venv`, `python3-pip`)
+- OpenBLAS (`libopenblas-dev`)
+
 ## Run tests
 
 Use a dev preset for tests. The `release` preset sets
