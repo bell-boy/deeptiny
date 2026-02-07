@@ -1,23 +1,13 @@
 #include "modules/linear.h"
 
-#include <random>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 #include "deeptiny/math.h"
 
 namespace module {
 
 namespace {
-
-uint64_t Numel(const deeptiny::Shape& shape) {
-  uint64_t total = 1;
-  for (const uint64_t dim : shape) {
-    total *= dim;
-  }
-  return total;
-}
 
 uint64_t ValidatePositiveDimension(uint64_t dim, const char* name) {
   if (dim == 0) {
@@ -28,16 +18,8 @@ uint64_t ValidatePositiveDimension(uint64_t dim, const char* name) {
 
 deeptiny::Tensor MakeUniformParameter(const deeptiny::Shape& shape,
                                       deeptiny::Device device) {
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  static std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-
-  const uint64_t total = Numel(shape);
-  std::vector<float> values(static_cast<size_t>(total), 0.0f);
-  for (uint64_t i = 0; i < total; ++i) {
-    values[static_cast<size_t>(i)] = dist(gen);
-  }
-  return deeptiny::Tensor::FromVector(values, shape, device, true);
+  return deeptiny::Tensor::CreateUniform(shape, device,
+                                         deeptiny::DType::Float32, true);
 }
 
 }  // namespace
