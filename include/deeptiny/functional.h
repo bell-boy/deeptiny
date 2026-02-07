@@ -16,6 +16,10 @@ Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
  * Element-wise ReLU activation.
  */
 Tensor ReLU(const Tensor& x);
+/**
+ * Softmax along a single dimension.
+ */
+Tensor Softmax(const Tensor& x, uint64_t dim);
 }  // namespace functional
 
 };  // namespace deeptiny
