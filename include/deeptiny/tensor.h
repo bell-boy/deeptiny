@@ -35,6 +35,7 @@ class Tensor {
   TensorSliceProxy operator()(std::vector<Slice> slices);
   Tensor operator()(std::vector<Slice> slices) const;
   Shape shape() const;
+  uint64_t numel() const;
   DType dtype() const;
   Device device() const;
   Tensor Clone() const;
@@ -53,9 +54,10 @@ class Tensor {
                            Device device = Device::CPU,
                            bool requires_grad = false);
   static Tensor CreateUniform(Shape shape, Device device = Device::CPU,
-                              DType dtype = DType::Float32);
+                              DType dtype = DType::Float32,
+                              bool requires_grad = false);
   static Tensor Zeros(Shape shape, Device device = Device::CPU,
-                      DType dtype = DType::Float32);
+                      DType dtype = DType::Float32, bool requires_grad = false);
 
   template <typename T>
   static Tensor FromVector(const std::vector<T>& values, Shape shape,

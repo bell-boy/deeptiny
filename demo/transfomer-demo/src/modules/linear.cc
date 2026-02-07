@@ -1,23 +1,13 @@
 #include "modules/linear.h"
 
-#include <random>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 #include "deeptiny/math.h"
 
 namespace module {
 
 namespace {
-
-uint64_t Numel(const deeptiny::Shape& shape) {
-  uint64_t total = 1;
-  for (const uint64_t dim : shape) {
-    total *= dim;
-  }
-  return total;
-}
 
 uint64_t ValidatePositiveDimension(uint64_t dim, const char* name) {
   if (dim == 0) {
@@ -26,29 +16,17 @@ uint64_t ValidatePositiveDimension(uint64_t dim, const char* name) {
   return dim;
 }
 
-deeptiny::Tensor MakeUniformParameter(const deeptiny::Shape& shape,
-                                      deeptiny::Device device) {
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  static std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-
-  const uint64_t total = Numel(shape);
-  std::vector<float> values(static_cast<size_t>(total), 0.0f);
-  for (uint64_t i = 0; i < total; ++i) {
-    values[static_cast<size_t>(i)] = dist(gen);
-  }
-  return deeptiny::Tensor::FromVector(values, shape, device, true);
-}
-
 }  // namespace
 
 Linear::Linear(uint64_t in_dim, uint64_t out_dim, bool bias,
                deeptiny::Device device)
     : in_dim_(ValidatePositiveDimension(in_dim, "in_dim")),
       out_dim_(ValidatePositiveDimension(out_dim, "out_dim")),
-      weight_(MakeUniformParameter({1, in_dim_, out_dim_}, device)) {
+      weight_(deeptiny::Tensor::CreateUniform({1, in_dim_, out_dim_}, device,
+                                              deeptiny::DType::Float32, true)) {
   if (bias) {
-    bias_ = MakeUniformParameter({1, 1, out_dim_}, device);
+    bias_ = deeptiny::Tensor::CreateUniform({1, 1, out_dim_}, device,
+                                            deeptiny::DType::Float32, true);
   }
 }
 
