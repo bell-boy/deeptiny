@@ -16,21 +16,17 @@ uint64_t ValidatePositiveDimension(uint64_t dim, const char* name) {
   return dim;
 }
 
-deeptiny::Tensor MakeUniformParameter(const deeptiny::Shape& shape,
-                                      deeptiny::Device device) {
-  return deeptiny::Tensor::CreateUniform(shape, device,
-                                         deeptiny::DType::Float32, true);
-}
-
 }  // namespace
 
 Linear::Linear(uint64_t in_dim, uint64_t out_dim, bool bias,
                deeptiny::Device device)
     : in_dim_(ValidatePositiveDimension(in_dim, "in_dim")),
       out_dim_(ValidatePositiveDimension(out_dim, "out_dim")),
-      weight_(MakeUniformParameter({1, in_dim_, out_dim_}, device)) {
+      weight_(deeptiny::Tensor::CreateUniform({1, in_dim_, out_dim_}, device,
+                                              deeptiny::DType::Float32, true)) {
   if (bias) {
-    bias_ = MakeUniformParameter({1, 1, out_dim_}, device);
+    bias_ = deeptiny::Tensor::CreateUniform({1, 1, out_dim_}, device,
+                                            deeptiny::DType::Float32, true);
   }
 }
 
