@@ -10,7 +10,7 @@ option(TRANSFOMER_DEMO_BUILD_TESTS "Build transfomer-demo tests" ON)
 
 set(DEEPTINY_GIT_REPOSITORY "https://github.com/bell-boy/deeptiny.git" CACHE STRING
     "Git repository for Deep Tiny")
-set(DEEPTINY_GIT_TAG "154acc95dc69a20646377d3e7059b6f46f8b9a18" CACHE STRING
+set(DEEPTINY_GIT_TAG "7e5284e8e2103f029ce791dbe08b6c4847a568ac" CACHE STRING
     "Pinned Deep Tiny commit")
 
 # Keep the demo isolated from Deep Tiny's internal test suite.
