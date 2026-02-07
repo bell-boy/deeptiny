@@ -1,5 +1,7 @@
 #include "cpu/storage.h"
 
+#include <cstring>
+
 namespace deeptiny {
 
 namespace cpu {
