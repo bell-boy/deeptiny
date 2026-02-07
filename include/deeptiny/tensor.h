@@ -32,6 +32,11 @@ class Tensor {
   // Create a a contingous tensor with uninitialized data
   Tensor(Shape shape, DType dtype, Device device, bool requires_grad);
 
+  // Implicitly wrap a TensorImpl with no autograd metadata.
+  Tensor(std::shared_ptr<TensorImpl> tensor_impl);
+  // Implicitly expose the underlying TensorImpl for dispatch/kernel layers.
+  operator std::shared_ptr<TensorImpl>() const;
+
   TensorSliceProxy operator()(std::vector<Slice> slices);
   Tensor operator()(std::vector<Slice> slices) const;
   Shape shape() const;
@@ -43,7 +48,7 @@ class Tensor {
   Tensor Squeeze(const std::vector<uint64_t>& dims);
   bool requires_grad() const;
   std::optional<Tensor> grad() const;
-  void Backward(bool keep_graph = false);
+  void Backward();
 
   /**
    * Creates a tensor on the CPU with the expectation that the bytes are laid

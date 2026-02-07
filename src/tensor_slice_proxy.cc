@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "autograd_meta.h"
+#include "dispatch/dispatch.h"
 #include "broadcast.h"
 #include "deeptiny/math.h"
 #include "deeptiny/tensor.h"
@@ -82,7 +83,9 @@ class SliceAssignBackward : public Function {
     assert(parents[1] && "SliceAssignBackward RHS parent must not be null");
 
     parents[1]->updateGrad(grad_rhs);
-    parents[0]->updateGrad(grad - *scattered);
+    auto grad_base_impl =
+        dispatch::binary::OutOfPlace(dispatch::binary::Op::Sub, grad, *scattered);
+    parents[0]->updateGrad(grad_base_impl);
   }
 
  private:

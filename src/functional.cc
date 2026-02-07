@@ -9,7 +9,7 @@
 #include <unordered_set>
 
 #include "autograd_meta.h"
-#include "cpu/kernels.h"
+#include "dispatch/dispatch.h"
 #include "engine.h"
 #include "utils.h"
 
@@ -18,40 +18,6 @@ namespace deeptiny {
 namespace functional {
 
 namespace {
-void DispatchReLUKernel(const Tensor& x, Tensor& out) {
-  switch (out.device()) {
-    case Device::CPU: {
-      auto x_impl = utils::TensorAccessor::GetTensorImpl(x);
-      auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
-      cpu::ReLU(x_impl, out_impl);
-      return;
-    }
-    default: {
-      std::stringstream err;
-      err << "ReLU does not support " << out.device().ToString();
-      throw std::runtime_error(err.str());
-    }
-  }
-}
-
-void DispatchReLUBackwardKernel(const Tensor& x, const Tensor& grad_out,
-                                Tensor& grad_x) {
-  switch (grad_x.device()) {
-    case Device::CPU: {
-      auto x_impl = utils::TensorAccessor::GetTensorImpl(x);
-      auto grad_out_impl = utils::TensorAccessor::GetTensorImpl(grad_out);
-      auto grad_x_impl = utils::TensorAccessor::GetTensorImpl(grad_x);
-      cpu::ReLUBackward(x_impl, grad_out_impl, grad_x_impl);
-      return;
-    }
-    default: {
-      std::stringstream err;
-      err << "ReLU backward does not support " << grad_x.device().ToString();
-      throw std::runtime_error(err.str());
-    }
-  }
-}
-
 class ReLUBackward : public Function {
  public:
   enum struct ContextObjects : uint64_t {
@@ -74,9 +40,8 @@ class ReLUBackward : public Function {
       throw std::runtime_error("ReLUBackward received invalid grad shape");
     }
 
-    Tensor grad_x(saved_x.shape(), saved_x.dtype(), saved_x.device(), false);
-    DispatchReLUBackwardKernel(saved_x, grad, grad_x);
-    parents[0]->updateGrad(grad_x);
+    auto grad_x_impl = dispatch::relu::Backward(saved_x, grad);
+    parents[0]->updateGrad(grad_x_impl);
   }
 };
 
@@ -148,11 +113,9 @@ Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
 }
 
 Tensor ReLU(const Tensor& x) {
-  Tensor out(x.shape(), x.dtype(), x.device(), false);
-  DispatchReLUKernel(x, out);
+  auto out_impl = dispatch::relu::OutOfPlace(x);
 
   auto backward = std::make_shared<ReLUBackward>(x, x);
-  auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
 }

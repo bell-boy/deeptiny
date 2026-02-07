@@ -1,11 +1,11 @@
-#include "modules/embedding.h"
+#include "deeptiny/nn/embedding.h"
 
 #include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
 
-namespace transfomer_demo::modules {
+namespace deeptiny::nn {
 namespace {
 
 int64_t ToSliceIndex(uint64_t value, const char* label) {
@@ -17,43 +17,41 @@ int64_t ToSliceIndex(uint64_t value, const char* label) {
   return static_cast<int64_t>(value);
 }
 
-deeptiny::Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim,
-                            deeptiny::DType dtype, deeptiny::Device device,
-                            bool requires_grad) {
+Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim, DType dtype,
+                  Device device, bool requires_grad) {
   if (num_embeddings == 0 || embedding_dim == 0) {
     throw std::runtime_error("Embedding dimensions must be positive.");
   }
-  if (dtype != deeptiny::DType::Float32) {
-    throw std::runtime_error(
-        "Demo Embedding currently supports only Float32 dtype.");
+  if (dtype != DType::Float32) {
+    throw std::runtime_error("Embedding currently supports only Float32 dtype.");
   }
-  if (device != deeptiny::Device::CPU) {
-    throw std::runtime_error("Demo Embedding currently supports only CPU.");
+  if (device != Device::CPU) {
+    throw std::runtime_error("Embedding currently supports only CPU.");
   }
 
-  return deeptiny::Tensor::CreateUniform({num_embeddings, embedding_dim},
-                                         device, dtype, requires_grad);
+  return Tensor::CreateUniform({num_embeddings, embedding_dim}, device, dtype,
+                               requires_grad);
 }
 
 }  // namespace
 
 Embedding::Embedding(uint64_t num_embeddings, uint64_t embedding_dim,
-                     deeptiny::DType dtype, deeptiny::Device device,
-                     bool requires_grad)
+                     DType dtype, Device device, bool requires_grad)
     : num_embeddings_(num_embeddings),
       embedding_dim_(embedding_dim),
       dtype_(dtype),
       device_(device),
       weight_(MakeWeight(num_embeddings, embedding_dim, dtype, device,
-                         requires_grad)) {}
+                         requires_grad)) {
+  RegisterParameter(weight_);
+}
 
-deeptiny::Tensor Embedding::operator()(const std::vector<int64_t>& indices,
-                                       const deeptiny::Shape& shape) const {
+Tensor Embedding::operator()(const std::vector<int64_t>& indices,
+                             const Shape& shape) const {
   const uint64_t index_count = static_cast<uint64_t>(indices.size());
-  deeptiny::Shape output_shape = shape;
+  Shape output_shape = shape;
   output_shape.push_back(embedding_dim_);
-  deeptiny::Tensor flat_output =
-      deeptiny::Tensor::Zeros({index_count, embedding_dim_}, device_, dtype_);
+  Tensor flat_output = Tensor::Zeros({index_count, embedding_dim_}, device_, dtype_);
 
   try {
     (void)flat_output.Reshape(output_shape);
@@ -73,13 +71,16 @@ deeptiny::Tensor Embedding::operator()(const std::vector<int64_t>& indices,
     }
 
     const int64_t row = ToSliceIndex(i, "row index");
-    deeptiny::Tensor gathered_row =
-        weight_({deeptiny::Slice(token), deeptiny::Slice(0, end_col)});
-    flat_output({deeptiny::Slice(row), deeptiny::Slice(0, end_col)}) =
-        gathered_row;
+    Tensor gathered_row =
+        weight_({Slice(token), Slice(0, end_col)});
+    flat_output({Slice(row), Slice(0, end_col)}) = gathered_row;
   }
 
   return flat_output.Reshape(output_shape);
 }
 
-}  // namespace transfomer_demo::modules
+Tensor& Embedding::weight() { return weight_; }
+
+const Tensor& Embedding::weight() const { return weight_; }
+
+}  // namespace deeptiny::nn
