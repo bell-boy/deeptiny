@@ -1,14 +1,16 @@
+
 {
   "version": 6,
-  "include": [
-    "CMakePresets.json"
-  ],
+  "include": ["CMakePresets.json"],
   "configurePresets": [
     {
       "name": "dev-local-openblas",
       "displayName": "Dev (Local OpenBLAS)",
       "inherits": "dev",
       "cacheVariables": {
+        "CMAKE_C_COMPILER": "/opt/homebrew/bin/gcc-15",
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/bin/g++-15",
+        "CMAKE_OSX_SYSROOT": "macosx",
         "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/openblas"
       }
     },
@@ -17,6 +19,9 @@
       "displayName": "Release (No Tests, Local OpenBLAS)",
       "inherits": "release",
       "cacheVariables": {
+        "CMAKE_C_COMPILER": "/opt/homebrew/bin/gcc-15",
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/bin/g++-15",
+        "CMAKE_OSX_SYSROOT": "macosx",
         "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/openblas"
       }
     }
