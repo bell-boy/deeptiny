@@ -51,7 +51,7 @@ class Engine {
 
  public:
   // pending_ is owned by Engine.
-  Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph = false);
+  Engine(std::shared_ptr<AutogradMeta> root);
 
   void Run();
 

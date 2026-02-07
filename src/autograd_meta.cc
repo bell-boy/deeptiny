@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "deeptiny/autograd.h"
+#include "dispatch/binary.h"
 
 namespace deeptiny {
 
@@ -24,7 +25,7 @@ void AutogradMeta::updateGrad(const Tensor& grad) {
     grad_ = std::make_shared<Tensor>(grad.Clone());
     return;
   }
-  *grad_ += grad;
+  deeptiny::dispatch::binary::Inplace(deeptiny::dispatch::binary::Op::Add, *grad_, grad);
 }
 
 }  // namespace deeptiny

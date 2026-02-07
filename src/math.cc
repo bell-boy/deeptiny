@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "autograd_meta.h"
-#include "cpu/kernels.h"
+#include "dispatch/dispatch.h"
 #include "deeptiny/types.h"
 #include "engine.h"
 #include "utils.h"
@@ -19,64 +19,27 @@ namespace deeptiny {
 namespace math {
 
 namespace {
-enum class BinaryOp { Add, Sub, Mul, Div };
-
-std::string BinaryOpName(BinaryOp op) {
+std::string BinaryOpName(dispatch::binary::Op op) {
   switch (op) {
-    case BinaryOp::Add:
+    case dispatch::binary::Op::Add:
       return "addition";
-    case BinaryOp::Sub:
+    case dispatch::binary::Op::Sub:
       return "subtraction";
-    case BinaryOp::Mul:
+    case dispatch::binary::Op::Mul:
       return "multiplication";
-    case BinaryOp::Div:
+    case dispatch::binary::Op::Div:
       return "division";
   }
   throw std::runtime_error("Unknown binary op");
 }
 
-void DispatchBinaryOpKernel(BinaryOp op, const Tensor& a, const Tensor& b,
-                            Tensor& out) {
-  switch (out.device()) {
-    case Device::CPU: {
-      auto a_impl = utils::TensorAccessor::GetTensorImpl(a);
-      auto b_impl = utils::TensorAccessor::GetTensorImpl(b);
-      auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
-      switch (op) {
-        case BinaryOp::Add:
-          cpu::Add(a_impl, b_impl, out_impl);
-          break;
-        case BinaryOp::Sub:
-          cpu::Sub(a_impl, b_impl, out_impl);
-          break;
-        case BinaryOp::Mul:
-          cpu::Mul(a_impl, b_impl, out_impl);
-          break;
-        case BinaryOp::Div:
-          cpu::Div(a_impl, b_impl, out_impl);
-          break;
-      }
-      return;
-    }
-    default:
-      std::stringstream err;
-      err << "Operation does not support " << out.device().ToString();
-      throw std::runtime_error(err.str());
-  }
-}
-
-Tensor BinaryOut(BinaryOp op, const Tensor& a, const Tensor& b) {
-  Tensor out(a.shape(), a.dtype(), a.device(), false);
-  DispatchBinaryOpKernel(op, a, b, out);
-  return out;
-}
-
 Tensor Negate(const Tensor& x) {
   Tensor zeros = Tensor::Zeros(x.shape(), x.device(), x.dtype());
-  return BinaryOut(BinaryOp::Sub, zeros, x);
+  auto neg_impl = dispatch::binary::OutOfPlace(dispatch::binary::Op::Sub, zeros, x);
+  return neg_impl;
 }
 
-void ValidateInplaceDestination(const Tensor& dst, BinaryOp op) {
+void ValidateInplaceDestination(const Tensor& dst, dispatch::binary::Op op) {
   const auto dst_impl = utils::TensorAccessor::GetTensorImpl(dst);
   for (const auto stride : dst_impl->stride()) {
     if (stride == 0) {
@@ -142,8 +105,12 @@ class MulBackward : public Function {
     assert(parents.size() == 2 && "MulBackward must have exactly 2 parents");
     assert(parents[0] && "MulBackward first parent must not be null");
     assert(parents[1] && "MulBackward second parent must not be null");
-    parents[0]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_b));
-    parents[1]->updateGrad(BinaryOut(BinaryOp::Mul, grad, saved_a));
+    auto grad_a_impl =
+        dispatch::binary::OutOfPlace(dispatch::binary::Op::Mul, grad, saved_b);
+    parents[0]->updateGrad(grad_a_impl);
+    auto grad_b_impl =
+        dispatch::binary::OutOfPlace(dispatch::binary::Op::Mul, grad, saved_a);
+    parents[1]->updateGrad(grad_b_impl);
   }
 };
 
@@ -171,45 +138,51 @@ class DivBackward : public Function {
     assert(parents.size() == 2 && "DivBackward must have exactly 2 parents");
     assert(parents[0] && "DivBackward first parent must not be null");
     assert(parents[1] && "DivBackward second parent must not be null");
-    parents[0]->updateGrad(BinaryOut(BinaryOp::Div, grad, saved_b));
-    Tensor numerator = BinaryOut(BinaryOp::Mul, grad, saved_a);
-    Tensor denominator = BinaryOut(BinaryOp::Mul, saved_b, saved_b);
-    parents[1]->updateGrad(
-        Negate(BinaryOut(BinaryOp::Div, numerator, denominator)));
+    auto grad_a_impl =
+        dispatch::binary::OutOfPlace(dispatch::binary::Op::Div, grad, saved_b);
+    parents[0]->updateGrad(grad_a_impl);
+
+    auto numerator_impl =
+        dispatch::binary::OutOfPlace(dispatch::binary::Op::Mul, grad, saved_a);
+    auto denominator_impl = dispatch::binary::OutOfPlace(
+        dispatch::binary::Op::Mul, saved_b, saved_b);
+    auto grad_b_impl =
+        dispatch::binary::OutOfPlace(dispatch::binary::Op::Div, numerator_impl,
+                                     denominator_impl);
+    parents[1]->updateGrad(Negate(grad_b_impl));
   }
 };
 
-std::shared_ptr<Function> MakeBackward(BinaryOp op, const Tensor& parent_a,
+std::shared_ptr<Function> MakeBackward(dispatch::binary::Op op, const Tensor& parent_a,
                                        const Tensor& parent_b,
                                        const Tensor& saved_a,
                                        const Tensor& saved_b) {
   switch (op) {
-    case BinaryOp::Add:
+    case dispatch::binary::Op::Add:
       return std::make_shared<AddBackward>(parent_a, parent_b);
-    case BinaryOp::Sub:
+    case dispatch::binary::Op::Sub:
       return std::make_shared<SubBackward>(parent_a, parent_b);
-    case BinaryOp::Mul:
+    case dispatch::binary::Op::Mul:
       return std::make_shared<MulBackward>(parent_a, parent_b, saved_a,
                                            saved_b);
-    case BinaryOp::Div:
+    case dispatch::binary::Op::Div:
       return std::make_shared<DivBackward>(parent_a, parent_b, saved_a,
                                            saved_b);
   }
   throw std::runtime_error("Unknown binary op");
 }
 
-Tensor BinaryOutOfPlace(BinaryOp op, const Tensor& a, const Tensor& b) {
+Tensor BinaryOutOfPlace(dispatch::binary::Op op, const Tensor& a, const Tensor& b) {
   utils::CompatabilityCheck({a, b});
   auto [a_b, b_b] = utils::Broadcast(a, b);
 
-  Tensor out = BinaryOut(op, a_b, b_b);
+  auto out_impl = dispatch::binary::OutOfPlace(op, a_b, b_b);
   auto backward = MakeBackward(op, a_b, b_b, a_b, b_b);
-  auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
 }
 
-std::shared_ptr<AutogradMeta> BinaryInplace(BinaryOp op, Tensor& self,
+std::shared_ptr<AutogradMeta> BinaryInplace(dispatch::binary::Op op, Tensor& self,
                                             const Tensor& other) {
   ValidateInplaceDestination(self, op);
   utils::CompatabilityCheck({self, other});
@@ -226,12 +199,12 @@ std::shared_ptr<AutogradMeta> BinaryInplace(BinaryOp op, Tensor& self,
   Tensor rhs_parent = *broadcasted_other;
   Tensor lhs_saved = self;
   Tensor rhs_saved = *broadcasted_other;
-  if (op == BinaryOp::Mul || op == BinaryOp::Div) {
+  if (op == dispatch::binary::Op::Mul || op == dispatch::binary::Op::Div) {
     lhs_saved = self.Clone();
     rhs_saved = broadcasted_other->Clone();
   }
 
-  DispatchBinaryOpKernel(op, self, *broadcasted_other, self);
+  dispatch::binary::Inplace(op, self, *broadcasted_other);
 
   auto backward =
       MakeBackward(op, lhs_parent, rhs_parent, lhs_saved, rhs_saved);
@@ -263,24 +236,6 @@ std::optional<Shape> BroadcastLeadingShape(const Shape& a, const Shape& b) {
     out[rank - i - 1] = b[b_rank - i - 1];
   }
   return out;
-}
-
-void DispatchBatchedMatMulKernel(const Tensor& a, const Tensor& b, Tensor& out,
-                                 bool transpose_a, bool transpose_b) {
-  switch (out.device()) {
-    case Device::CPU: {
-      auto a_impl = utils::TensorAccessor::GetTensorImpl(a);
-      auto b_impl = utils::TensorAccessor::GetTensorImpl(b);
-      auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
-      cpu::BatchedMatMul(a_impl, b_impl, out_impl, transpose_a, transpose_b);
-      return;
-    }
-    default: {
-      std::stringstream err;
-      err << "Operation does not support " << out.device().ToString();
-      throw std::runtime_error(err.str());
-    }
-  }
 }
 
 class BatchedMatMulBackward : public Function {
@@ -315,18 +270,22 @@ class BatchedMatMulBackward : public Function {
 
     if (!transpose_a_) {
       parents[0]->updateGrad(
-          math::BatchedMatMul(grad, saved_b, false, !transpose_b_));
+          dispatch::batched_matmul::OutOfPlace(grad, saved_b, false,
+                                               !transpose_b_));
     } else {
       parents[0]->updateGrad(
-          math::BatchedMatMul(saved_b, grad, transpose_b_, true));
+          dispatch::batched_matmul::OutOfPlace(saved_b, grad, transpose_b_,
+                                               true));
     }
 
     if (!transpose_b_) {
       parents[1]->updateGrad(
-          math::BatchedMatMul(saved_a, grad, !transpose_a_, false));
+          dispatch::batched_matmul::OutOfPlace(saved_a, grad, !transpose_a_,
+                                               false));
     } else {
       parents[1]->updateGrad(
-          math::BatchedMatMul(grad, saved_a, true, transpose_a_));
+          dispatch::batched_matmul::OutOfPlace(grad, saved_a, true,
+                                               transpose_a_));
     }
   }
 
@@ -384,52 +343,46 @@ Tensor BatchedMatMul(const Tensor& a, const Tensor& b, bool transpose_a,
     throw std::runtime_error(err.str());
   }
 
-  const uint64_t lhs_rows = transpose_a ? a_cols : a_rows;
-  const uint64_t rhs_cols = transpose_b ? b_rows : b_cols;
-  Shape out_shape = *out_batch;
-  out_shape.push_back(lhs_rows);
-  out_shape.push_back(rhs_cols);
-  Tensor out(out_shape, a.dtype(), a.device(), false);
-  DispatchBatchedMatMulKernel(*a_broadcast, *b_broadcast, out, transpose_a,
-                              transpose_b);
+  auto out_impl = dispatch::batched_matmul::OutOfPlace(*a_broadcast,
+                                                       *b_broadcast, transpose_a,
+                                                       transpose_b);
 
   auto backward = std::make_shared<BatchedMatMulBackward>(
       *a_broadcast, *b_broadcast, transpose_a, transpose_b);
-  auto out_impl = utils::TensorAccessor::GetTensorImpl(out);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
 }
 
 Tensor operator+(const Tensor& a, const Tensor& b) {
-  return BinaryOutOfPlace(BinaryOp::Add, a, b);
+  return BinaryOutOfPlace(dispatch::binary::Op::Add, a, b);
 }
 
 Tensor operator-(const Tensor& a, const Tensor& b) {
-  return BinaryOutOfPlace(BinaryOp::Sub, a, b);
+  return BinaryOutOfPlace(dispatch::binary::Op::Sub, a, b);
 }
 
 Tensor operator*(const Tensor& a, const Tensor& b) {
-  return BinaryOutOfPlace(BinaryOp::Mul, a, b);
+  return BinaryOutOfPlace(dispatch::binary::Op::Mul, a, b);
 }
 
 Tensor operator/(const Tensor& a, const Tensor& b) {
-  return BinaryOutOfPlace(BinaryOp::Div, a, b);
+  return BinaryOutOfPlace(dispatch::binary::Op::Div, a, b);
 }
 
 std::shared_ptr<AutogradMeta> InplaceAdd(Tensor& self, const Tensor& other) {
-  return BinaryInplace(BinaryOp::Add, self, other);
+  return BinaryInplace(dispatch::binary::Op::Add, self, other);
 }
 
 std::shared_ptr<AutogradMeta> InplaceSub(Tensor& self, const Tensor& other) {
-  return BinaryInplace(BinaryOp::Sub, self, other);
+  return BinaryInplace(dispatch::binary::Op::Sub, self, other);
 }
 
 std::shared_ptr<AutogradMeta> InplaceMul(Tensor& self, const Tensor& other) {
-  return BinaryInplace(BinaryOp::Mul, self, other);
+  return BinaryInplace(dispatch::binary::Op::Mul, self, other);
 }
 
 std::shared_ptr<AutogradMeta> InplaceDiv(Tensor& self, const Tensor& other) {
-  return BinaryInplace(BinaryOp::Div, self, other);
+  return BinaryInplace(dispatch::binary::Op::Div, self, other);
 }
 
 }  // namespace math

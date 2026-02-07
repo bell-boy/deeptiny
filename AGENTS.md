@@ -12,11 +12,17 @@
 ## Project conventions and preferences
 - Prioritize performance in math kernels; use `cblas` fast paths where they fit safely.
 - Keep math layering clear: `math.cc` handles broadcast + device routing + autograd wiring, while device kernels do raw `TensorImpl` math.
+- Keep compute dispatch centralized in `src/dispatch/` (kernel routing + non-autograd tensor outputs) and keep graph wiring in `math.cc`/`functional.cc`/backward `Function` classes.
+- In math/autograd wiring, use `dispatch::binary::Op` directly instead of mirroring duplicate local binary-op enums/mapping helpers.
+- Keep dispatch headers split by op (`src/dispatch/<op>.h`) with `src/dispatch/dispatch.h` as a small umbrella include header.
+- Organize both dispatch and CPU kernels by operation where practical (`src/dispatch/<op>.cc`, `src/cpu/kernels/<op>.cc`), with shared helpers only when they reduce duplication cleanly.
+- Keep `Tensor`/`TensorImpl` boundary ergonomic: allow implicit `TensorImpl -> Tensor` (null autograd) and `Tensor -> TensorImpl` conversions to avoid verbose accessor boilerplate in dispatch-heavy code.
 - In-place math ops are forbidden on destination tensors with any zero stride (broadcasted views).
 - For backward functions that save tensors, use `Context` and `ContextObjects` enum keys:
   - `enum struct ContextObjects : uint64_t { ... }`
 - Keep storage-version lookup encapsulated on `Context` (member helper), not as a free-floating helper.
 - Keep kernel read paths version-safe: when inputs are read-only, access storage through const pointers so read access does not bump storage version counters used by `Context` checks.
+- Higher-order gradients are intentionally unsupported: `Tensor::Backward()` does not accept `keep_graph`, `Engine::Run` executes under no-grad, and backward implementations should use dispatch/kernel paths rather than graph-building frontend ops.
 - Treat Function parent presence as an invariant: assert parents exist in backward/graph traversal paths instead of silently skipping nulls.
 - Reuse shared helpers in `tests/test_utils` (e.g., tensor construction/data assertions) instead of adding ad-hoc per-test utilities when the helpers are broadly reusable.
 - For elementary math changes, maintain forward/backward/in-place test coverage and guard tests for invalid mutation/version behavior.

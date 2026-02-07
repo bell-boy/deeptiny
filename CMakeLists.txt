@@ -11,12 +11,17 @@ option(DEEPTINY_ENABLE_WERROR "Treat warnings as errors for deeptiny"
 file(GLOB DEEPTINY_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/src/nn/*.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/dispatch/*.cc"
+)
+
+file(GLOB DEEPTINY_CPU_KERNEL_SOURCES CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/cpu/kernels/*.cc"
 )
 
 add_library(deeptiny STATIC
   ${DEEPTINY_SOURCES}
+  ${DEEPTINY_CPU_KERNEL_SOURCES}
   "${CMAKE_CURRENT_SOURCE_DIR}/src/cpu/storage.cc"
-  "${CMAKE_CURRENT_SOURCE_DIR}/src/cpu/kernels.cc"
 )
 add_library(deeptiny::deeptiny ALIAS deeptiny)
 

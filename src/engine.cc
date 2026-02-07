@@ -51,8 +51,7 @@ Tensor Context::Get(uint64_t id) const {
   return it->second.tensor;
 }
 
-Engine::Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph) {
-  (void)keep_graph;
+Engine::Engine(std::shared_ptr<AutogradMeta> root) {
   if (!root) {
     throw std::runtime_error("Engine root is null");
   }
@@ -123,6 +122,7 @@ Engine::Engine(std::shared_ptr<AutogradMeta> root, bool keep_graph) {
 }
 
 void Engine::Run() {
+  NoGrad guard;
   while (!ready_queue_.empty()) {
     auto node = ready_queue_.front();
     ready_queue_.pop_front();

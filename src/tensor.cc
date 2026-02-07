@@ -13,7 +13,6 @@
 
 #include "autograd_meta.h"
 #include "cpu/kernels.h"
-#include "deeptiny/autograd.h"
 #include "engine.h"
 #include "tensor_impl.h"
 #include "utils.h"
@@ -106,6 +105,12 @@ Tensor::Tensor(std::shared_ptr<TensorImpl> tensor_impl,
 Tensor::Tensor(Shape shape, DType dtype, Device device, bool requires_grad)
     : tensor_impl_(std::make_shared<TensorImpl>(shape, dtype, device)),
       autograd_meta_(std::make_shared<AutogradMeta>(nullptr, requires_grad)) {}
+
+
+Tensor::Tensor(std::shared_ptr<TensorImpl> tensor_impl)
+    : Tensor(std::move(tensor_impl), nullptr) {}
+
+Tensor::operator std::shared_ptr<TensorImpl>() const { return tensor_impl_; }
 
 Shape Tensor::shape() const { return tensor_impl_->shape(); }
 uint64_t Tensor::numel() const { return utils::GetTotalSize(shape()); }
@@ -207,7 +212,7 @@ std::optional<Tensor> Tensor::grad() const {
   return autograd_meta_->grad();
 }
 
-void Tensor::Backward(bool keep_graph) {
+void Tensor::Backward() {
   if (!autograd_meta_) {
     throw std::runtime_error("Tensor has no autograd metadata");
   }
@@ -215,7 +220,7 @@ void Tensor::Backward(bool keep_graph) {
     throw std::runtime_error("Backward requires a scalar (empty shape) tensor");
   }
 
-  Engine engine(autograd_meta_, keep_graph);
+  Engine engine(autograd_meta_);
   if (!autograd_meta_->requires_grad()) {
     throw std::runtime_error("Cannot call Backward on tensor without grad");
   }
@@ -230,13 +235,6 @@ void Tensor::Backward(bool keep_graph) {
     }
     default:
       throw std::runtime_error("Backward only supports Float32 gradients");
-  }
-
-  if (!keep_graph) {
-    GradMode guard(false);
-    autograd_meta_->updateGrad(grad);
-    engine.Run();
-    return;
   }
 
   autograd_meta_->updateGrad(grad);
