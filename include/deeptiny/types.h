@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <stdexcept>
 #include <vector>
 
 namespace deeptiny {
@@ -27,6 +28,7 @@ class DType {
       case BFloat16:
         return 2;
     }
+    throw std::logic_error("Unknown DType enum");
   }
 
   std::string ToString() const {
@@ -36,6 +38,7 @@ class DType {
       case BFloat16:
         return "Bfloat16";
     }
+    throw std::logic_error("Unknown DType enum");
   }
 
  private:
@@ -55,6 +58,7 @@ class Device {
       case Metal:
         return "Metal";
     }
+    throw std::logic_error("Unknown Device enum");
   }
 
  private:

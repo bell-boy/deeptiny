@@ -28,7 +28,7 @@ target_include_directories(deeptiny
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-find_package(OpenBLAS REQUIRED)
+find_package(OpenBLAS REQUIRED CONFIG)
 
 if (TARGET OpenBLAS::OpenBLAS)
   target_link_libraries(deeptiny
