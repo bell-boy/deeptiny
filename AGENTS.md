@@ -34,6 +34,8 @@
 - Keep `Tensor::CreateUniform` and `Tensor::Zeros` trainability explicit via a `requires_grad` parameter (default `false`).
 - Keep autograd pending-count bookkeeping owned by `Engine`; avoid exposing mutators on `AutogradMeta` for `pending_`.
 - Keep autograd interfaces minimal: `updateGrad` only accumulates gradients, and backward `Function` callbacks should not take `Engine` unless it is truly needed.
+- Keep attention module wiring explicit: `nn::MultiHeadAttention` should take constructor parameters directly (no config object), apply internal RoPE from `position_offset`, use additive masks, and keep dropout/KV-cache out of scope unless explicitly requested.
+- Keep softmax as a public functional op (`functional::Softmax(x, dim)`) with kernel/dispatch implementation and explicit backward.
 - Keep slice semantics explicit: `Tensor::operator()` returns `TensorSliceProxy` for mutable slicing and a read `Tensor` via conversion, and slice assignment autograd must be owned by the destination tensor metadata (not a temporary slice object).
 - Keep CMake presets split by intent: `dev` for debug/testing, and `release` for optimized builds with `DEEPTINY_BUILD_TESTS=OFF` (output in `build/release`).
 - Keep local + CI build/test execution centralized via `scripts/ci-local.sh`; Docker workflows should call that script instead of duplicating command sequences.
