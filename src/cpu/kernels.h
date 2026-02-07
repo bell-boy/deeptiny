@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <span>
 
@@ -31,6 +32,11 @@ void ReLU(std::shared_ptr<TensorImpl> x, std::shared_ptr<TensorImpl> out);
 void ReLUBackward(std::shared_ptr<TensorImpl> x,
                   std::shared_ptr<TensorImpl> grad_out,
                   std::shared_ptr<TensorImpl> grad_x);
+void Softmax(std::shared_ptr<TensorImpl> x, std::shared_ptr<TensorImpl> out,
+             uint64_t dim);
+void SoftmaxBackward(std::shared_ptr<TensorImpl> y,
+                     std::shared_ptr<TensorImpl> grad_out,
+                     std::shared_ptr<TensorImpl> grad_x, uint64_t dim);
 
 /**
  * Batched matrix multiply.
