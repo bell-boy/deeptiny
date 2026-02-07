@@ -24,6 +24,7 @@ docker build \
 
 docker run --rm -t \
   -v "$(pwd):/workspace" \
+  --tmpfs /workspace/build:rw,exec,mode=1777 \
   -w /workspace \
   "${IMAGE_TAG}" \
   ./scripts/ci-local.sh "$@"
