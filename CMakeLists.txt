@@ -10,6 +10,7 @@ option(DEEPTINY_ENABLE_WERROR "Treat warnings as errors for deeptiny"
 
 file(GLOB DEEPTINY_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/nn/*.cc"
 )
 
 add_library(deeptiny STATIC

@@ -4,7 +4,7 @@
 #include "deeptiny/functional.h"
 #include "deeptiny/tensor.h"
 #include "deeptiny/types.h"
-#include "modules/llama_mlp.h"
+#include "deeptiny/nn/gated_relu.h"
 
 int main() {
   using deeptiny::FormatShape;
@@ -18,13 +18,13 @@ int main() {
   };
   auto x = deeptiny::Tensor::FromVector(input_values, {2, 3, in_dim},
                                         deeptiny::Device::CPU, true);
-  module::LlamaMLP mlp(in_dim, hidden_dim, out_dim);
+  deeptiny::nn::GatedReLU mlp(in_dim, hidden_dim, out_dim);
 
   auto y = mlp(x);
   auto loss = deeptiny::functional::Reduce(y, {0, 1, 2});
   loss.Backward();
 
-  std::cout << "transfomer-demo LlamaMLP demo\n";
+  std::cout << "transfomer-demo GatedReLU demo\n";
   std::cout << "input shape: " << FormatShape(x.shape()) << "\n";
   std::cout << "output shape: " << FormatShape(y.shape()) << "\n";
   std::cout << "loss shape: " << FormatShape(loss.shape()) << "\n";

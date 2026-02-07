@@ -41,39 +41,7 @@ FetchContent_MakeAvailable(deeptiny)
 set(BUILD_TESTING "${_demo_build_testing}" CACHE BOOL
     "Build transfomer-demo tests" FORCE)
 
-add_library(transfomer_modules STATIC
-  src/modules/linear.cc
-  src/modules/llama_mlp.cc
-  src/modules/embedding.cc
-)
-target_compile_features(transfomer_modules PUBLIC cxx_std_23)
-target_include_directories(transfomer_modules PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-target_link_libraries(transfomer_modules PUBLIC deeptiny)
-
 add_executable(transfomer_demo src/main.cc)
 
 target_compile_features(transfomer_demo PRIVATE cxx_std_23)
-target_link_libraries(transfomer_demo PRIVATE transfomer_modules)
-
-if(TRANSFOMER_DEMO_BUILD_TESTS)
-  enable_testing()
-
-  add_executable(modules_smoke tests/modules_smoke.cc)
-  target_compile_features(modules_smoke PRIVATE cxx_std_23)
-  target_link_libraries(modules_smoke PRIVATE transfomer_modules)
-  target_include_directories(modules_smoke PRIVATE ${deeptiny_SOURCE_DIR}/src)
-  add_test(NAME modules_smoke COMMAND modules_smoke)
-
-  add_executable(transfomer_demo_embedding_test tests/embedding_test.cc)
-  target_compile_features(transfomer_demo_embedding_test PRIVATE cxx_std_23)
-  target_link_libraries(transfomer_demo_embedding_test PRIVATE transfomer_modules)
-  target_include_directories(transfomer_demo_embedding_test PRIVATE
-    ${deeptiny_SOURCE_DIR}/src
-  )
-  add_test(
-    NAME transfomer_demo_embedding_test
-    COMMAND transfomer_demo_embedding_test
-  )
-endif()
+target_link_libraries(transfomer_demo PRIVATE deeptiny)
