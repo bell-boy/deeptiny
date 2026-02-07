@@ -14,12 +14,16 @@ std::shared_ptr<TensorImpl> FromBuffer(DType dtype,
   std::shared_ptr<TensorImpl> result;
   switch (dtype) {
     case DType::Float32:
-      if (buffer.size() != total_size * 4) {
-        std::stringstream err;
-        err << "Failed to create tensor with shape " << FormatShape(shape)
-            << " with dtype float32 on CPU. Expected " << total_size
-            << " bytes in buffer but only found " << buffer.size();
-        throw std::runtime_error(err.str());
+      {
+        const uint64_t expected_bytes = total_size * 4;
+        const uint64_t actual_bytes = buffer.size();
+        if (actual_bytes != expected_bytes) {
+          std::stringstream err;
+          err << "Failed to create tensor with shape " << FormatShape(shape)
+              << " with dtype float32 on CPU. Expected " << expected_bytes
+              << " bytes in buffer but found " << actual_bytes << " bytes";
+          throw std::runtime_error(err.str());
+        }
       }
       result = std::make_shared<TensorImpl>(shape, DType::Float32, Device::CPU);
       result->storage()->CopyFromHost(0, total_size, buffer.data());
