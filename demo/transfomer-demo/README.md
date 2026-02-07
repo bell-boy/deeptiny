@@ -2,9 +2,9 @@
 
 Standalone CMake demo that consumes Deep Tiny via `FetchContent`.
 
-This demo includes transformer modules under `src/modules`:
+This demo uses `deeptiny::nn` modules from the main library:
 
-- `Linear` and `LlamaMLP` demo modules
+- `Linear` and `GatedReLU`
 - `Embedding` with PyTorch-style lookup via `Embedding::operator()(indices, shape)`
 - `Embedding::operator()(indices, shape)` expects
   `indices.size() == product(shape)`
@@ -40,23 +40,10 @@ If you configured with `dev-local-openblas`, build with:
 cmake --build --preset dev-local-openblas
 ```
 
-Build demo test targets:
-
-```bash
-cmake --build build --target modules_smoke
-cmake --build build --target transfomer_demo_embedding_test
-```
-
 ## Run
 
 ```bash
 ./build/transfomer_demo
-```
-
-Run demo tests:
-
-```bash
-ctest --test-dir build --output-on-failure
 ```
 
 Override the pinned Deep Tiny commit:
