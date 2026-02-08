@@ -121,10 +121,16 @@ Run with default local model cache location (`./model_files`):
 ```
 
 Generate a CPU profile (defaults to
-`./transfomer_demo_benchmark.prof` if `CPUPROFILE` is not set):
+`./transfomer_demo_benchmark.prof`):
 
 ```bash
-CPUPROFILE=benchmark.prof ./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
+./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
+```
+
+Override profile output path:
+
+```bash
+TRANSFOMER_DEMO_PROFILE_PATH=benchmark.prof ./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
 ```
 
 Inspect the profile with `pprof` (from Go toolchain or another `pprof`

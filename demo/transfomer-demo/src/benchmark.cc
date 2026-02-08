@@ -61,27 +61,12 @@ std::filesystem::path ResolveModelDirWithWeights(int argc, char** argv) {
 
 #ifdef TRANSFOMER_DEMO_HAS_GPERFTOOLS
 std::string ResolveProfilePath() {
-  const char* profile_path = std::getenv("CPUPROFILE");
+  const char* profile_path = std::getenv("TRANSFOMER_DEMO_PROFILE_PATH");
   if (profile_path != nullptr && profile_path[0] != '\0') {
     return std::string(profile_path);
   }
   return "transfomer_demo_benchmark.prof";
 }
-
-class ScopedProfiler final {
- public:
-  explicit ScopedProfiler(const std::string& profile_path) {
-    if (ProfilerStart(profile_path.c_str()) == 0) {
-      throw std::runtime_error("Failed to start gperftools profiler at " +
-                               profile_path);
-    }
-  }
-
-  ~ScopedProfiler() { ProfilerStop(); }
-
-  ScopedProfiler(const ScopedProfiler&) = delete;
-  ScopedProfiler& operator=(const ScopedProfiler&) = delete;
-};
 #endif
 
 }  // namespace
@@ -134,11 +119,30 @@ int main(int argc, char** argv) {
     std::vector<int64_t> tokens(token_ids.begin(), token_ids.end());
 
 #ifdef TRANSFOMER_DEMO_HAS_GPERFTOOLS
-    const std::string profile_path = ResolveProfilePath();
-    const deeptiny::Tensor output = [&]() {
-      const ScopedProfiler profiler(profile_path);
-      return (*model)({tokens});
-    }();
+    bool started_here = false;
+    std::string profile_path;
+    if (ProfilingIsEnabledForAllThreads() != 0) {
+      const char* cpuprofile_path = std::getenv("CPUPROFILE");
+      if (cpuprofile_path != nullptr && cpuprofile_path[0] != '\0') {
+        profile_path = cpuprofile_path;
+      } else {
+        profile_path = "<already enabled>";
+      }
+    } else {
+      profile_path = ResolveProfilePath();
+      if (ProfilerStart(profile_path.c_str()) == 0) {
+        throw std::runtime_error("Failed to start gperftools profiler at " +
+                                 profile_path);
+      }
+      started_here = true;
+    }
+
+    const deeptiny::Tensor output = (*model)({tokens});
+    if (started_here) {
+      ProfilerStop();
+    } else {
+      ProfilerFlush();
+    }
 
     std::cout << "model_dir: " << model_dir << "\n";
     std::cout << "tokenizer: " << tokenizer_path << "\n";
