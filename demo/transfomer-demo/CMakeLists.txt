@@ -32,6 +32,13 @@ FetchContent_Declare(
   GIT_SHALLOW FALSE
 )
 
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY "https://github.com/nlohmann/json.git"
+  GIT_TAG "v3.11.3"
+  GIT_SHALLOW TRUE
+)
+
 if(NOT DEFINED FETCHCONTENT_SOURCE_DIR_DEEPTINY)
   get_filename_component(_local_deeptiny_root "${CMAKE_CURRENT_SOURCE_DIR}/../.."
                          ABSOLUTE)
@@ -42,7 +49,7 @@ if(NOT DEFINED FETCHCONTENT_SOURCE_DIR_DEEPTINY)
   endif()
 endif()
 
-FetchContent_MakeAvailable(deeptiny)
+FetchContent_MakeAvailable(deeptiny nlohmann_json)
 set(BUILD_TESTING "${_demo_build_testing}" CACHE BOOL
     "Build transfomer-demo tests" FORCE)
 
@@ -73,10 +80,15 @@ if(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP)
                    EXCLUDE_FROM_ALL)
 endif()
 
-add_executable(transfomer_demo src/main.cc src/transformer.cc)
+add_executable(
+  transfomer_demo
+  src/main.cc
+  src/transformer.cc
+  src/smollm2_135m_instruct_loader.cc
+)
 
 target_compile_features(transfomer_demo PRIVATE cxx_std_23)
-target_link_libraries(transfomer_demo PRIVATE deeptiny)
+target_link_libraries(transfomer_demo PRIVATE deeptiny nlohmann_json::nlohmann_json)
 
 if(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP)
   target_compile_definitions(transfomer_demo

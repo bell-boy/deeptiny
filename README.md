@@ -183,3 +183,7 @@ int main() {
 - `math::BatchedMatMul` broadcasts leading batch dims only; matrix inner dims (after transpose flags) must match.
 - `Tensor::Reshape` requires contiguous input and matching element count.
 - Current compute kernels are CPU-first and Float32-focused.
+
+## TODO
+
+6. Add zero-copy external-storage aliasing for tensor load paths (e.g., safetensors mmap) to avoid staging copies when inference-only semantics are acceptable.

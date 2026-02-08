@@ -14,6 +14,9 @@ This demo uses `deeptiny::nn` modules from the main library:
   `indices.size() == product(shape)`
 - Embedding output shape is `shape + {embedding_dim}`
 - Invalid embedding indices (`< 0` or `>= num_embeddings`) throw
+- `src/smollm2_135m_instruct_loader.{h,cc}` exposes a factory that builds a
+  demo `Transformer` from SmolLM2 safetensors using mmap-backed reads, `F32`
+  direct copy, and `BF16 -> F32` conversion for runtime compatibility
 
 ## Configure
 
@@ -55,8 +58,25 @@ cmake --build --preset dev-local-openblas
 ## Run
 
 ```bash
-./build/transfomer_demo
+./build/transfomer_demo /path/to/SmolLM2-135M-Instruct
 ```
+
+Optional generation args:
+
+```bash
+./build/transfomer_demo /path/to/SmolLM2-135M-Instruct 64 0.8
+```
+
+The demo runs a simple CLI chat loop:
+
+- input line is tokenized
+- tokens are fed through the model
+- next-token IDs are sampled from logits
+- generated token IDs are decoded and printed
+
+If `tokenizer.json` is missing in your provided model directory, the demo
+downloads `tokenizer.json` into `model_files/` under the current working
+directory and uses it.
 
 Override the pinned Deep Tiny commit:
 
