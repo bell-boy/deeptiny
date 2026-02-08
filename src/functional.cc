@@ -45,6 +45,37 @@ class ReLUBackward : public Function {
   }
 };
 
+class SoftmaxBackward : public Function {
+ public:
+  enum struct ContextObjects : uint64_t {
+    SAVED_Y = 0,
+  };
+
+  SoftmaxBackward(const Tensor& parent_x, const Tensor& saved_y, uint64_t dim)
+      : Function({utils::TensorAccessor::GetAutogradMeta(parent_x)}),
+        dim_(dim) {
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_Y), saved_y);
+  }
+
+  void operator()(const Tensor& grad) override {
+    Tensor saved_y =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_Y));
+    const auto& parents = getParents();
+    assert(parents.size() == 1 && "SoftmaxBackward must have exactly 1 parent");
+    assert(parents[0] && "SoftmaxBackward parent must not be null");
+
+    if (grad.shape() != saved_y.shape()) {
+      throw std::runtime_error("SoftmaxBackward received invalid grad shape");
+    }
+
+    auto grad_x_impl = dispatch::softmax::Backward(saved_y, grad, dim_);
+    parents[0]->updateGrad(grad_x_impl);
+  }
+
+ private:
+  uint64_t dim_;
+};
+
 template <typename DimContainer>
 Tensor ReduceImpl(const Tensor& x, const DimContainer& dims, bool keep_dims) {
   std::unordered_set<uint64_t> dims_set(dims.begin(), dims.end());
@@ -116,6 +147,22 @@ Tensor ReLU(const Tensor& x) {
   auto out_impl = dispatch::relu::OutOfPlace(x);
 
   auto backward = std::make_shared<ReLUBackward>(x, x);
+  auto out_meta = std::make_shared<AutogradMeta>(backward);
+  return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
+}
+
+Tensor Softmax(const Tensor& x, uint64_t dim) {
+  const auto& shape = x.shape();
+  if (shape.empty()) {
+    throw std::runtime_error("Softmax does not support scalar input");
+  }
+  if (dim >= shape.size()) {
+    throw std::runtime_error("Softmax dim out of range");
+  }
+
+  auto out_impl = dispatch::softmax::OutOfPlace(x, dim);
+  Tensor out_saved = utils::TensorAccessor::MakeTensor(out_impl, nullptr);
+  auto backward = std::make_shared<SoftmaxBackward>(x, out_saved, dim);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
 }

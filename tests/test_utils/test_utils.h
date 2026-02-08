@@ -20,6 +20,7 @@ inline doctest::Approx Approx(double expected,
 
 Tensor MakeTensor(const Shape& shape, const std::vector<float>& values,
                   bool requires_grad = false);
+void CopyTensorData(const Tensor& src, const Tensor& dst);
 std::vector<float> ToVector(const Tensor& t);
 void CheckTensorData(const Tensor& t, const std::vector<float>& expected);
 }  // namespace deeptiny::test_utils

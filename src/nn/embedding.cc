@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "nn/validation.h"
+
 namespace deeptiny::nn {
 namespace {
 
@@ -19,11 +21,12 @@ int64_t ToSliceIndex(uint64_t value, const char* label) {
 
 Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim, DType dtype,
                   Device device, bool requires_grad) {
-  if (num_embeddings == 0 || embedding_dim == 0) {
-    throw std::runtime_error("Embedding dimensions must be positive.");
-  }
+  detail::ValidateNonZeroDimension("Embedding", "num_embeddings",
+                                   num_embeddings);
+  detail::ValidateNonZeroDimension("Embedding", "embedding_dim", embedding_dim);
   if (dtype != DType::Float32) {
-    throw std::runtime_error("Embedding currently supports only Float32 dtype.");
+    throw std::runtime_error(
+        "Embedding currently supports only Float32 dtype.");
   }
   if (device != Device::CPU) {
     throw std::runtime_error("Embedding currently supports only CPU.");
@@ -51,7 +54,8 @@ Tensor Embedding::operator()(const std::vector<int64_t>& indices,
   const uint64_t index_count = static_cast<uint64_t>(indices.size());
   Shape output_shape = shape;
   output_shape.push_back(embedding_dim_);
-  Tensor flat_output = Tensor::Zeros({index_count, embedding_dim_}, device_, dtype_);
+  Tensor flat_output =
+      Tensor::Zeros({index_count, embedding_dim_}, device_, dtype_);
 
   try {
     (void)flat_output.Reshape(output_shape);
@@ -71,8 +75,7 @@ Tensor Embedding::operator()(const std::vector<int64_t>& indices,
     }
 
     const int64_t row = ToSliceIndex(i, "row index");
-    Tensor gathered_row =
-        weight_({Slice(token), Slice(0, end_col)});
+    Tensor gathered_row = weight_({Slice(token), Slice(0, end_col)});
     flat_output({Slice(row), Slice(0, end_col)}) = gathered_row;
   }
 
