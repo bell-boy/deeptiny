@@ -4,7 +4,9 @@ Standalone CMake demo that consumes Deep Tiny via `FetchContent`.
 
 This demo uses `deeptiny::nn` modules from the main library:
 
-- `Linear` and `GatedReLU`
+- `Embedding`, `MultiHeadAttention`, `GatedReLU`, and `RMSNorm`
+- `nn::TransformerBlock` for repeated hidden-state updates
+- demo-local `Transformer` module with pipeline: `embed -> transformer_block * N -> norm`
 - `Embedding` with PyTorch-style lookup via `Embedding::operator()(indices, shape)`
 - `Embedding::operator()(indices, shape)` expects
   `indices.size() == product(shape)`
