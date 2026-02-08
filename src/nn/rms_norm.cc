@@ -1,21 +1,14 @@
 #include "deeptiny/nn/rms_norm.h"
 
 #include <stdexcept>
-#include <string>
 #include <vector>
 
 #include "deeptiny/functional.h"
 #include "deeptiny/math.h"
+#include "nn/validation.h"
 
 namespace deeptiny::nn {
 namespace {
-
-uint64_t ValidatePositiveDimension(uint64_t dim) {
-  if (dim == 0) {
-    throw std::runtime_error("RMSNorm dim must be > 0");
-  }
-  return dim;
-}
 
 float ValidateEpsilon(float eps) {
   if (eps < 0.0f) {
@@ -27,7 +20,7 @@ float ValidateEpsilon(float eps) {
 }  // namespace
 
 RMSNorm::RMSNorm(uint64_t dim, float eps, Device device)
-    : dim_(ValidatePositiveDimension(dim)),
+    : dim_(detail::ValidateNonZeroDimension("RMSNorm", "dim", dim)),
       eps_(ValidateEpsilon(eps)),
       weight_(Tensor::FromVector(std::vector<float>(dim_, 1.0f), {dim_}, device,
                                  true)) {
