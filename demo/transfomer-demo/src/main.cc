@@ -4,34 +4,43 @@
 #include "deeptiny/functional.h"
 #include "deeptiny/tensor.h"
 #include "deeptiny/types.h"
-#include "deeptiny/nn/gated_relu.h"
+#include "transformer.h"
 
 int main() {
   using deeptiny::FormatShape;
 
-  constexpr uint64_t in_dim = 4;
-  constexpr uint64_t hidden_dim = 8;
-  constexpr uint64_t out_dim = 4;
-  const std::vector<float> input_values{
-      0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 1.1f, 1.2f,
-      1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f, 1.9f, 2.0f, 2.1f, 2.2f, 2.3f, 2.4f,
-  };
-  auto x = deeptiny::Tensor::FromVector(input_values, {2, 3, in_dim},
-                                        deeptiny::Device::CPU, true);
-  deeptiny::nn::GatedReLU mlp(in_dim, hidden_dim, out_dim);
+  constexpr uint64_t vocab_size = 32;
+  constexpr uint64_t hidden_size = 8;
+  constexpr uint64_t intermediate_size = 16;
+  constexpr uint64_t num_hidden_states = 3;
+  constexpr uint64_t num_attention_heads = 2;
+  constexpr uint64_t num_key_value_heads = 2;
 
-  auto y = mlp(x);
+  const std::vector<std::vector<int64_t>> tokens{
+      {1, 7, 3, 5},
+      {4, 2, 9, 6},
+  };
+  transfomer_demo::Transformer transformer(
+      vocab_size, hidden_size, intermediate_size, num_hidden_states,
+      num_attention_heads, num_key_value_heads, deeptiny::Device::CPU);
+
+  auto y = transformer(tokens);
   auto loss = deeptiny::functional::Reduce(y, {0, 1, 2});
   loss.Backward();
 
-  std::cout << "transfomer-demo GatedReLU demo\n";
-  std::cout << "input shape: " << FormatShape(x.shape()) << "\n";
+  std::cout << "transfomer-demo Transformer demo\n";
+  std::cout << "token batch shape: "
+            << FormatShape({static_cast<uint64_t>(tokens.size()),
+                            static_cast<uint64_t>(tokens.front().size())})
+            << "\n";
+  std::cout << "hidden states layers: " << transformer.num_hidden_states()
+            << "\n";
   std::cout << "output shape: " << FormatShape(y.shape()) << "\n";
   std::cout << "loss shape: " << FormatShape(loss.shape()) << "\n";
-  std::cout << "x.grad available: " << std::boolalpha << x.grad().has_value()
-            << "\n";
-  std::cout << "gate_proj.weight.grad available: "
-            << mlp.gate_proj().weight().grad().has_value() << "\n";
+  std::cout << "embed.weight.grad available: " << std::boolalpha
+            << transformer.embed().weight().grad().has_value() << "\n";
+  std::cout << "norm.weight.grad available: "
+            << transformer.norm().weight().grad().has_value() << "\n";
 
   return 0;
 }

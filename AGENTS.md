@@ -47,3 +47,4 @@
 - Embedded use should default `DEEPTINY_BUILD_TESTS=OFF` and `DEEPTINY_ENABLE_WERROR=OFF` unless the parent explicitly enables them.
 - Keep standalone demos under `demo/<name>` as independent CMake projects that consume Deep Tiny via `FetchContent` with a pinned commit (`DEEPTINY_GIT_TAG`), and allow local override through `FETCHCONTENT_SOURCE_DIR_DEEPTINY` when needed.
 - Keep `transfomer-demo` embedding contract strict: `Embedding::operator()(indices, shape)` requires `indices.size() == product(shape)`, throws on out-of-range indices, and returns `shape + {embedding_dim}`.
+- Keep `transfomer-demo::Transformer` pipeline fixed as `embed -> hidden_states * N -> norm`, with `std::vector<std::vector<int64_t>>` token-batch input.
