@@ -45,6 +45,33 @@ class ReLUBackward : public Function {
   }
 };
 
+class SqrtBackward : public Function {
+ public:
+  enum struct ContextObjects : uint64_t {
+    SAVED_X = 0,
+  };
+
+  explicit SqrtBackward(const Tensor& parent_x, const Tensor& saved_x)
+      : Function({utils::TensorAccessor::GetAutogradMeta(parent_x)}) {
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_X), saved_x);
+  }
+
+  void operator()(const Tensor& grad) override {
+    Tensor saved_x =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_X));
+    const auto& parents = getParents();
+    assert(parents.size() == 1 && "SqrtBackward must have exactly 1 parent");
+    assert(parents[0] && "SqrtBackward parent must not be null");
+
+    if (grad.shape() != saved_x.shape()) {
+      throw std::runtime_error("SqrtBackward received invalid grad shape");
+    }
+
+    auto grad_x_impl = dispatch::sqrt::Backward(saved_x, grad);
+    parents[0]->updateGrad(grad_x_impl);
+  }
+};
+
 template <typename DimContainer>
 Tensor ReduceImpl(const Tensor& x, const DimContainer& dims, bool keep_dims) {
   std::unordered_set<uint64_t> dims_set(dims.begin(), dims.end());
@@ -116,6 +143,14 @@ Tensor ReLU(const Tensor& x) {
   auto out_impl = dispatch::relu::OutOfPlace(x);
 
   auto backward = std::make_shared<ReLUBackward>(x, x);
+  auto out_meta = std::make_shared<AutogradMeta>(backward);
+  return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
+}
+
+Tensor Sqrt(const Tensor& x) {
+  auto out_impl = dispatch::sqrt::OutOfPlace(x);
+
+  auto backward = std::make_shared<SqrtBackward>(x, x);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
 }

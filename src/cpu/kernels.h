@@ -31,6 +31,10 @@ void ReLU(std::shared_ptr<TensorImpl> x, std::shared_ptr<TensorImpl> out);
 void ReLUBackward(std::shared_ptr<TensorImpl> x,
                   std::shared_ptr<TensorImpl> grad_out,
                   std::shared_ptr<TensorImpl> grad_x);
+void Sqrt(std::shared_ptr<TensorImpl> x, std::shared_ptr<TensorImpl> out);
+void SqrtBackward(std::shared_ptr<TensorImpl> x,
+                  std::shared_ptr<TensorImpl> grad_out,
+                  std::shared_ptr<TensorImpl> grad_x);
 
 /**
  * Batched matrix multiply.

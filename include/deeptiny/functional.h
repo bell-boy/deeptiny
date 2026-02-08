@@ -16,6 +16,10 @@ Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
  * Element-wise ReLU activation.
  */
 Tensor ReLU(const Tensor& x);
+/**
+ * Element-wise square root.
+ */
+Tensor Sqrt(const Tensor& x);
 }  // namespace functional
 
 };  // namespace deeptiny
