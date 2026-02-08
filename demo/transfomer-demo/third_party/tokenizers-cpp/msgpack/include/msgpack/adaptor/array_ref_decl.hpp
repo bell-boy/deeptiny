@@ -14,4 +14,4 @@
 #include "msgpack/v2/adaptor/array_ref_decl.hpp"
 #include "msgpack/v3/adaptor/array_ref_decl.hpp"
 
-#endif  // MSGPACK_TYPE_ARRAY_REF_DECL_HPP
+#endif // MSGPACK_TYPE_ARRAY_REF_DECL_HPP

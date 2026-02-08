@@ -16,14 +16,14 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
+/// @endcond
 
-  using v2::zbuffer;
+using v2::zbuffer;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V3_ZBUFFER_DECL_HPP
+#endif // MSGPACK_V3_ZBUFFER_DECL_HPP

@@ -34,14 +34,14 @@ namespace test {
 
 namespace {
 struct Test {
-  const char* base;
-  const char* name;
+  const char *base;
+  const char *name;
   void (*func)();
 };
-std::vector<Test>* tests;
+std::vector<Test> *tests;
 }  // namespace
 
-bool RegisterTest(const char* base, const char* name, void (*func)()) {
+bool RegisterTest(const char *base, const char *name, void (*func)()) {
   if (tests == nullptr) {
     tests = new std::vector<Test>;
   }
@@ -66,7 +66,7 @@ int RunAllTests() {
     return 0;
   }
 
-  for (const Test& t : *(tests)) {
+  for (const Test &t : *(tests)) {
     std::cerr << "[ RUN      ] " << t.base << "." << t.name << std::endl;
     (*t.func)();
     std::cerr << "[       OK ] " << t.base << "." << t.name << std::endl;

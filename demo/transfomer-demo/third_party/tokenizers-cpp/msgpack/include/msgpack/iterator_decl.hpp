@@ -15,4 +15,4 @@
 #include "msgpack/v2/iterator_decl.hpp"
 #include "msgpack/v3/iterator_decl.hpp"
 
-#endif  // MSGPACK_ITERATOR_DECL_HPP
+#endif // MSGPACK_ITERATOR_DECL_HPP

@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_ARCHITECTURE_PTX_H
 #define MSGPACK_PREDEF_ARCHITECTURE_PTX_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_ARCH_PTX`]
@@ -28,12 +28,12 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_ARCH_PTX MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__CUDA_ARCH__)
-#undef MSGPACK_ARCH_PTX
-#define MSGPACK_ARCH_PTX MSGPACK_PREDEF_MAKE_10_VR0(__CUDA_ARCH__)
+#   undef MSGPACK_ARCH_PTX
+#   define MSGPACK_ARCH_PTX MSGPACK_PREDEF_MAKE_10_VR0(__CUDA_ARCH__)
 #endif
 
 #if MSGPACK_ARCH_PTX
-#define MSGPACK_ARCH_PTX_AVAILABLE
+#   define MSGPACK_ARCH_PTX_AVAILABLE
 #endif
 
 #define MSGPACK_ARCH_PTX_NAME "PTX"
@@ -41,4 +41,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_PTX, MSGPACK_ARCH_PTX_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_PTX,MSGPACK_ARCH_PTX_NAME)

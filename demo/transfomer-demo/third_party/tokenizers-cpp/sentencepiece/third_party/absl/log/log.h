@@ -38,11 +38,12 @@ class Die {
   ~Die() {
     std::cerr << std::endl;
     if (die_) {
-      std::cerr << "Program terminated with an unrecoverable error." << std::endl;
+      std::cerr << "Program terminated with an unrecoverable error."
+                << std::endl;
       std::exit(-1);
     }
   }
-  int operator&(std::ostream&) { return 0; }
+  int operator&(std::ostream &) { return 0; }
 
  private:
   bool die_ = false;
@@ -59,11 +60,12 @@ inline absl::string_view BaseName(absl::string_view path) {
 }  // namespace logging
 }  // namespace absl
 
-#define LOG(severity)                                                                   \
-  (::absl::MinLogLevel() > ::absl::LOG_##severity)                                      \
-      ? 0                                                                               \
-      : ::absl::logging::Die(::absl::LOG_##severity >= ::absl::LOG_FATAL) &             \
-            std::cerr << ::absl::logging::BaseName(__FILE__) << "(" << __LINE__ << ") " \
+#define LOG(severity)                                                       \
+  (::absl::MinLogLevel() > ::absl::LOG_##severity)                          \
+      ? 0                                                                   \
+      : ::absl::logging::Die(::absl::LOG_##severity >= ::absl::LOG_FATAL) & \
+            std::cerr << ::absl::logging::BaseName(__FILE__) << "("         \
+                      << __LINE__ << ") "                                   \
                       << "LOG(" << #severity << ") "
 
 #endif  // ABSL_LOG_LOG_H_

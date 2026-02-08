@@ -16,32 +16,34 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
+/// @endcond
 
-  namespace detail {
+namespace detail {
 
-  template <typename VisitorHolder>
-  class context;
+template <typename VisitorHolder>
+class context;
 
-  }  // namespace detail
+} // detail
 
-  using v2::parse;
-  using v2::parser;
+using v2::parser;
+using v2::parse;
 
-  namespace detail {
+namespace detail {
 
-  template <typename Visitor>
-  struct parse_helper;
+template <typename Visitor>
+struct parse_helper;
 
-  template <typename Visitor>
-  inline parse_return parse_imp(const char* data, size_t len, size_t& off, Visitor& v);
+template <typename Visitor>
+inline parse_return
+parse_imp(const char* data, size_t len, size_t& off, Visitor& v);
 
-  }  // namespace detail
+} // detail
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V3_PARSE_DECL_HPP
+
+#endif // MSGPACK_V3_PARSE_DECL_HPP

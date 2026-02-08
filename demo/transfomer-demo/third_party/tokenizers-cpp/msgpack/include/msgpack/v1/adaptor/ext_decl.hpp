@@ -10,30 +10,29 @@
 #ifndef MSGPACK_V1_TYPE_EXT_DECL_HPP
 #define MSGPACK_V1_TYPE_EXT_DECL_HPP
 
-#include <cstring>
-#include <string>
-
+#include "msgpack/versioning.hpp"
 #include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/object.hpp"
-#include "msgpack/versioning.hpp"
+#include <cstring>
+#include <string>
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
-
-  namespace type {
-
-  class ext_ref;
-  class ext;
-
-  }  // namespace type
-
-  /// @cond
-}  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
-}  // namespace msgpack
+namespace type {
 
-#endif  // MSGPACK_V1_TYPE_EXT_DECL_HPP
+class ext_ref;
+class ext;
+
+} // namespace type
+
+/// @cond
+} // MSGPACK_API_VERSION_NAMESPACE(v1)
+/// @endcond
+
+} // namespace msgpack
+
+#endif // MSGPACK_V1_TYPE_EXT_DECL_HPP

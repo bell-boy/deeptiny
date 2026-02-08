@@ -32,19 +32,20 @@
 #define GOOGLE_PROTOBUF_MAP_ENTRY_LITE_H__
 
 #include <assert.h>
+#include <string>
+
+#include <google/protobuf/stubs/casts.h>
+#include <google/protobuf/parse_context.h>
+#include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/arenastring.h>
 #include <google/protobuf/generated_message_util.h>
-#include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/map.h>
 #include <google/protobuf/map_type_handler.h>
-#include <google/protobuf/parse_context.h>
 #include <google/protobuf/port.h>
-#include <google/protobuf/stubs/casts.h>
 #include <google/protobuf/wire_format_lite.h>
 
 #include <google/protobuf/port_def.inc>
-#include <string>
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
 #endif
@@ -52,10 +53,12 @@
 namespace google {
 namespace protobuf {
 namespace internal {
-template <typename Derived, typename Key, typename Value, WireFormatLite::FieldType kKeyFieldType,
+template <typename Derived, typename Key, typename Value,
+          WireFormatLite::FieldType kKeyFieldType,
           WireFormatLite::FieldType kValueFieldType>
 class MapEntry;
-template <typename Derived, typename Key, typename Value, WireFormatLite::FieldType kKeyFieldType,
+template <typename Derived, typename Key, typename Value,
+          WireFormatLite::FieldType kKeyFieldType,
           WireFormatLite::FieldType kValueFieldType>
 class MapFieldLite;
 }  // namespace internal
@@ -89,7 +92,9 @@ struct MoveHelper<false, true, is_stringlike, T> {  // messages
 
 template <typename T>
 struct MoveHelper<false, false, true, T> {  // strings and similar
-  static void Move(T* src, T* dest) { *dest = std::move(*src); }
+  static void Move(T* src, T* dest) {
+    *dest = std::move(*src);
+  }
 };
 
 // Functions for operating on a map entry.  Does not contain any representation
@@ -102,12 +107,14 @@ struct MapEntryFuncs {
   static const int kKeyFieldNumber = 1;
   static const int kValueFieldNumber = 2;
 
-  static uint8* InternalSerialize(int field_number, const Key& key, const Value& value, uint8* ptr,
+  static uint8* InternalSerialize(int field_number, const Key& key,
+                                  const Value& value, uint8* ptr,
                                   io::EpsCopyOutputStream* stream) {
     ptr = stream->EnsureSpace(ptr);
-    ptr = WireFormatLite::WriteTagToArray(field_number, WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-                                          ptr);
-    ptr = io::CodedOutputStream::WriteVarint32ToArray(GetCachedSize(key, value), ptr);
+    ptr = WireFormatLite::WriteTagToArray(
+        field_number, WireFormatLite::WIRETYPE_LENGTH_DELIMITED, ptr);
+    ptr = io::CodedOutputStream::WriteVarint32ToArray(GetCachedSize(key, value),
+                                                      ptr);
 
     ptr = KeyTypeHandler::Write(kKeyFieldNumber, key, ptr, stream);
     return ValueTypeHandler::Write(kValueFieldNumber, value, ptr, stream);
@@ -115,13 +122,16 @@ struct MapEntryFuncs {
 
   static size_t ByteSizeLong(const Key& key, const Value& value) {
     // Tags for key and value will both be one byte (field numbers 1 and 2).
-    size_t inner_length = 2 + KeyTypeHandler::ByteSize(key) + ValueTypeHandler::ByteSize(value);
-    return inner_length + io::CodedOutputStream::VarintSize32(static_cast<uint32>(inner_length));
+    size_t inner_length =
+        2 + KeyTypeHandler::ByteSize(key) + ValueTypeHandler::ByteSize(value);
+    return inner_length + io::CodedOutputStream::VarintSize32(
+                              static_cast<uint32>(inner_length));
   }
 
   static int GetCachedSize(const Key& key, const Value& value) {
     // Tags for key and value will both be one byte (field numbers 1 and 2).
-    return 2 + KeyTypeHandler::GetCachedSize(key) + ValueTypeHandler::GetCachedSize(value);
+    return 2 + KeyTypeHandler::GetCachedSize(key) +
+           ValueTypeHandler::GetCachedSize(value);
   }
 };
 
@@ -129,7 +139,8 @@ struct MapEntryFuncs {
 // It uses Curious Recursive Template Pattern (CRTP) to provide the type of
 // the eventual code to the template code.
 template <typename Derived, typename Base, typename Key, typename Value,
-          WireFormatLite::FieldType kKeyFieldType, WireFormatLite::FieldType kValueFieldType>
+          WireFormatLite::FieldType kKeyFieldType,
+          WireFormatLite::FieldType kValueFieldType>
 class MapEntryImpl : public Base {
  public:
   typedef MapEntryFuncs<Key, Value, kKeyFieldType, kValueFieldType> Funcs;
@@ -148,7 +159,8 @@ class MapEntryImpl : public Base {
   // Enum type cannot be used for MapTypeHandler::Read. Define a type
   // which will replace Enum with int.
   typedef typename KeyTypeHandler::MapEntryAccessorType KeyMapEntryAccessorType;
-  typedef typename ValueTypeHandler::MapEntryAccessorType ValueMapEntryAccessorType;
+  typedef
+      typename ValueTypeHandler::MapEntryAccessorType ValueMapEntryAccessorType;
 
   // Constants for field number.
   static const int kKeyFieldNumber = 1;
@@ -157,8 +169,8 @@ class MapEntryImpl : public Base {
   // Constants for field tag.
   static const uint8 kKeyTag =
       GOOGLE_PROTOBUF_WIRE_FORMAT_MAKE_TAG(kKeyFieldNumber, KeyTypeHandler::kWireType);
-  static const uint8 kValueTag =
-      GOOGLE_PROTOBUF_WIRE_FORMAT_MAKE_TAG(kValueFieldNumber, ValueTypeHandler::kWireType);
+  static const uint8 kValueTag = GOOGLE_PROTOBUF_WIRE_FORMAT_MAKE_TAG(
+      kValueFieldNumber, ValueTypeHandler::kWireType);
   static const size_t kTagSize = 1;
 
  public:
@@ -171,7 +183,9 @@ class MapEntryImpl : public Base {
   static const WireFormatLite::FieldType kEntryValueFieldType = kValueFieldType;
 
   constexpr MapEntryImpl()
-      : key_(KeyTypeHandler::Constinit()), value_(ValueTypeHandler::Constinit()), _has_bits_{} {}
+      : key_(KeyTypeHandler::Constinit()),
+        value_(ValueTypeHandler::Constinit()),
+        _has_bits_{} {}
 
   explicit MapEntryImpl(Arena* arena)
       : Base(arena),
@@ -228,11 +242,13 @@ class MapEntryImpl : public Base {
         ptr = ValueTypeHandler::Read(ptr, ctx, value);
         if (!Derived::ValidateValue(value)) return nullptr;
       } else {
-        if (tag == 0 || WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
+        if (tag == 0 || WireFormatLite::GetTagWireType(tag) ==
+                            WireFormatLite::WIRETYPE_END_GROUP) {
           ctx->SetLastTag(tag);
           return ptr;
         }
-        ptr = UnknownFieldParse(tag, static_cast<std::string*>(nullptr), ptr, ctx);
+        ptr = UnknownFieldParse(tag, static_cast<std::string*>(nullptr), ptr,
+                                ctx);
       }
       GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     }
@@ -247,7 +263,7 @@ class MapEntryImpl : public Base {
   }
 
   ::google::protobuf::uint8* _InternalSerialize(::google::protobuf::uint8* ptr,
-                                                io::EpsCopyOutputStream* stream) const override {
+                              io::EpsCopyOutputStream* stream) const override {
     ptr = KeyTypeHandler::Write(kKeyFieldNumber, key(), ptr, stream);
     return ValueTypeHandler::Write(kValueFieldNumber, value(), ptr, stream);
   }
@@ -256,12 +272,18 @@ class MapEntryImpl : public Base {
 
   int GetCachedSize() const override {
     int size = 0;
-    size += has_key() ? static_cast<int>(kTagSize) + KeyTypeHandler::GetCachedSize(key()) : 0;
-    size += has_value() ? static_cast<int>(kTagSize) + ValueTypeHandler::GetCachedSize(value()) : 0;
+    size += has_key() ? static_cast<int>(kTagSize) +
+                            KeyTypeHandler::GetCachedSize(key())
+                      : 0;
+    size += has_value() ? static_cast<int>(kTagSize) +
+                              ValueTypeHandler::GetCachedSize(value())
+                        : 0;
     return size;
   }
 
-  bool IsInitialized() const override { return ValueTypeHandler::IsInitialized(value_); }
+  bool IsInitialized() const override {
+    return ValueTypeHandler::IsInitialized(value_);
+  }
 
   Base* New() const override {
     Derived* entry = new Derived;
@@ -331,9 +353,11 @@ class MapEntryImpl : public Base {
           value_ptr_ = &(*map_)[key_];
           if (PROTOBUF_PREDICT_TRUE(map_size != map_->size())) {
             // We created a new key-value pair.  Fill in the value.
-            typedef typename MapIf<ValueTypeHandler::kIsEnum, int*, Value*>::type T;
+            typedef
+                typename MapIf<ValueTypeHandler::kIsEnum, int*, Value*>::type T;
             input->Skip(kTagSize);  // Skip kValueTag.
-            if (!ValueTypeHandler::Read(input, reinterpret_cast<T>(value_ptr_))) {
+            if (!ValueTypeHandler::Read(input,
+                                        reinterpret_cast<T>(value_ptr_))) {
               map_->erase(key_);  // Failure! Undo insertion.
               return false;
             }
@@ -362,9 +386,12 @@ class MapEntryImpl : public Base {
           typename Map::size_type map_size = map_->size();
           value_ptr_ = &(*map_)[key_];
           if (PROTOBUF_PREDICT_TRUE(map_size != map_->size())) {
-            using T = typename MapIf<ValueTypeHandler::kIsEnum, int*, Value*>::type;
-            ptr = ValueTypeHandler::Read(ptr + 1, ctx, reinterpret_cast<T>(value_ptr_));
-            if (PROTOBUF_PREDICT_FALSE(!ptr || !Derived::ValidateValue(value_ptr_))) {
+            using T =
+                typename MapIf<ValueTypeHandler::kIsEnum, int*, Value*>::type;
+            ptr = ValueTypeHandler::Read(ptr + 1, ctx,
+                                         reinterpret_cast<T>(value_ptr_));
+            if (PROTOBUF_PREDICT_FALSE(!ptr ||
+                                       !Derived::ValidateValue(value_ptr_))) {
               map_->erase(key_);  // Failure! Undo insertion.
               return nullptr;
             }
@@ -391,8 +418,9 @@ class MapEntryImpl : public Base {
     }
 
     template <typename UnknownType>
-    const char* ParseWithEnumValidation(const char* ptr, ParseContext* ctx, bool (*is_valid)(int),
-                                        uint32 field_num, InternalMetadata* metadata) {
+    const char* ParseWithEnumValidation(const char* ptr, ParseContext* ctx,
+                                        bool (*is_valid)(int), uint32 field_num,
+                                        InternalMetadata* metadata) {
       auto entry = NewEntry();
       ptr = entry->_InternalParse(ptr, ctx);
       if (!ptr) return nullptr;
@@ -438,10 +466,13 @@ class MapEntryImpl : public Base {
     }
 
     typedef MoveHelper<KeyTypeHandler::kIsEnum, KeyTypeHandler::kIsMessage,
-                       KeyTypeHandler::kWireType == WireFormatLite::WIRETYPE_LENGTH_DELIMITED, Key>
+                       KeyTypeHandler::kWireType ==
+                           WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+                       Key>
         KeyMover;
     typedef MoveHelper<ValueTypeHandler::kIsEnum, ValueTypeHandler::kIsMessage,
-                       ValueTypeHandler::kWireType == WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+                       ValueTypeHandler::kWireType ==
+                           WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
                        Value>
         ValueMover;
 
@@ -482,12 +513,15 @@ class MapEntryImpl : public Base {
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(MapEntryImpl);
 };
 
-template <typename T, typename Key, typename Value, WireFormatLite::FieldType kKeyFieldType,
+template <typename T, typename Key, typename Value,
+          WireFormatLite::FieldType kKeyFieldType,
           WireFormatLite::FieldType kValueFieldType>
-class MapEntryLite
-    : public MapEntryImpl<T, MessageLite, Key, Value, kKeyFieldType, kValueFieldType> {
+class MapEntryLite : public MapEntryImpl<T, MessageLite, Key, Value,
+                                         kKeyFieldType, kValueFieldType> {
  public:
-  typedef MapEntryImpl<T, MessageLite, Key, Value, kKeyFieldType, kValueFieldType> SuperType;
+  typedef MapEntryImpl<T, MessageLite, Key, Value, kKeyFieldType,
+                       kValueFieldType>
+      SuperType;
   constexpr MapEntryLite() {}
   explicit MapEntryLite(Arena* arena) : SuperType(arena) {}
   ~MapEntryLite() { MessageLite::_internal_metadata_.Delete<std::string>(); }
@@ -577,9 +611,11 @@ struct FromHelper<WireFormatLite::TYPE_MESSAGE> {
 template <typename MapEntryType>
 struct MapEntryHelper;
 
-template <typename T, typename Key, typename Value, WireFormatLite::FieldType kKeyFieldType,
+template <typename T, typename Key, typename Value,
+          WireFormatLite::FieldType kKeyFieldType,
           WireFormatLite::FieldType kValueFieldType>
-struct MapEntryHelper<MapEntryLite<T, Key, Value, kKeyFieldType, kValueFieldType> > {
+struct MapEntryHelper<
+    MapEntryLite<T, Key, Value, kKeyFieldType, kValueFieldType> > {
   // Provide utilities to parse/serialize key/value.  Provide utilities to
   // manipulate internal stored type.
   typedef MapTypeHandler<kKeyFieldType, Key> KeyTypeHandler;

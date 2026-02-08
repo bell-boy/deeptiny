@@ -19,8 +19,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #include <msgpack/predef/os/cygwin.h>
 #include <msgpack/predef/os/haiku.h>
 #include <msgpack/predef/os/hpux.h>
-#include <msgpack/predef/os/ios.h>
 #include <msgpack/predef/os/irix.h>
+#include <msgpack/predef/os/ios.h>
 #include <msgpack/predef/os/linux.h>
 #include <msgpack/predef/os/macos.h>
 #include <msgpack/predef/os/os400.h>

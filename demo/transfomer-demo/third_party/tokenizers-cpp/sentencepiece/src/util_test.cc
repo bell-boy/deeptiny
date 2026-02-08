@@ -171,22 +171,25 @@ TEST(UtilTest, DecodeUTF8Test) {
 
   // Invalid UTF8
   {
-    EXPECT_EQ(kUnicodeError, string_util::DecodeUTF8("\xF7\xBF\xBF\xBF ", &mblen));
+    EXPECT_EQ(kUnicodeError,
+              string_util::DecodeUTF8("\xF7\xBF\xBF\xBF ", &mblen));
     EXPECT_EQ(1, mblen);
   }
 
   {
-    EXPECT_EQ(kUnicodeError, string_util::DecodeUTF8("\xF8\x88\x80\x80\x80 ", &mblen));
+    EXPECT_EQ(kUnicodeError,
+              string_util::DecodeUTF8("\xF8\x88\x80\x80\x80 ", &mblen));
     EXPECT_EQ(1, mblen);
   }
 
   {
-    EXPECT_EQ(kUnicodeError, string_util::DecodeUTF8("\xFC\x84\x80\x80\x80\x80 ", &mblen));
+    EXPECT_EQ(kUnicodeError,
+              string_util::DecodeUTF8("\xFC\x84\x80\x80\x80\x80 ", &mblen));
     EXPECT_EQ(1, mblen);
   }
 
   {
-    const char* kInvalidData[] = {
+    const char *kInvalidData[] = {
         "\xC2",      // must be 2byte.
         "\xE0\xE0",  // must be 3byte.
         "\xFF",      // BOM
@@ -197,8 +200,9 @@ TEST(UtilTest, DecodeUTF8Test) {
       // return values of string_util::DecodeUTF8 is not defined.
       // TODO(taku) implement an workaround.
       EXPECT_EQ(kUnicodeError,
-                string_util::DecodeUTF8(kInvalidData[i], kInvalidData[i] + strlen(kInvalidData[i]),
-                                        &mblen));
+                string_util::DecodeUTF8(
+                    kInvalidData[i], kInvalidData[i] + strlen(kInvalidData[i]),
+                    &mblen));
       EXPECT_FALSE(string_util::IsStructurallyValid(kInvalidData[i]));
       EXPECT_EQ(1, mblen);
     }
@@ -215,7 +219,8 @@ TEST(UtilTest, DecodeUTF8Test) {
   }
 
   {
-    EXPECT_EQ(kUnicodeError, string_util::DecodeUTF8("\xF0\xF0\xF0\xFF ", &mblen));
+    EXPECT_EQ(kUnicodeError,
+              string_util::DecodeUTF8("\xF0\xF0\xF0\xFF ", &mblen));
     EXPECT_EQ(1, mblen);
   }
 }
@@ -261,10 +266,11 @@ TEST(UtilTest, UnicodeCharToUTF8Test) {
 
 TEST(UtilTest, IsStructurallyValidTest) {
   EXPECT_TRUE(string_util::IsStructurallyValid("abcd"));
-  EXPECT_TRUE(string_util::IsStructurallyValid(absl::string_view("a\0cd", 4)));  // NUL
-  EXPECT_TRUE(string_util::IsStructurallyValid("ab\xc3\x81"));                   // 2-byte
-  EXPECT_TRUE(string_util::IsStructurallyValid("a\xe3\x81\x81"));                // 3-byte
-  EXPECT_TRUE(string_util::IsStructurallyValid("\xf2\x82\x81\x84"));             // 4
+  EXPECT_TRUE(
+      string_util::IsStructurallyValid(absl::string_view("a\0cd", 4)));  // NUL
+  EXPECT_TRUE(string_util::IsStructurallyValid("ab\xc3\x81"));        // 2-byte
+  EXPECT_TRUE(string_util::IsStructurallyValid("a\xe3\x81\x81"));     // 3-byte
+  EXPECT_TRUE(string_util::IsStructurallyValid("\xf2\x82\x81\x84"));  // 4
   EXPECT_FALSE(string_util::IsStructurallyValid("abc\x80"));
   EXPECT_FALSE(string_util::IsStructurallyValid("abc\xc3"));
   EXPECT_FALSE(string_util::IsStructurallyValid("ab\xe3\x81"));
@@ -297,7 +303,8 @@ TEST(UtilTest, UnicodeTextToUTF8Test) {
 }
 
 TEST(UtilTest, MapUtilTest) {
-  const std::map<std::string, std::string> kMap = {{"a", "A"}, {"b", "B"}, {"c", "C"}};
+  const std::map<std::string, std::string> kMap = {
+      {"a", "A"}, {"b", "B"}, {"c", "C"}};
 
   EXPECT_TRUE(port::ContainsKey(kMap, "a"));
   EXPECT_TRUE(port::ContainsKey(kMap, "b"));
@@ -322,14 +329,16 @@ TEST(UtilTest, InputOutputBufferTest) {
       "test"};
 
   {
-    auto output = filesystem::NewWritableFile(util::JoinPath(::testing::TempDir(), "test_file"));
+    auto output = filesystem::NewWritableFile(
+        util::JoinPath(::testing::TempDir(), "test_file"));
     for (size_t i = 0; i < kData.size(); ++i) {
       output->WriteLine(kData[i]);
     }
   }
 
   {
-    auto input = filesystem::NewReadableFile(util::JoinPath(::testing::TempDir(), "test_file"));
+    auto input = filesystem::NewReadableFile(
+        util::JoinPath(::testing::TempDir(), "test_file"));
     std::string line;
     for (size_t i = 0; i < kData.size(); ++i) {
       EXPECT_TRUE(input->ReadLine(&line));
@@ -347,14 +356,14 @@ TEST(UtilTest, InputOutputBufferInvalidFileTest) {
 TEST(UtilTest, STLDeleteELementsTest) {
   class Item {
    public:
-    explicit Item(int* counter) : counter_(counter) {}
+    explicit Item(int *counter) : counter_(counter) {}
     ~Item() { ++*counter_; }
 
    private:
-    int* counter_;
+    int *counter_;
   };
 
-  std::vector<Item*> data;
+  std::vector<Item *> data;
   int counter = 0;
   for (int i = 0; i < 10; ++i) {
     data.push_back(new Item(&counter));
@@ -386,7 +395,8 @@ TEST(UtilTest, StatusTest) {
   util::OkStatus().IgnoreError();
   for (int i = 1; i <= 16; ++i) {
     util::Status s(static_cast<util::StatusCode>(i), "message");
-    EXPECT_TRUE(s.ToString().find("message") != std::string::npos) << s.ToString();
+    EXPECT_TRUE(s.ToString().find("message") != std::string::npos)
+        << s.ToString();
   }
 }
 

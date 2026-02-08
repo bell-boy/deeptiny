@@ -32,20 +32,23 @@
 // For a compiler that doesn't support __alignof__:
 // #define MSGPACK_ZONE_ALIGNOF(type) MSGPACK_ZONE_ALIGN
 
+
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  class zone;
+class zone;
 
-  std::size_t aligned_size(std::size_t size, std::size_t align = MSGPACK_ZONE_ALIGN);
+std::size_t aligned_size(
+    std::size_t size,
+    std::size_t align = MSGPACK_ZONE_ALIGN);
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_CPP03_ZONE_DECL_HPP
+#endif // MSGPACK_V1_CPP03_ZONE_DECL_HPP

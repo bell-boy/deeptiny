@@ -39,23 +39,25 @@
 #define GOOGLE_PROTOBUF_GENERATED_MESSAGE_UTIL_H__
 
 #include <assert.h>
+
+#include <atomic>
+#include <climits>
+#include <string>
+#include <vector>
+
+#include <google/protobuf/stubs/common.h>
 #include <google/protobuf/any.h>
 #include <google/protobuf/has_bits.h>
 #include <google/protobuf/implicit_weak_message.h>
 #include <google/protobuf/message_lite.h>
+#include <google/protobuf/stubs/once.h>  // Add direct dep on port for pb.cc
 #include <google/protobuf/port.h>
 #include <google/protobuf/repeated_field.h>
-#include <google/protobuf/stubs/casts.h>
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/once.h>  // Add direct dep on port for pb.cc
-#include <google/protobuf/stubs/strutil.h>
 #include <google/protobuf/wire_format_lite.h>
+#include <google/protobuf/stubs/strutil.h>
+#include <google/protobuf/stubs/casts.h>
 
-#include <atomic>
-#include <climits>
 #include <google/protobuf/port_def.inc>
-#include <string>
-#include <vector>
 
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
@@ -82,13 +84,15 @@ inline To DownCast(From& f) {
   return PROTOBUF_NAMESPACE_ID::internal::down_cast<To>(f);
 }
 
+
 // This fastpath inlines a single branch instead of having to make the
 // InitProtobufDefaults function call.
 // It also generates less inlined code than a function-scope static initializer.
 PROTOBUF_EXPORT extern std::atomic<bool> init_protobuf_defaults_state;
 PROTOBUF_EXPORT void InitProtobufDefaultsSlow();
 PROTOBUF_EXPORT inline void InitProtobufDefaults() {
-  if (PROTOBUF_PREDICT_FALSE(!init_protobuf_defaults_state.load(std::memory_order_acquire))) {
+  if (PROTOBUF_PREDICT_FALSE(
+          !init_protobuf_defaults_state.load(std::memory_order_acquire))) {
     InitProtobufDefaultsSlow();
   }
 }
@@ -98,6 +102,7 @@ PROTOBUF_EXPORT inline const std::string& GetEmptyString() {
   InitProtobufDefaults();
   return GetEmptyStringAlreadyInited();
 }
+
 
 // True if IsInitialized() is true for all elements of t.  Type is expected
 // to be a RepeatedPtrField<some message type>.  It's useful to have this
@@ -133,20 +138,26 @@ inline bool IsPresent(const void* base, uint32 hasbit) {
 }
 
 inline bool IsOneofPresent(const void* base, uint32 offset, uint32 tag) {
-  const uint32* oneof = reinterpret_cast<const uint32*>(static_cast<const uint8*>(base) + offset);
+  const uint32* oneof =
+      reinterpret_cast<const uint32*>(static_cast<const uint8*>(base) + offset);
   return *oneof == tag >> 3;
 }
 
-typedef void (*SpecialSerializer)(const uint8* base, uint32 offset, uint32 tag, uint32 has_offset,
+typedef void (*SpecialSerializer)(const uint8* base, uint32 offset, uint32 tag,
+                                  uint32 has_offset,
                                   io::CodedOutputStream* output);
 
-PROTOBUF_EXPORT void ExtensionSerializer(const uint8* base, uint32 offset, uint32 tag,
-                                         uint32 has_offset, io::CodedOutputStream* output);
-PROTOBUF_EXPORT void UnknownFieldSerializerLite(const uint8* base, uint32 offset, uint32 tag,
-                                                uint32 has_offset, io::CodedOutputStream* output);
+PROTOBUF_EXPORT void ExtensionSerializer(const uint8* base, uint32 offset,
+                                         uint32 tag, uint32 has_offset,
+                                         io::CodedOutputStream* output);
+PROTOBUF_EXPORT void UnknownFieldSerializerLite(const uint8* base,
+                                                uint32 offset, uint32 tag,
+                                                uint32 has_offset,
+                                                io::CodedOutputStream* output);
 
 PROTOBUF_EXPORT MessageLite* DuplicateIfNonNullInternal(MessageLite* message);
-PROTOBUF_EXPORT MessageLite* GetOwnedMessageInternal(Arena* message_arena, MessageLite* submessage,
+PROTOBUF_EXPORT MessageLite* GetOwnedMessageInternal(Arena* message_arena,
+                                                     MessageLite* submessage,
                                                      Arena* submessage_arena);
 PROTOBUF_EXPORT void GenericSwap(MessageLite* m1, MessageLite* m2);
 // We specialize GenericSwap for non-lite messages to benefit from reflection.
@@ -156,15 +167,18 @@ template <typename T>
 T* DuplicateIfNonNull(T* message) {
   // The casts must be reinterpret_cast<> because T might be a forward-declared
   // type that the compiler doesn't know is related to MessageLite.
-  return reinterpret_cast<T*>(DuplicateIfNonNullInternal(reinterpret_cast<MessageLite*>(message)));
+  return reinterpret_cast<T*>(
+      DuplicateIfNonNullInternal(reinterpret_cast<MessageLite*>(message)));
 }
 
 template <typename T>
-T* GetOwnedMessage(Arena* message_arena, T* submessage, Arena* submessage_arena) {
+T* GetOwnedMessage(Arena* message_arena, T* submessage,
+                   Arena* submessage_arena) {
   // The casts must be reinterpret_cast<> because T might be a forward-declared
   // type that the compiler doesn't know is related to MessageLite.
   return reinterpret_cast<T*>(GetOwnedMessageInternal(
-      message_arena, reinterpret_cast<MessageLite*>(submessage), submessage_arena));
+      message_arena, reinterpret_cast<MessageLite*>(submessage),
+      submessage_arena));
 }
 
 // Hide atomic from the public header and allow easy change to regular int
@@ -232,15 +246,20 @@ PROTOBUF_EXPORT void InitSCCImpl(SCCInfoBase* scc);
 
 inline void InitSCC(SCCInfoBase* scc) {
   auto status = scc->visit_status.load(std::memory_order_acquire);
-  if (PROTOBUF_PREDICT_FALSE(status != SCCInfoBase::kInitialized)) InitSCCImpl(scc);
+  if (PROTOBUF_PREDICT_FALSE(status != SCCInfoBase::kInitialized))
+    InitSCCImpl(scc);
 }
 
 PROTOBUF_EXPORT void DestroyMessage(const void* message);
 PROTOBUF_EXPORT void DestroyString(const void* s);
 // Destroy (not delete) the message
-inline void OnShutdownDestroyMessage(const void* ptr) { OnShutdownRun(DestroyMessage, ptr); }
+inline void OnShutdownDestroyMessage(const void* ptr) {
+  OnShutdownRun(DestroyMessage, ptr);
+}
 // Destroy the string (call std::string destructor)
-inline void OnShutdownDestroyString(const std::string* ptr) { OnShutdownRun(DestroyString, ptr); }
+inline void OnShutdownDestroyString(const std::string* ptr) {
+  OnShutdownRun(DestroyString, ptr);
+}
 
 }  // namespace internal
 }  // namespace protobuf

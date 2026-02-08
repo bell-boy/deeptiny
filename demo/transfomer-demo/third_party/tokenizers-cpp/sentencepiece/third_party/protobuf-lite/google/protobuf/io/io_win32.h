@@ -49,11 +49,11 @@
 
 #if defined(_WIN32)
 
-#include <google/protobuf/port.h>
-
 #include <functional>
-#include <google/protobuf/port_def.inc>
 #include <string>
+
+#include <google/protobuf/port.h>
+#include <google/protobuf/port_def.inc>
 
 // Compilers on Windows other than MSVC (e.g. Cygwin, MinGW32) define the
 // following functions already, except for mkdir.
@@ -91,13 +91,14 @@ enum class ExpandWildcardsResult {
 // `consume`. The resulting paths may not be absolute nor normalized.
 //
 // The function returns a value from `ExpandWildcardsResult`.
-PROTOBUF_EXPORT ExpandWildcardsResult
-ExpandWildcards(const std::string& path, std::function<void(const std::string&)> consume);
+PROTOBUF_EXPORT ExpandWildcardsResult ExpandWildcards(
+    const std::string& path, std::function<void(const std::string&)> consume);
 
 namespace strings {
 
 // Convert from UTF-16 to Active-Code-Page-encoded or to UTF-8-encoded text.
-PROTOBUF_EXPORT bool wcs_to_mbs(const wchar_t* s, std::string* out, bool outUtf8);
+PROTOBUF_EXPORT bool wcs_to_mbs(const wchar_t* s, std::string* out,
+                                bool outUtf8);
 
 // Convert from Active-Code-Page-encoded or UTF-8-encoded text to UTF-16.
 PROTOBUF_EXPORT bool mbs_to_wcs(const char* s, std::wstring* out, bool inUtf8);

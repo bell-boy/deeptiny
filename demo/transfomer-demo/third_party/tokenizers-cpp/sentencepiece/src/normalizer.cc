@@ -30,14 +30,16 @@ namespace normalizer {
 
 constexpr int Normalizer::kMaxTrieResultsSize;
 
-Normalizer::Normalizer(const NormalizerSpec& spec, const TrainerSpec& trainer_spec)
+Normalizer::Normalizer(const NormalizerSpec &spec,
+                       const TrainerSpec &trainer_spec)
     : spec_(&spec),
       treat_whitespace_as_suffix_(trainer_spec.treat_whitespace_as_suffix()),
       status_(util::OkStatus()) {
   Init();
 }
 
-Normalizer::Normalizer(const NormalizerSpec& spec) : spec_(&spec), status_(util::OkStatus()) {
+Normalizer::Normalizer(const NormalizerSpec &spec)
+    : spec_(&spec), status_(util::OkStatus()) {
   Init();
 }
 
@@ -48,8 +50,8 @@ void Normalizer::Init() {
 
   if (!index.empty()) {
     absl::string_view trie_blob;
-    status_ =
-        DecodePrecompiledCharsMap(index, &trie_blob, &normalized_, &precompiled_charsmap_buffer_);
+    status_ = DecodePrecompiledCharsMap(index, &trie_blob, &normalized_,
+                                        &precompiled_charsmap_buffer_);
 
     if (!status_.ok()) return;
 
@@ -58,12 +60,14 @@ void Normalizer::Init() {
 
     // The second arg of set_array is not the size of blob,
     // but the number of double array units.
-    trie_->set_array(const_cast<char*>(trie_blob.data()), trie_blob.size() / trie_->unit_size());
+    trie_->set_array(const_cast<char *>(trie_blob.data()),
+                     trie_blob.size() / trie_->unit_size());
   }
 }
 
-util::Status Normalizer::Normalize(absl::string_view input, std::string* normalized,
-                                   std::vector<size_t>* norm_to_orig) const {
+util::Status Normalizer::Normalize(absl::string_view input,
+                                   std::string *normalized,
+                                   std::vector<size_t> *norm_to_orig) const {
   norm_to_orig->clear();
   normalized->clear();
 
@@ -131,7 +135,7 @@ util::Status Normalizer::Normalize(absl::string_view input, std::string* normali
     }
 
     if (!sp.empty()) {
-      const char* data = sp.data();
+      const char *data = sp.data();
       for (size_t n = 0; n < sp.size(); ++n) {
         if (spec_->escape_whitespaces() && data[n] == ' ') {
           // replace ' ' with kSpaceSymbol.
@@ -157,7 +161,8 @@ util::Status Normalizer::Normalize(absl::string_view input, std::string* normali
 
   // Ignores trailing space.
   if (spec_->remove_extra_whitespaces()) {
-    const absl::string_view space = spec_->escape_whitespaces() ? kSpaceSymbol : " ";
+    const absl::string_view space =
+        spec_->escape_whitespaces() ? kSpaceSymbol : " ";
     while (absl::EndsWith(*normalized, space)) {
       const int length = normalized->size() - space.size();
       CHECK_GE_OR_RETURN(length, 0);
@@ -184,7 +189,8 @@ std::string Normalizer::Normalize(absl::string_view input) const {
   return normalized;
 }
 
-std::pair<absl::string_view, int> Normalizer::NormalizePrefix(absl::string_view input) const {
+std::pair<absl::string_view, int> Normalizer::NormalizePrefix(
+    absl::string_view input) const {
   std::pair<absl::string_view, int> result;
 
   if (input.empty()) return result;
@@ -203,10 +209,12 @@ std::pair<absl::string_view, int> Normalizer::NormalizePrefix(absl::string_view 
     // faster. (38k sentences/sec => 60k sentences/sec). Builder checks that the
     // result size never exceeds kMaxTrieResultsSize. This array consumes
     // 0.5kByte in stack, which is less than default stack frames (16kByte).
-    Darts::DoubleArray::result_pair_type trie_results[Normalizer::kMaxTrieResultsSize];
+    Darts::DoubleArray::result_pair_type
+        trie_results[Normalizer::kMaxTrieResultsSize];
 
     const size_t num_nodes = trie_->commonPrefixSearch(
-        input.data(), trie_results, Normalizer::kMaxTrieResultsSize, input.size());
+        input.data(), trie_results, Normalizer::kMaxTrieResultsSize,
+        input.size());
 
     // Finds the longest rule.
     for (size_t k = 0; k < num_nodes; ++k) {
@@ -217,7 +225,8 @@ std::pair<absl::string_view, int> Normalizer::NormalizePrefix(absl::string_view 
     }
   }
 
-  if (longest_length == 0 || longest_length > input.size() || longest_value >= normalized_.size()) {
+  if (longest_length == 0 || longest_length > input.size() ||
+      longest_value >= normalized_.size()) {
     size_t length = 0;
     if (!string_util::IsValidDecodeUTF8(input, &length)) {
       // Found a malformed utf8.
@@ -242,15 +251,15 @@ std::pair<absl::string_view, int> Normalizer::NormalizePrefix(absl::string_view 
 }
 
 // static
-std::string Normalizer::EncodePrecompiledCharsMap(absl::string_view trie_blob,
-                                                  absl::string_view normalized) {
+std::string Normalizer::EncodePrecompiledCharsMap(
+    absl::string_view trie_blob, absl::string_view normalized) {
   // <trie size(4byte)><double array trie><normalized string>
   std::string blob;
   blob.append(string_util::EncodePOD<uint32_t>(trie_blob.size()));
   blob.append(trie_blob.data(), trie_blob.size());
 
   if constexpr (util::is_bigendian()) {
-    uint32_t* data = reinterpret_cast<uint32_t*>(blob.data());
+    uint32_t *data = reinterpret_cast<uint32_t *>(blob.data());
     for (int i = 0; i < blob.size() / 4; ++i) data[i] = util::Swap32(data[i]);
   }
 
@@ -260,14 +269,14 @@ std::string Normalizer::EncodePrecompiledCharsMap(absl::string_view trie_blob,
 }
 
 // static
-util::Status Normalizer::DecodePrecompiledCharsMap(absl::string_view blob,
-                                                   absl::string_view* trie_blob,
-                                                   absl::string_view* normalized,
-                                                   std::string* buffer) {
+util::Status Normalizer::DecodePrecompiledCharsMap(
+    absl::string_view blob, absl::string_view *trie_blob,
+    absl::string_view *normalized, std::string *buffer) {
   uint32_t trie_blob_size = 0;
   if (blob.size() <= sizeof(trie_blob_size) ||
-      !string_util::DecodePOD<uint32_t>(absl::string_view(blob.data(), sizeof(trie_blob_size)),
-                                        &trie_blob_size)) {
+      !string_util::DecodePOD<uint32_t>(
+          absl::string_view(blob.data(), sizeof(trie_blob_size)),
+          &trie_blob_size)) {
     return util::InternalError("Blob for normalization rule is broken.");
   }
 
@@ -289,8 +298,10 @@ util::Status Normalizer::DecodePrecompiledCharsMap(absl::string_view blob,
   if constexpr (util::is_bigendian()) {
     CHECK_OR_RETURN(buffer);
     buffer->assign(blob.data(), trie_blob_size);
-    uint32_t* data = reinterpret_cast<uint32_t*>(const_cast<char*>(buffer->data()));
-    for (int i = 0; i < buffer->size() / 4; ++i) data[i] = util::Swap32(data[i]);
+    uint32_t *data =
+        reinterpret_cast<uint32_t *>(const_cast<char *>(buffer->data()));
+    for (int i = 0; i < buffer->size() / 4; ++i)
+      data[i] = util::Swap32(data[i]);
     *trie_blob = absl::string_view(buffer->data(), trie_blob_size);
   } else {
     *trie_blob = absl::string_view(blob.data(), trie_blob_size);
@@ -306,25 +317,25 @@ util::Status Normalizer::DecodePrecompiledCharsMap(absl::string_view blob,
   return util::OkStatus();
 }
 
-PrefixMatcher::PrefixMatcher(const std::set<absl::string_view>& dic) {
+PrefixMatcher::PrefixMatcher(const std::set<absl::string_view> &dic) {
   if (dic.empty()) return;
-  std::vector<const char*> key;
+  std::vector<const char *> key;
   std::vector<size_t> lengths;
   key.reserve(dic.size());
   lengths.reserve(dic.size());
-  for (const auto& it : dic) {
+  for (const auto &it : dic) {
     key.push_back(it.data());
     lengths.push_back(it.size());
   }
   trie_ = std::make_unique<Darts::DoubleArray>();
-  if (trie_->build(key.size(), const_cast<char**>(key.data()), const_cast<size_t*>(lengths.data()),
-                   nullptr) != 0) {
+  if (trie_->build(key.size(), const_cast<char **>(key.data()),
+                   const_cast<size_t *>(lengths.data()), nullptr) != 0) {
     LOG(ERROR) << "Failed to build the TRIE for PrefixMatcher";
     trie_.reset();
   }
 }
 
-int PrefixMatcher::PrefixMatch(absl::string_view w, bool* found) const {
+int PrefixMatcher::PrefixMatch(absl::string_view w, bool *found) const {
   if (trie_ == nullptr) {
     if (found) *found = false;
     return std::min<int>(w.size(), string_util::OneCharLen(w.data()));
@@ -332,7 +343,8 @@ int PrefixMatcher::PrefixMatch(absl::string_view w, bool* found) const {
 
   constexpr int kResultSize = 64;
   Darts::DoubleArray::result_pair_type trie_results[kResultSize];
-  const int num_nodes = trie_->commonPrefixSearch(w.data(), trie_results, kResultSize, w.size());
+  const int num_nodes =
+      trie_->commonPrefixSearch(w.data(), trie_results, kResultSize, w.size());
 
   if (found) *found = (num_nodes > 0);
   if (num_nodes == 0) {
@@ -347,7 +359,8 @@ int PrefixMatcher::PrefixMatch(absl::string_view w, bool* found) const {
   return mblen;
 }
 
-std::string PrefixMatcher::GlobalReplace(absl::string_view w, absl::string_view out) const {
+std::string PrefixMatcher::GlobalReplace(absl::string_view w,
+                                         absl::string_view out) const {
   std::string result;
   while (!w.empty()) {
     bool found = false;

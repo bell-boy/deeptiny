@@ -10,36 +10,36 @@
 #ifndef MSGPACK_V1_TYPE_NIL_DECL_HPP
 #define MSGPACK_V1_TYPE_NIL_DECL_HPP
 
+#include "msgpack/versioning.hpp"
 #include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/object.hpp"
-#include "msgpack/versioning.hpp"
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  namespace type {
+namespace type {
 
-  struct nil_t;
+struct nil_t;
 
 #if !defined(MSGPACK_DISABLE_LEGACY_NIL)
 
-  typedef nil_t nil;
+typedef nil_t nil;
 
-#endif  // !defined(MSGPACK_DISABLE_LEGACY_NIL)
+#endif // !defined(MSGPACK_DISABLE_LEGACY_NIL)
 
-  bool operator<(nil_t const& lhs, nil_t const& rhs);
+bool operator<(nil_t const& lhs, nil_t const& rhs);
 
-  bool operator==(nil_t const& lhs, nil_t const& rhs);
+bool operator==(nil_t const& lhs, nil_t const& rhs);
 
-  }  // namespace type
+}  // namespace type
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_TYPE_NIL_DECL_HPP
+#endif // MSGPACK_V1_TYPE_NIL_DECL_HPP

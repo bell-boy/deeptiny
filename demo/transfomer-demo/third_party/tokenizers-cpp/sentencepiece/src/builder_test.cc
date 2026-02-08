@@ -65,7 +65,8 @@ TEST(BuilderTest, GetPrecompiledCharsMapTest) {
   SetDataDir(::testing::SrcDir());
 
   {
-    const NormalizerSpec spec = SentencePieceTrainer::GetNormalizerSpec("nmt_nfkc");
+    const NormalizerSpec spec =
+        SentencePieceTrainer::GetNormalizerSpec("nmt_nfkc");
     const Normalizer normalizer(spec);
     EXPECT_EQ(WS "ABC", normalizer.Normalize("ＡＢＣ"));
     EXPECT_EQ(WS "(株)", normalizer.Normalize("㈱"));
@@ -73,21 +74,24 @@ TEST(BuilderTest, GetPrecompiledCharsMapTest) {
   }
 
   {
-    const NormalizerSpec spec = SentencePieceTrainer::GetNormalizerSpec("nfkc_cf");
+    const NormalizerSpec spec =
+        SentencePieceTrainer::GetNormalizerSpec("nfkc_cf");
     const Normalizer normalizer(spec);
     EXPECT_EQ(WS "abc", normalizer.Normalize("ＡＢＣ"));
     EXPECT_EQ(WS "abc", normalizer.Normalize("ABC"));
   }
 
   {
-    const NormalizerSpec spec = SentencePieceTrainer::GetNormalizerSpec("nmt_nfkc_cf");
+    const NormalizerSpec spec =
+        SentencePieceTrainer::GetNormalizerSpec("nmt_nfkc_cf");
     const Normalizer normalizer(spec);
     EXPECT_EQ(WS "abc", normalizer.Normalize("ＡＢＣ"));
     EXPECT_EQ(WS "abc", normalizer.Normalize("ABC"));
   }
 
   {
-    const NormalizerSpec spec = SentencePieceTrainer::GetNormalizerSpec("identity");
+    const NormalizerSpec spec =
+        SentencePieceTrainer::GetNormalizerSpec("identity");
     EXPECT_TRUE(spec.precompiled_charsmap().empty());
     const Normalizer normalizer(spec);
     EXPECT_EQ(WS "ＡＢＣ", normalizer.Normalize("ＡＢＣ"));
@@ -100,7 +104,8 @@ TEST(BuilderTest, CompileCharsMap) {
   Builder::CharsMap chars_map;
 
   // Lowercase => Uppercase
-  for (char32 lc = static_cast<char32>('a'); lc <= static_cast<char32>('z'); ++lc) {
+  for (char32 lc = static_cast<char32>('a'); lc <= static_cast<char32>('z');
+       ++lc) {
     const char32 uc = lc + 'A' - 'a';
     chars_map[{lc}] = {uc};
   }
@@ -112,9 +117,13 @@ TEST(BuilderTest, CompileCharsMap) {
   chars_map[{0x3048, 0x304A}] = {};
 
   NormalizerSpec spec;
-  EXPECT_TRUE(Builder::CompileCharsMap(chars_map, spec.mutable_precompiled_charsmap()).ok());
+  EXPECT_TRUE(
+      Builder::CompileCharsMap(chars_map, spec.mutable_precompiled_charsmap())
+          .ok());
   Builder::CharsMap decompiled_chars_map;
-  EXPECT_TRUE(Builder::DecompileCharsMap(spec.precompiled_charsmap(), &decompiled_chars_map).ok());
+  EXPECT_TRUE(Builder::DecompileCharsMap(spec.precompiled_charsmap(),
+                                         &decompiled_chars_map)
+                  .ok());
   EXPECT_EQ(chars_map, decompiled_chars_map);
 
   spec.set_add_dummy_prefix(false);
@@ -136,22 +145,27 @@ static constexpr char kTestInputData[] = "nfkc.tsv";
 TEST(BuilderTest, LoadCharsMapTest) {
   Builder::CharsMap chars_map;
   ASSERT_TRUE(
-      Builder::LoadCharsMap(util::JoinPath(::testing::SrcDir(), kTestInputData), &chars_map).ok());
+      Builder::LoadCharsMap(util::JoinPath(::testing::SrcDir(), kTestInputData),
+                            &chars_map)
+          .ok());
 
   std::string precompiled, expected;
   ASSERT_TRUE(Builder::CompileCharsMap(chars_map, &precompiled).ok());
 
   // Round-trip.
   Builder::CharsMap decompiled_chars_map;
-  ASSERT_TRUE(Builder::DecompileCharsMap(precompiled, &decompiled_chars_map).ok());
+  ASSERT_TRUE(
+      Builder::DecompileCharsMap(precompiled, &decompiled_chars_map).ok());
   EXPECT_EQ(chars_map, decompiled_chars_map);
 
-  ASSERT_TRUE(
-      Builder::SaveCharsMap(util::JoinPath(::testing::TempDir(), "output.tsv"), chars_map).ok());
+  ASSERT_TRUE(Builder::SaveCharsMap(
+                  util::JoinPath(::testing::TempDir(), "output.tsv"), chars_map)
+                  .ok());
 
   Builder::CharsMap saved_chars_map;
   ASSERT_TRUE(
-      Builder::LoadCharsMap(util::JoinPath(::testing::TempDir(), "output.tsv"), &saved_chars_map)
+      Builder::LoadCharsMap(util::JoinPath(::testing::TempDir(), "output.tsv"),
+                            &saved_chars_map)
           .ok());
   EXPECT_EQ(chars_map, saved_chars_map);
 
@@ -164,15 +178,17 @@ TEST(BuilderTest, LoadCharsMapTest) {
 
 TEST(BuilderTest, LoadCharsMapWithEmptyeTest) {
   {
-    auto output = filesystem::NewWritableFile(util::JoinPath(::testing::TempDir(), "test.tsv"));
+    auto output = filesystem::NewWritableFile(
+        util::JoinPath(::testing::TempDir(), "test.tsv"));
     output->WriteLine("0061\t0041");
     output->WriteLine("0062");
     output->WriteLine("0063\t\t#foo=>bar");
   }
 
   Builder::CharsMap chars_map;
-  EXPECT_TRUE(
-      Builder::LoadCharsMap(util::JoinPath(::testing::TempDir(), "test.tsv"), &chars_map).ok());
+  EXPECT_TRUE(Builder::LoadCharsMap(
+                  util::JoinPath(::testing::TempDir(), "test.tsv"), &chars_map)
+                  .ok());
 
   EXPECT_EQ(3, chars_map.size());
   EXPECT_EQ(std::vector<char32>({0x0041}), chars_map[{0x0061}]);
@@ -180,11 +196,14 @@ TEST(BuilderTest, LoadCharsMapWithEmptyeTest) {
   EXPECT_EQ(std::vector<char32>({}), chars_map[{0x0063}]);
 
   EXPECT_TRUE(
-      Builder::SaveCharsMap(util::JoinPath(::testing::TempDir(), "test_out.tsv"), chars_map).ok());
+      Builder::SaveCharsMap(
+          util::JoinPath(::testing::TempDir(), "test_out.tsv"), chars_map)
+          .ok());
 
   Builder::CharsMap new_chars_map;
   EXPECT_TRUE(
-      Builder::LoadCharsMap(util::JoinPath(::testing::TempDir(), "test_out.tsv"), &new_chars_map)
+      Builder::LoadCharsMap(
+          util::JoinPath(::testing::TempDir(), "test_out.tsv"), &new_chars_map)
           .ok());
   EXPECT_EQ(chars_map, new_chars_map);
 }

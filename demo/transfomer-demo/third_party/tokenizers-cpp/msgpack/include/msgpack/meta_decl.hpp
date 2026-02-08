@@ -15,4 +15,4 @@
 #include "msgpack/v2/meta_decl.hpp"
 #include "msgpack/v3/meta_decl.hpp"
 
-#endif  // MSGPACK_META_DECL_HPP
+#endif // MSGPACK_META_DECL_HPP

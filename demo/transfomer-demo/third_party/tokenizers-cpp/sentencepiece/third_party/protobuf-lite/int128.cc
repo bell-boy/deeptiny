@@ -29,18 +29,22 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <google/protobuf/stubs/int128.h>
-#include <google/protobuf/stubs/logging.h>
 
-#include <google/protobuf/port_def.inc>
 #include <iomanip>
 #include <ostream>  // NOLINT(readability/streams)
 #include <sstream>
 
+#include <google/protobuf/stubs/logging.h>
+
+#include <google/protobuf/port_def.inc>
+
 namespace google {
 namespace protobuf {
 
-const uint128_pod kuint128max = {static_cast<uint64>(PROTOBUF_LONGLONG(0xFFFFFFFFFFFFFFFF)),
-                                 static_cast<uint64>(PROTOBUF_LONGLONG(0xFFFFFFFFFFFFFFFF))};
+const uint128_pod kuint128max = {
+    static_cast<uint64>(PROTOBUF_LONGLONG(0xFFFFFFFFFFFFFFFF)),
+    static_cast<uint64>(PROTOBUF_LONGLONG(0xFFFFFFFFFFFFFFFF))
+};
 
 // Returns the 0-based position of the last set bit (i.e., most significant bit)
 // in the given uint64. The argument may not be 0.
@@ -76,8 +80,8 @@ static inline int Fls128(uint128 n) {
   return Fls64(Uint128Low64(n));
 }
 
-void uint128::DivModImpl(uint128 dividend, uint128 divisor, uint128* quotient_ret,
-                         uint128* remainder_ret) {
+void uint128::DivModImpl(uint128 dividend, uint128 divisor,
+                         uint128* quotient_ret, uint128* remainder_ret) {
   if (divisor == 0) {
     GOOGLE_LOG(FATAL) << "Division or mod by zero: dividend.hi=" << dividend.hi_
                       << ", lo=" << dividend.lo_;
@@ -99,11 +103,12 @@ void uint128::DivModImpl(uint128 dividend, uint128 divisor, uint128* quotient_re
       }
       difference -= 1;
     }
-    // record the final quotient and remainder
+    //record the final quotient and remainder
     *quotient_ret = quotient;
     *remainder_ret = dividend;
   }
 }
+
 
 uint128& uint128::operator/=(const uint128& divisor) {
   uint128 quotient = 0;
@@ -128,15 +133,18 @@ std::ostream& operator<<(std::ostream& o, const uint128& b) {
   std::streamsize div_base_log;
   switch (flags & std::ios::basefield) {
     case std::ios::hex:
-      div = static_cast<uint64>(PROTOBUF_ULONGLONG(0x1000000000000000));  // 16^15
+      div =
+          static_cast<uint64>(PROTOBUF_ULONGLONG(0x1000000000000000));  // 16^15
       div_base_log = 15;
       break;
     case std::ios::oct:
-      div = static_cast<uint64>(PROTOBUF_ULONGLONG(01000000000000000000000));  // 8^21
+      div = static_cast<uint64>(
+          PROTOBUF_ULONGLONG(01000000000000000000000));  // 8^21
       div_base_log = 21;
       break;
-    default:                                                                // std::ios::dec
-      div = static_cast<uint64>(PROTOBUF_ULONGLONG(10000000000000000000));  // 10^19
+    default:  // std::ios::dec
+      div = static_cast<uint64>(
+          PROTOBUF_ULONGLONG(10000000000000000000));  // 10^19
       div_base_log = 19;
       break;
   }
@@ -171,7 +179,8 @@ std::ostream& operator<<(std::ostream& o, const uint128& b) {
     if ((flags & std::ios::adjustfield) == std::ios::left) {
       rep.append(width - rep.size(), o.fill());
     } else {
-      rep.insert(static_cast<std::string::size_type>(0), width - rep.size(), o.fill());
+      rep.insert(static_cast<std::string::size_type>(0),
+                 width - rep.size(), o.fill());
     }
   }
 

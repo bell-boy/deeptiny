@@ -9,8 +9,9 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_PREDEF_LIBRARY_STD_STLPORT_H
 
 #include <msgpack/predef/library/std/_prefix.h>
-#include <msgpack/predef/make.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LIB_STD_STLPORT`]
@@ -33,21 +34,21 @@ Version number available as major, minor, and patch.
 #define MSGPACK_LIB_STD_STLPORT MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__SGI_STL_PORT) || defined(_STLPORT_VERSION)
-#undef MSGPACK_LIB_STD_STLPORT
-#if !defined(MSGPACK_LIB_STD_STLPORT) && defined(_STLPORT_MAJOR)
-#define MSGPACK_LIB_STD_STLPORT \
-  MSGPACK_VERSION_NUMBER(_STLPORT_MAJOR, _STLPORT_MINOR, _STLPORT_PATCHLEVEL)
-#endif
-#if !defined(MSGPACK_LIB_STD_STLPORT) && defined(_STLPORT_VERSION)
-#define MSGPACK_LIB_STD_STLPORT MSGPACK_PREDEF_MAKE_0X_VRP(_STLPORT_VERSION)
-#endif
-#if !defined(MSGPACK_LIB_STD_STLPORT)
-#define MSGPACK_LIB_STD_STLPORT MSGPACK_PREDEF_MAKE_0X_VRP(__SGI_STL_PORT)
-#endif
+#   undef MSGPACK_LIB_STD_STLPORT
+#   if !defined(MSGPACK_LIB_STD_STLPORT) && defined(_STLPORT_MAJOR)
+#       define MSGPACK_LIB_STD_STLPORT \
+            MSGPACK_VERSION_NUMBER(_STLPORT_MAJOR,_STLPORT_MINOR,_STLPORT_PATCHLEVEL)
+#   endif
+#   if !defined(MSGPACK_LIB_STD_STLPORT) && defined(_STLPORT_VERSION)
+#       define MSGPACK_LIB_STD_STLPORT MSGPACK_PREDEF_MAKE_0X_VRP(_STLPORT_VERSION)
+#   endif
+#   if !defined(MSGPACK_LIB_STD_STLPORT)
+#       define MSGPACK_LIB_STD_STLPORT MSGPACK_PREDEF_MAKE_0X_VRP(__SGI_STL_PORT)
+#   endif
 #endif
 
 #if MSGPACK_LIB_STD_STLPORT
-#define MSGPACK_LIB_STD_STLPORT_AVAILABLE
+#   define MSGPACK_LIB_STD_STLPORT_AVAILABLE
 #endif
 
 #define MSGPACK_LIB_STD_STLPORT_NAME "STLport"
@@ -55,4 +56,4 @@ Version number available as major, minor, and patch.
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_STLPORT, MSGPACK_LIB_STD_STLPORT_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_STLPORT,MSGPACK_LIB_STD_STLPORT_NAME)

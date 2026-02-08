@@ -31,11 +31,12 @@ is undefine this expand to test the given `symbol` version value with the
 `comp` comparison against `MSGPACK_VERSION_NUMBER(major,minor,patch)`.
 */
 #ifdef MSGPACK_STRICT_CONFIG
-#define MSGPACK_PREDEF_WORKAROUND(symbol, comp, major, minor, patch) (0)
+#   define MSGPACK_PREDEF_WORKAROUND(symbol, comp, major, minor, patch) (0)
 #else
-#include <msgpack/predef/version_number.h>
-#define MSGPACK_PREDEF_WORKAROUND(symbol, comp, major, minor, patch) \
-  ((symbol) != (0)) && ((symbol)comp(MSGPACK_VERSION_NUMBER((major), (minor), (patch))))
+#   include <msgpack/predef/version_number.h>
+#   define MSGPACK_PREDEF_WORKAROUND(symbol, comp, major, minor, patch) \
+        ( (symbol) != (0) ) && \
+        ( (symbol) comp (MSGPACK_VERSION_NUMBER( (major) , (minor) , (patch) )) )
 #endif
 
 /*`
@@ -70,15 +71,17 @@ is undefined this expand to either:
   `MSGPACK_DETECT_OUTDATED_WORKAROUNDS` is defined.
 */
 #ifdef MSGPACK_STRICT_CONFIG
-#define MSGPACK_PREDEF_TESTED_AT(symbol, major, minor, patch) (0)
+#   define MSGPACK_PREDEF_TESTED_AT(symbol, major, minor, patch) (0)
 #else
-#ifdef MSGPACK_DETECT_OUTDATED_WORKAROUNDS
-#define MSGPACK_PREDEF_TESTED_AT(symbol, major, minor, patch) \
-  (MSGPACK_PREDEF_WORKAROUND(symbol, <=, major, minor, patch) ? 1 : (1 % 0))
-#else
-#define MSGPACK_PREDEF_TESTED_AT(symbol, major, minor, patch) \
-  ((symbol) >= MSGPACK_VERSION_NUMBER_AVAILABLE)
-#endif
+#   ifdef MSGPACK_DETECT_OUTDATED_WORKAROUNDS
+#       define MSGPACK_PREDEF_TESTED_AT(symbol, major, minor, patch) ( \
+            MSGPACK_PREDEF_WORKAROUND(symbol, <=, major, minor, patch) \
+            ? 1 \
+            : (1%0) )
+#   else
+#       define MSGPACK_PREDEF_TESTED_AT(symbol, major, minor, patch) \
+            ( (symbol) >= MSGPACK_VERSION_NUMBER_AVAILABLE )
+#   endif
 #endif
 
 #endif

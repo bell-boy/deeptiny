@@ -17,6 +17,7 @@ http://www.boost.org/LICENSE_1_0.txt)
  [note You *MUST* compare them with the predef `MSGPACK_HW_SIMD_X86_AMD`.]
  */
 
+
 // ---------------------------------
 
 /*`
@@ -31,8 +32,7 @@ http://www.boost.org/LICENSE_1_0.txt)
 /*`
  [heading `MSGPACK_HW_SIMD_X86_AMD_FMA4_VERSION`]
 
- [@https://en.wikipedia.org/wiki/FMA_instruction_set#FMA4_instruction_set FMA4] x86 extension (AMD
- specific).
+ [@https://en.wikipedia.org/wiki/FMA_instruction_set#FMA4_instruction_set FMA4] x86 extension (AMD specific).
 
  Version number is: *5.1.0*.
  */
@@ -46,5 +46,6 @@ http://www.boost.org/LICENSE_1_0.txt)
  Version number is: *5.1.1*.
  */
 #define MSGPACK_HW_SIMD_X86_AMD_XOP_VERSION MSGPACK_VERSION_NUMBER(5, 1, 1)
+
 
 #endif

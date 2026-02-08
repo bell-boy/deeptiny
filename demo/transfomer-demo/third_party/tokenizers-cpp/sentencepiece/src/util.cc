@@ -39,7 +39,7 @@ uint32_t GetRandomGeneratorSeed() {
 }
 
 namespace {
-std::shared_ptr<const std::string>* GetSharedDataDir() {
+std::shared_ptr<const std::string> *GetSharedDataDir() {
   static auto g_data_dir = std::make_shared<const std::string>(INSTALL_DATADIR);
   return &g_data_dir;
 }
@@ -51,16 +51,19 @@ std::string GetDataDir() {
 }
 
 void SetDataDir(absl::string_view data_dir) {
-  auto shared_data_dir = std::make_shared<const std::string>(std::string(data_dir));
+  auto shared_data_dir =
+      std::make_shared<const std::string>(std::string(data_dir));
   std::atomic_store(GetSharedDataDir(), std::move(shared_data_dir));
 }
 
-void SetMinLogLevel(int v) { absl::SetMinLogLevel(static_cast<absl::LogSeverityAtLeast>(v)); }
+void SetMinLogLevel(int v) {
+  absl::SetMinLogLevel(static_cast<absl::LogSeverityAtLeast>(v));
+}
 
 namespace string_util {
 
 // mblen sotres the number of bytes consumed after decoding.
-char32 DecodeUTF8(const char* begin, const char* end, size_t* mblen) {
+char32 DecodeUTF8(const char *begin, const char *end, size_t *mblen) {
   const size_t len = end - begin;
 
   if (static_cast<unsigned char>(begin[0]) < 0x80) {
@@ -73,16 +76,18 @@ char32 DecodeUTF8(const char* begin, const char* end, size_t* mblen) {
       return cp;
     }
   } else if (len >= 3 && (begin[0] & 0xF0) == 0xE0) {
-    const char32 cp = (((begin[0] & 0x0F) << 12) | ((begin[1] & 0x3F) << 6) | ((begin[2] & 0x3F)));
-    if (IsTrailByte(begin[1]) && IsTrailByte(begin[2]) && cp >= 0x0800 && IsValidCodepoint(cp)) {
+    const char32 cp = (((begin[0] & 0x0F) << 12) | ((begin[1] & 0x3F) << 6) |
+                       ((begin[2] & 0x3F)));
+    if (IsTrailByte(begin[1]) && IsTrailByte(begin[2]) && cp >= 0x0800 &&
+        IsValidCodepoint(cp)) {
       *mblen = 3;
       return cp;
     }
   } else if (len >= 4 && (begin[0] & 0xf8) == 0xF0) {
     const char32 cp = (((begin[0] & 0x07) << 18) | ((begin[1] & 0x3F) << 12) |
                        ((begin[2] & 0x3F) << 6) | ((begin[3] & 0x3F)));
-    if (IsTrailByte(begin[1]) && IsTrailByte(begin[2]) && IsTrailByte(begin[3]) && cp >= 0x10000 &&
-        IsValidCodepoint(cp)) {
+    if (IsTrailByte(begin[1]) && IsTrailByte(begin[2]) &&
+        IsTrailByte(begin[3]) && cp >= 0x10000 && IsValidCodepoint(cp)) {
       *mblen = 4;
       return cp;
     }
@@ -94,8 +99,8 @@ char32 DecodeUTF8(const char* begin, const char* end, size_t* mblen) {
 }
 
 bool IsStructurallyValid(absl::string_view str) {
-  const char* begin = str.data();
-  const char* end = str.data() + str.size();
+  const char *begin = str.data();
+  const char *end = str.data() + str.size();
   size_t mblen = 0;
   while (begin < end) {
     const char32 c = DecodeUTF8(begin, end, &mblen);
@@ -106,7 +111,7 @@ bool IsStructurallyValid(absl::string_view str) {
   return true;
 }
 
-size_t EncodeUTF8(char32 c, char* output) {
+size_t EncodeUTF8(char32 c, char *output) {
   if (c <= 0x7F) {
     *output = static_cast<char>(c);
     return 1;
@@ -147,8 +152,8 @@ std::string UnicodeCharToUTF8(const char32 c) { return UnicodeTextToUTF8({c}); }
 
 UnicodeText UTF8ToUnicodeText(absl::string_view utf8) {
   UnicodeText uc;
-  const char* begin = utf8.data();
-  const char* end = utf8.data() + utf8.size();
+  const char *begin = utf8.data();
+  const char *end = utf8.data() + utf8.size();
   while (begin < end) {
     size_t mblen;
     const char32 c = DecodeUTF8(begin, end, &mblen);
@@ -158,7 +163,7 @@ UnicodeText UTF8ToUnicodeText(absl::string_view utf8) {
   return uc;
 }
 
-std::string UnicodeTextToUTF8(const UnicodeText& utext) {
+std::string UnicodeTextToUTF8(const UnicodeText &utext) {
   char buf[8];
   std::string result;
   for (const char32 c : utext) {
@@ -170,7 +175,7 @@ std::string UnicodeTextToUTF8(const UnicodeText& utext) {
 }  // namespace string_util
 
 namespace random {
-std::mt19937* GetRandomGenerator() {
+std::mt19937 *GetRandomGenerator() {
   // Thread-locals occupy stack space in every thread ever created by the
   // program, even if that thread never uses the thread-local variable.
   //
@@ -180,7 +185,8 @@ std::mt19937* GetRandomGenerator() {
   // the heap, leaving only a pointer to it in thread-local storage.  This must
   // be a unique_ptr, not a raw pointer, so that the generator is not leaked on
   // thread exit.
-  thread_local static auto mt = std::make_unique<std::mt19937>(GetRandomGeneratorSeed());
+  thread_local static auto mt =
+      std::make_unique<std::mt19937>(GetRandomGeneratorSeed());
   return mt.get();
 }
 }  // namespace random
@@ -190,7 +196,7 @@ namespace util {
 std::string StrError(int errnum) {
   constexpr int kStrErrorSize = 1024;
   char buffer[kStrErrorSize];
-  char* str = nullptr;
+  char *str = nullptr;
 #if defined(__GLIBC__) && defined(_GNU_SOURCE)
   str = strerror_r(errnum, buffer, kStrErrorSize - 1);
 #elif defined(_WIN32)
@@ -207,10 +213,10 @@ std::string StrError(int errnum) {
 
 std::vector<std::string> StrSplitAsCSV(absl::string_view text) {
   std::string buf = std::string(text);
-  char* str = const_cast<char*>(buf.data());
-  char* eos = str + text.size();
-  char* start = nullptr;
-  char* end = nullptr;
+  char *str = const_cast<char *>(buf.data());
+  char *eos = str + text.size();
+  char *start = nullptr;
+  char *end = nullptr;
 
   std::vector<std::string> result;
   for (; str < eos; ++str) {
@@ -239,13 +245,14 @@ std::vector<std::string> StrSplitAsCSV(absl::string_view text) {
 
 #ifdef OS_WIN
 std::wstring Utf8ToWide(absl::string_view input) {
-  const int output_length =
-      ::MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
+  const int output_length = ::MultiByteToWideChar(
+      CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
   if (output_length == 0) {
     return L"";
   }
   std::wstring output(output_length, 0);
-  const int result = ::MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()),
+  const int result = ::MultiByteToWideChar(CP_UTF8, 0, input.data(),
+                                           static_cast<int>(input.size()),
                                            output.data(), output.size());
   return result == output_length ? output : L"";
 }
@@ -253,7 +260,7 @@ std::wstring Utf8ToWide(absl::string_view input) {
 }  // namespace util
 
 namespace log_domain {
-double LogSum(const std::vector<double>& xs) {
+double LogSum(const std::vector<double> &xs) {
   if (xs.empty()) {
     return -1.0 * std::numeric_limits<double>::max();
   }

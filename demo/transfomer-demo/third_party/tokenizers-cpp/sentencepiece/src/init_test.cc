@@ -42,11 +42,12 @@ TEST(FlagsTest, DefaultValueTest) {
 }
 
 TEST(FlagsTest, ParseCommandLineFlagsTest) {
-  const char* kFlags[] = {"program",       "--int32_f=100",  "other1",         "--bool_f=true",
-                          "--int64_f=200", "--uint64_f=300", "--double_f=400", "--string_f=foo",
-                          "other2",        "other3"};
+  const char *kFlags[] = {"program",        "--int32_f=100",  "other1",
+                          "--bool_f=true",  "--int64_f=200",  "--uint64_f=300",
+                          "--double_f=400", "--string_f=foo", "other2",
+                          "other3"};
   int argc = std::size(kFlags);
-  char** argv = const_cast<char**>(kFlags);
+  char **argv = const_cast<char **>(kFlags);
   ParseCommandLineFlags(kFlags[0], &argc, &argv);
 
   EXPECT_EQ(100, absl::GetFlag(FLAGS_int32_f));
@@ -63,10 +64,11 @@ TEST(FlagsTest, ParseCommandLineFlagsTest) {
 }
 
 TEST(FlagsTest, ParseCommandLineFlagsTest2) {
-  const char* kFlags[] = {"program",   "--int32_f", "500",           "-int64_f=600",
-                          "-uint64_f", "700",       "--bool_f=FALSE"};
+  const char *kFlags[] = {"program",       "--int32_f", "500",
+                          "-int64_f=600",  "-uint64_f", "700",
+                          "--bool_f=FALSE"};
   int argc = std::size(kFlags);
-  char** argv = const_cast<char**>(kFlags);
+  char **argv = const_cast<char **>(kFlags);
   ParseCommandLineFlags(kFlags[0], &argc, &argv);
 
   EXPECT_EQ(500, absl::GetFlag(FLAGS_int32_f));
@@ -77,10 +79,10 @@ TEST(FlagsTest, ParseCommandLineFlagsTest2) {
 }
 
 TEST(FlagsTest, ParseCommandLineFlagsTest3) {
-  const char* kFlags[] = {"program", "--bool_f", "--int32_f", "800"};
+  const char *kFlags[] = {"program", "--bool_f", "--int32_f", "800"};
 
   int argc = std::size(kFlags);
-  char** argv = const_cast<char**>(kFlags);
+  char **argv = const_cast<char **>(kFlags);
   ParseCommandLineFlags(kFlags[0], &argc, &argv);
   EXPECT_TRUE(absl::GetFlag(FLAGS_bool_f));
   EXPECT_EQ(800, absl::GetFlag(FLAGS_int32_f));
@@ -88,18 +90,18 @@ TEST(FlagsTest, ParseCommandLineFlagsTest3) {
 }
 
 TEST(FlagsTest, ParseCommandLineFlagsEmptyStringArgs) {
-  const char* kFlags[] = {"program", "--string_f="};
+  const char *kFlags[] = {"program", "--string_f="};
   int argc = std::size(kFlags);
-  char** argv = const_cast<char**>(kFlags);
+  char **argv = const_cast<char **>(kFlags);
   ParseCommandLineFlags(kFlags[0], &argc, &argv);
   EXPECT_EQ(1, argc);
   EXPECT_EQ("", absl::GetFlag(FLAGS_string_f));
 }
 
 TEST(FlagsTest, ParseCommandLineFlagsEmptyBoolArgs) {
-  const char* kFlags[] = {"program", "--bool_f"};
+  const char *kFlags[] = {"program", "--bool_f"};
   int argc = std::size(kFlags);
-  char** argv = const_cast<char**>(kFlags);
+  char **argv = const_cast<char **>(kFlags);
   ParseCommandLineFlags(kFlags[0], &argc, &argv);
   EXPECT_EQ(1, argc);
   EXPECT_TRUE(absl::GetFlag(FLAGS_bool_f));

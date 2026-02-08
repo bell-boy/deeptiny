@@ -13,9 +13,10 @@ http://www.boost.org/LICENSE_1_0.txt)
  * detect OSX first. Hence we will force include OSX detection
  * before doing any BSD detection.
  */
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/os/macos.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_OS_BSD`]
@@ -51,36 +52,39 @@ of BSD. If the above variants is detected the corresponding macro is also set.]
 #include <msgpack/predef/os/bsd/bsdi.h>
 #include <msgpack/predef/os/bsd/dragonfly.h>
 #include <msgpack/predef/os/bsd/free.h>
-#include <msgpack/predef/os/bsd/net.h>
 #include <msgpack/predef/os/bsd/open.h>
+#include <msgpack/predef/os/bsd/net.h>
 
 #ifndef MSGPACK_OS_BSD
 #define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 #endif
 
-#if !defined(MSGPACK_PREDEF_DETAIL_OS_DETECTED) && (defined(BSD) || defined(_SYSTYPE_BSD))
-#undef MSGPACK_OS_BSD
-#include <sys/param.h>
-#if !defined(MSGPACK_OS_BSD) && defined(BSD4_4)
-#define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER(4, 4, 0)
-#endif
-#if !defined(MSGPACK_OS_BSD) && defined(BSD4_3)
-#define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER(4, 3, 0)
-#endif
-#if !defined(MSGPACK_OS_BSD) && defined(BSD4_2)
-#define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER(4, 2, 0)
-#endif
-#if !defined(MSGPACK_OS_BSD) && defined(BSD)
-#define MSGPACK_OS_BSD MSGPACK_PREDEF_MAKE_10_VVRR(BSD)
-#endif
-#if !defined(MSGPACK_OS_BSD)
-#define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER_AVAILABLE
-#endif
+#if !defined(MSGPACK_PREDEF_DETAIL_OS_DETECTED) && ( \
+    defined(BSD) || \
+    defined(_SYSTYPE_BSD) \
+    )
+#   undef MSGPACK_OS_BSD
+#   include <sys/param.h>
+#   if !defined(MSGPACK_OS_BSD) && defined(BSD4_4)
+#       define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER(4,4,0)
+#   endif
+#   if !defined(MSGPACK_OS_BSD) && defined(BSD4_3)
+#       define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER(4,3,0)
+#   endif
+#   if !defined(MSGPACK_OS_BSD) && defined(BSD4_2)
+#       define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER(4,2,0)
+#   endif
+#   if !defined(MSGPACK_OS_BSD) && defined(BSD)
+#       define MSGPACK_OS_BSD MSGPACK_PREDEF_MAKE_10_VVRR(BSD)
+#   endif
+#   if !defined(MSGPACK_OS_BSD)
+#       define MSGPACK_OS_BSD MSGPACK_VERSION_NUMBER_AVAILABLE
+#   endif
 #endif
 
 #if MSGPACK_OS_BSD
-#define MSGPACK_OS_BSD_AVAILABLE
-#include <msgpack/predef/detail/os_detected.h>
+#   define MSGPACK_OS_BSD_AVAILABLE
+#   include <msgpack/predef/detail/os_detected.h>
 #endif
 
 #define MSGPACK_OS_BSD_NAME "BSD"
@@ -90,10 +94,10 @@ of BSD. If the above variants is detected the corresponding macro is also set.]
 #include <msgpack/predef/os/bsd/bsdi.h>
 #include <msgpack/predef/os/bsd/dragonfly.h>
 #include <msgpack/predef/os/bsd/free.h>
-#include <msgpack/predef/os/bsd/net.h>
 #include <msgpack/predef/os/bsd/open.h>
+#include <msgpack/predef/os/bsd/net.h>
 
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_OS_BSD, MSGPACK_OS_BSD_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_OS_BSD,MSGPACK_OS_BSD_NAME)

@@ -9,8 +9,9 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_PREDEF_LIBRARY_STD_ROGUEWAVE_H
 
 #include <msgpack/predef/library/std/_prefix.h>
-#include <msgpack/predef/make.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LIB_STD_RW`]
@@ -31,20 +32,20 @@ If available version number as major, minor, and patch.
 #define MSGPACK_LIB_STD_RW MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__STD_RWCOMPILER_H__) || defined(_RWSTD_VER)
-#undef MSGPACK_LIB_STD_RW
-#if defined(_RWSTD_VER)
-#if _RWSTD_VER < 0x010000
-#define MSGPACK_LIB_STD_RW MSGPACK_PREDEF_MAKE_0X_VVRRP(_RWSTD_VER)
-#else
-#define MSGPACK_LIB_STD_RW MSGPACK_PREDEF_MAKE_0X_VVRRPP(_RWSTD_VER)
-#endif
-#else
-#define MSGPACK_LIB_STD_RW MSGPACK_VERSION_NUMBER_AVAILABLE
-#endif
+#   undef MSGPACK_LIB_STD_RW
+#   if defined(_RWSTD_VER)
+#       if _RWSTD_VER < 0x010000
+#           define MSGPACK_LIB_STD_RW MSGPACK_PREDEF_MAKE_0X_VVRRP(_RWSTD_VER)
+#       else
+#           define MSGPACK_LIB_STD_RW MSGPACK_PREDEF_MAKE_0X_VVRRPP(_RWSTD_VER)
+#       endif
+#   else
+#       define MSGPACK_LIB_STD_RW MSGPACK_VERSION_NUMBER_AVAILABLE
+#   endif
 #endif
 
 #if MSGPACK_LIB_STD_RW
-#define MSGPACK_LIB_STD_RW_AVAILABLE
+#   define MSGPACK_LIB_STD_RW_AVAILABLE
 #endif
 
 #define MSGPACK_LIB_STD_RW_NAME "Roguewave"
@@ -52,4 +53,4 @@ If available version number as major, minor, and patch.
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_RW, MSGPACK_LIB_STD_RW_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_RW,MSGPACK_LIB_STD_RW_NAME)

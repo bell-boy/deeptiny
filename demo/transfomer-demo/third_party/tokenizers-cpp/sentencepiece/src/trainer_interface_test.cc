@@ -44,7 +44,8 @@ TEST(TrainerInterfaceTest, IsValidSentencePieceTest) {
   TrainerInterface trainer(trainer_spec, normalizer_spec, denormalizer_spec);
   EXPECT_TRUE(trainer.Train().ok());
 
-  auto IsValid = [&trainer_spec, &normalizer_spec, &denormalizer_spec](const std::string& str) {
+  auto IsValid = [&trainer_spec, &normalizer_spec,
+                  &denormalizer_spec](const std::string &str) {
     TrainerInterface trainer(trainer_spec, normalizer_spec, denormalizer_spec);
     const string_util::UnicodeText text = string_util::UTF8ToUnicodeText(str);
     return trainer.IsValidSentencePiece(text);
@@ -72,7 +73,7 @@ TEST(TrainerInterfaceTest, IsValidSentencePieceTest) {
   EXPECT_FALSE(IsValid("F1"));
   EXPECT_FALSE(IsValid("1F"));
   EXPECT_FALSE(IsValid("1A2"));
-  EXPECT_TRUE(IsValid("$10"));  // $ and 1 are both "common" script.
+  EXPECT_TRUE(IsValid("$10"));      // $ and 1 are both "common" script.
   EXPECT_FALSE(IsValid("$ABC"));
   EXPECT_FALSE(IsValid("ab\tbc"));  // "\t" is UPP boundary.
   EXPECT_FALSE(IsValid("ab cd"));
@@ -80,8 +81,8 @@ TEST(TrainerInterfaceTest, IsValidSentencePieceTest) {
   EXPECT_FALSE(IsValid("\0"));
   EXPECT_TRUE(IsValid("proteïni"));  // Combining Diaeresis should inherit
                                      // script from base character.
-  EXPECT_TRUE(IsValid("ثَبَّتَ"));       // Arabic Fatha and Shadda should inherit script
-                                     // from base character.
+  EXPECT_TRUE(IsValid("ثَبَّتَ"));  // Arabic Fatha and Shadda should inherit script
+                                // from base character.
 
   trainer_spec.set_split_by_whitespace(false);
   EXPECT_TRUE(IsValid(WS));
@@ -372,11 +373,16 @@ TEST(TrainerInterfaceTest, OverrideSpecialPiecesTest) {
     EXPECT_EQ("<pad>", trainer.meta_pieces_[30].first);
     EXPECT_EQ("foo", trainer.meta_pieces_[1].first);
 
-    EXPECT_EQ(ModelProto::SentencePiece::UNKNOWN, trainer.meta_pieces_[0].second);
-    EXPECT_EQ(ModelProto::SentencePiece::USER_DEFINED, trainer.meta_pieces_[10].second);
-    EXPECT_EQ(ModelProto::SentencePiece::CONTROL, trainer.meta_pieces_[20].second);
-    EXPECT_EQ(ModelProto::SentencePiece::USER_DEFINED, trainer.meta_pieces_[30].second);
-    EXPECT_EQ(ModelProto::SentencePiece::USER_DEFINED, trainer.meta_pieces_[1].second);
+    EXPECT_EQ(ModelProto::SentencePiece::UNKNOWN,
+              trainer.meta_pieces_[0].second);
+    EXPECT_EQ(ModelProto::SentencePiece::USER_DEFINED,
+              trainer.meta_pieces_[10].second);
+    EXPECT_EQ(ModelProto::SentencePiece::CONTROL,
+              trainer.meta_pieces_[20].second);
+    EXPECT_EQ(ModelProto::SentencePiece::USER_DEFINED,
+              trainer.meta_pieces_[30].second);
+    EXPECT_EQ(ModelProto::SentencePiece::USER_DEFINED,
+              trainer.meta_pieces_[1].second);
   }
 
   {
@@ -429,7 +435,7 @@ TEST(TrainerInterfaceTest, BytePiecesTest) {
 
   // Byte pieces come after control symbols and user-defined symbols.
   for (int i = 0; i < 256; ++i) {
-    const auto& piece = trainer.meta_pieces_[i + 7];
+    const auto &piece = trainer.meta_pieces_[i + 7];
     EXPECT_EQ(absl::StrFormat("<0x%02X>", i), piece.first);
     EXPECT_EQ(ModelProto::SentencePiece::BYTE, piece.second);
   }
@@ -444,7 +450,8 @@ TEST(TrainerInterfaceTest, SerializeTest) {
 
   EXPECT_TRUE(trainer_spec.hard_vocab_limit());
 
-  std::vector<std::pair<std::string, float>> final_pieces = {{"a", 0.1}, {"b", 0.2}, {"c", 0.3}};
+  std::vector<std::pair<std::string, float>> final_pieces = {
+      {"a", 0.1}, {"b", 0.2}, {"c", 0.3}};
 
   {
     trainer_spec.set_vocab_size(10);
@@ -485,7 +492,8 @@ TEST(TrainerInterfaceTest, SerializeTest) {
 }
 
 TEST(TrainerInterfaceTest, CharactersTest) {
-  const std::string input_file = util::JoinPath(::testing::TempDir(), "input");
+  const std::string input_file =
+      util::JoinPath(::testing::TempDir(), "input");
   {
     auto output = filesystem::NewWritableFile(input_file);
     // Make a single line with 50 "a", 49 "あ", and 1 "b".
@@ -515,31 +523,35 @@ TEST(TrainerInterfaceTest, CharactersTest) {
     EXPECT_OK(trainer.LoadSentences());
     // Because --character_coverage=0.98, "a" and "あ" are chosen, but "b" is
     // dropped.
-    EXPECT_EQ(trainer.required_chars_, E({{ToChar32("a"), 50}, {ToChar32("あ"), 49}}));
+    EXPECT_EQ(trainer.required_chars_,
+              E({{ToChar32("a"), 50}, {ToChar32("あ"), 49}}));
   }
   {
     trainer_spec.set_required_chars("漢字");
     TrainerInterface trainer(trainer_spec, normalizer_spec, denormalizer_spec);
     EXPECT_OK(trainer.LoadSentences());
     // 漢 and 字 do not occur in the line, but they are added.
-    EXPECT_EQ(
-        trainer.required_chars_,
-        E({{ToChar32("a"), 50}, {ToChar32("あ"), 49}, {ToChar32("漢"), 0}, {ToChar32("字"), 0}}));
+    EXPECT_EQ(trainer.required_chars_, E({{ToChar32("a"), 50},
+                                          {ToChar32("あ"), 49},
+                                          {ToChar32("漢"), 0},
+                                          {ToChar32("字"), 0}}));
   }
   {
     trainer_spec.set_required_chars("aあ");
     TrainerInterface trainer(trainer_spec, normalizer_spec, denormalizer_spec);
     EXPECT_OK(trainer.LoadSentences());
     // Adding characters that frequently occur do not change the result.
-    EXPECT_EQ(trainer.required_chars_, E({{ToChar32("a"), 50}, {ToChar32("あ"), 49}}));
+    EXPECT_EQ(trainer.required_chars_,
+              E({{ToChar32("a"), 50}, {ToChar32("あ"), 49}}));
   }
   {
     trainer_spec.set_required_chars("b");
     TrainerInterface trainer(trainer_spec, normalizer_spec, denormalizer_spec);
     EXPECT_OK(trainer.LoadSentences());
     // "b" is added with the correct frequency.
-    EXPECT_EQ(trainer.required_chars_,
-              E({{ToChar32("a"), 50}, {ToChar32("あ"), 49}, {ToChar32("b"), 1}}));
+    EXPECT_EQ(
+        trainer.required_chars_,
+        E({{ToChar32("a"), 50}, {ToChar32("あ"), 49}, {ToChar32("b"), 1}}));
   }
 }
 
@@ -547,7 +559,8 @@ TEST(TrainerInterfaceTest, MultiFileSentenceIteratorTest) {
   std::vector<std::string> files;
   std::vector<std::string> expected;
   for (int i = 0; i < 10; ++i) {
-    const std::string file = util::JoinPath(::testing::TempDir(), absl::StrCat("input", i));
+    const std::string file = util::JoinPath(::testing::TempDir(),
+                                            absl::StrCat("input", i));
     auto output = filesystem::NewWritableFile(file);
     int num_line = (rand() % 100) + 1;
     for (int n = 0; n < num_line; ++n) {
@@ -568,8 +581,8 @@ TEST(TrainerInterfaceTest, MultiFileSentenceIteratorTest) {
 TEST(TrainerInterfaceTest, MultiFileSentenceIteratorErrorTest) {
   std::vector<std::string> files;
   for (int i = 0; i < 10; ++i) {
-    const std::string file =
-        util::JoinPath(::testing::TempDir(), absl::StrCat("input_not_exist", i));
+    const std::string file = util::JoinPath(::testing::TempDir(),
+                                            absl::StrCat("input_not_exist", i));
     files.push_back(file);
   }
 

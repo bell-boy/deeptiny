@@ -44,15 +44,18 @@
 #ifndef GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_IMPL_LITE_H__
 #define GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_IMPL_LITE_H__
 
-#include <google/protobuf/io/zero_copy_stream.h>
-#include <google/protobuf/stubs/callback.h>
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/stl_util.h>
 
-#include <google/protobuf/port_def.inc>
 #include <iosfwd>
 #include <memory>
 #include <string>
+
+#include <google/protobuf/stubs/callback.h>
+#include <google/protobuf/stubs/common.h>
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/stubs/stl_util.h>
+
+
+#include <google/protobuf/port_def.inc>
 
 namespace google {
 namespace protobuf {
@@ -78,6 +81,7 @@ class PROTOBUF_EXPORT ArrayInputStream : public ZeroCopyInputStream {
   void BackUp(int count) override;
   bool Skip(int count) override;
   int64_t ByteCount() const override;
+
 
  private:
   const uint8* const data_;  // The byte array.
@@ -203,7 +207,8 @@ class PROTOBUF_EXPORT CopyingInputStreamAdaptor : public ZeroCopyInputStream {
   // should be read and returned with each call to Next().  Otherwise,
   // a reasonable default is used.  The caller retains ownership of
   // copying_stream unless SetOwnsCopyingStream(true) is called.
-  explicit CopyingInputStreamAdaptor(CopyingInputStream* copying_stream, int block_size = -1);
+  explicit CopyingInputStreamAdaptor(CopyingInputStream* copying_stream,
+                                     int block_size = -1);
   ~CopyingInputStreamAdaptor() override;
 
   // Call SetOwnsCopyingStream(true) to tell the CopyingInputStreamAdaptor to
@@ -285,7 +290,8 @@ class PROTOBUF_EXPORT CopyingOutputStreamAdaptor : public ZeroCopyOutputStream {
   // If a block_size is given, it specifies the size of the buffers
   // that should be returned by Next().  Otherwise, a reasonable default
   // is used.
-  explicit CopyingOutputStreamAdaptor(CopyingOutputStream* copying_stream, int block_size = -1);
+  explicit CopyingOutputStreamAdaptor(CopyingOutputStream* copying_stream,
+                                      int block_size = -1);
   ~CopyingOutputStreamAdaptor() override;
 
   // Writes all pending data to the underlying stream.  Returns false if a
@@ -351,13 +357,15 @@ class PROTOBUF_EXPORT LimitingInputStream : public ZeroCopyInputStream {
   bool Skip(int count) override;
   int64_t ByteCount() const override;
 
+
  private:
   ZeroCopyInputStream* input_;
-  int64 limit_;             // Decreases as we go, becomes negative if we overshoot.
+  int64 limit_;  // Decreases as we go, becomes negative if we overshoot.
   int64 prior_bytes_read_;  // Bytes read on underlying stream at construction
 
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(LimitingInputStream);
 };
+
 
 // ===================================================================
 

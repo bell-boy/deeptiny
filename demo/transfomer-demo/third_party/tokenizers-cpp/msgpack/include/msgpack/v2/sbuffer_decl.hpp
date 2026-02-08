@@ -20,14 +20,14 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  using v1::sbuffer;
+using v1::sbuffer;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V2_SBUFFER_DECL_HPP
+#endif // MSGPACK_V2_SBUFFER_DECL_HPP

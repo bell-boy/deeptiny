@@ -29,8 +29,10 @@ class Splitter {
   Splitter(absl::string_view str, absl::string_view delim, bool allow_empty) {
     size_t current_pos = 0;
     size_t found_pos = 0;
-    while ((found_pos = str.find_first_of(delim, current_pos)) != absl::string_view::npos) {
-      if ((allow_empty && found_pos >= current_pos) || (!allow_empty && found_pos > current_pos)) {
+    while ((found_pos = str.find_first_of(delim, current_pos)) !=
+           absl::string_view::npos) {
+      if ((allow_empty && found_pos >= current_pos) ||
+          (!allow_empty && found_pos > current_pos)) {
         result_.push_back(str.substr(current_pos, found_pos - current_pos));
       }
       current_pos = found_pos + 1;
@@ -53,7 +55,8 @@ class Splitter {
 template <>
 inline Splitter::operator std::vector<std::string>() const {
   std::vector<std::string> x(result_.size());
-  for (size_t i = 0; i < x.size(); ++i) x[i].assign(result_[i].data(), result_[i].size());
+  for (size_t i = 0; i < x.size(); ++i)
+    x[i].assign(result_[i].data(), result_[i].size());
   return x;
 }
 
@@ -65,12 +68,14 @@ inline Splitter::operator std::vector<absl::string_view>() const {
 
 inline constexpr bool AllowEmpty() { return true; };
 
-inline internal::Splitter StrSplit(absl::string_view str, absl::string_view delim,
+inline internal::Splitter StrSplit(absl::string_view str,
+                                   absl::string_view delim,
                                    bool allow_empty = false) {
   return internal::Splitter(str, delim, allow_empty);
 }
 
-inline internal::Splitter StrSplit(absl::string_view str, const char c, bool allow_empty = false) {
+inline internal::Splitter StrSplit(absl::string_view str, const char c,
+                                   bool allow_empty = false) {
   char delim[2];
   delim[0] = c;
   delim[1] = '\0';

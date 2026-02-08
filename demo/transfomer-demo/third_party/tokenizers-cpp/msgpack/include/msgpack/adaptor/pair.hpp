@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/pair.hpp"
 
-#endif  // MSGPACK_TYPE_PAIR_HPP
+#endif // MSGPACK_TYPE_PAIR_HPP

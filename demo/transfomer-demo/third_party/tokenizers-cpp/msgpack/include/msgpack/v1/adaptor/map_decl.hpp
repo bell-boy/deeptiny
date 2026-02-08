@@ -10,28 +10,27 @@
 #ifndef MSGPACK_V1_TYPE_MAP_DECL_HPP
 #define MSGPACK_V1_TYPE_MAP_DECL_HPP
 
-#include <algorithm>
-
 #include "msgpack/versioning.hpp"
+
+#include <algorithm>
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  namespace type {
+namespace type {
 
-  template <typename K, typename V, typename Compare = std::less<K>,
-            typename Alloc = std::allocator<std::pair<K, V> > >
-  class assoc_vector;
+template <typename K, typename V, typename Compare = std::less<K>, typename Alloc = std::allocator<std::pair<K, V> > >
+class assoc_vector;
 
-  }  // namespace type
+}  //namespace type
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_TYPE_MAP_DECL_HPP
+#endif // MSGPACK_V1_TYPE_MAP_DECL_HPP

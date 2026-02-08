@@ -28,22 +28,27 @@ struct Status::Rep {
   std::string error_message;
 };
 
-Status::Status(StatusCode code, absl::string_view error_message) : rep_(new Rep) {
+Status::Status(StatusCode code, absl::string_view error_message)
+    : rep_(new Rep) {
   rep_->code = code;
   rep_->error_message = std::string(error_message);
 }
 
-Status::Status(const Status& s) : rep_((s.rep_ == nullptr) ? nullptr : new Rep(*s.rep_)) {}
+Status::Status(const Status& s)
+    : rep_((s.rep_ == nullptr) ? nullptr : new Rep(*s.rep_)) {}
 
 void Status::operator=(const Status& s) {
-  if (rep_ != s.rep_) rep_.reset((s.rep_ == nullptr) ? nullptr : new Rep(*s.rep_));
+  if (rep_ != s.rep_)
+    rep_.reset((s.rep_ == nullptr) ? nullptr : new Rep(*s.rep_));
 }
 
 bool Status::operator==(const Status& s) const { return (rep_ == s.rep_); }
 
 bool Status::operator!=(const Status& s) const { return (rep_ != s.rep_); }
 
-const char* Status::error_message() const { return ok() ? "" : rep_->error_message.c_str(); }
+const char* Status::error_message() const {
+  return ok() ? "" : rep_->error_message.c_str();
+}
 
 void Status::set_error_message(const char* str) {
   if (rep_ == nullptr) rep_.reset(new Rep);

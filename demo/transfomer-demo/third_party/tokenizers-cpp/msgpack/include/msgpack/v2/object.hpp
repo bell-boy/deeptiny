@@ -12,18 +12,22 @@
 
 #include "msgpack/object_fwd.hpp"
 
+
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  inline object::implicit_type object::convert() const { return v1::object::convert(); }
+inline object::implicit_type object::convert() const
+{
+    return v1::object::convert();
+}
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V2_OBJECT_HPP
+#endif // MSGPACK_V2_OBJECT_HPP

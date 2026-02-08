@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_COMPILER_KAI_H
 #define MSGPACK_PREDEF_COMPILER_KAI_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_COMP_KCC`]
@@ -29,18 +29,18 @@ Version number available as major, minor, and patch.
 #define MSGPACK_COMP_KCC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__KCC)
-#define MSGPACK_COMP_KCC_DETECTION MSGPACK_PREDEF_MAKE_0X_VRPP(__KCC_VERSION)
+#   define MSGPACK_COMP_KCC_DETECTION MSGPACK_PREDEF_MAKE_0X_VRPP(__KCC_VERSION)
 #endif
 
 #ifdef MSGPACK_COMP_KCC_DETECTION
-#if defined(MSGPACK_PREDEF_DETAIL_COMP_DETECTED)
-#define MSGPACK_COMP_KCC_EMULATED MSGPACK_COMP_KCC_DETECTION
-#else
-#undef MSGPACK_COMP_KCC
-#define MSGPACK_COMP_KCC MSGPACK_COMP_KCC_DETECTION
-#endif
-#define MSGPACK_COMP_KCC_AVAILABLE
-#include <msgpack/predef/detail/comp_detected.h>
+#   if defined(MSGPACK_PREDEF_DETAIL_COMP_DETECTED)
+#       define MSGPACK_COMP_KCC_EMULATED MSGPACK_COMP_KCC_DETECTION
+#   else
+#       undef MSGPACK_COMP_KCC
+#       define MSGPACK_COMP_KCC MSGPACK_COMP_KCC_DETECTION
+#   endif
+#   define MSGPACK_COMP_KCC_AVAILABLE
+#   include <msgpack/predef/detail/comp_detected.h>
 #endif
 
 #define MSGPACK_COMP_KCC_NAME "Kai C++"
@@ -48,9 +48,9 @@ Version number available as major, minor, and patch.
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_COMP_KCC, MSGPACK_COMP_KCC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_COMP_KCC,MSGPACK_COMP_KCC_NAME)
 
 #ifdef MSGPACK_COMP_KCC_EMULATED
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_COMP_KCC_EMULATED, MSGPACK_COMP_KCC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_COMP_KCC_EMULATED,MSGPACK_COMP_KCC_NAME)
 #endif

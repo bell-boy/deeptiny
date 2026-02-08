@@ -9,8 +9,9 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_PREDEF_LIBRARY_C_UC_H
 
 #include <msgpack/predef/library/c/_prefix.h>
-#include <msgpack/predef/make.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LIB_C_UC`]
@@ -29,13 +30,13 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_LIB_C_UC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__UCLIBC__)
-#undef MSGPACK_LIB_C_UC
-#define MSGPACK_LIB_C_UC \
-  MSGPACK_VERSION_NUMBER(__UCLIBC_MAJOR__, __UCLIBC_MINOR__, __UCLIBC_SUBLEVEL__)
+#   undef MSGPACK_LIB_C_UC
+#   define MSGPACK_LIB_C_UC MSGPACK_VERSION_NUMBER(\
+        __UCLIBC_MAJOR__,__UCLIBC_MINOR__,__UCLIBC_SUBLEVEL__)
 #endif
 
 #if MSGPACK_LIB_C_UC
-#define MSGPACK_LIB_C_UC_AVAILABLE
+#   define MSGPACK_LIB_C_UC_AVAILABLE
 #endif
 
 #define MSGPACK_LIB_C_UC_NAME "uClibc"
@@ -43,4 +44,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_C_UC, MSGPACK_LIB_C_UC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_C_UC,MSGPACK_LIB_C_UC_NAME)

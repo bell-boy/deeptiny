@@ -9,8 +9,9 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_PREDEF_LIBRARY_STD_CXX_H
 
 #include <msgpack/predef/library/std/_prefix.h>
-#include <msgpack/predef/make.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LIB_STD_CXX`]
@@ -29,12 +30,12 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_LIB_STD_CXX MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(_LIBCPP_VERSION)
-#undef MSGPACK_LIB_STD_CXX
-#define MSGPACK_LIB_STD_CXX MSGPACK_PREDEF_MAKE_10_VPPP(_LIBCPP_VERSION)
+#   undef MSGPACK_LIB_STD_CXX
+#   define MSGPACK_LIB_STD_CXX MSGPACK_PREDEF_MAKE_10_VPPP(_LIBCPP_VERSION)
 #endif
 
 #if MSGPACK_LIB_STD_CXX
-#define MSGPACK_LIB_STD_CXX_AVAILABLE
+#   define MSGPACK_LIB_STD_CXX_AVAILABLE
 #endif
 
 #define MSGPACK_LIB_STD_CXX_NAME "libc++"
@@ -42,4 +43,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_CXX, MSGPACK_LIB_STD_CXX_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_CXX,MSGPACK_LIB_STD_CXX_NAME)

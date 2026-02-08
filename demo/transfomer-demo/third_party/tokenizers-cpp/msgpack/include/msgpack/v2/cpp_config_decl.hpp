@@ -10,8 +10,8 @@
 #ifndef MSGPACK_V2_CPP_CONFIG_DECL_HPP
 #define MSGPACK_V2_CPP_CONFIG_DECL_HPP
 
-#include "msgpack/cpp_version.hpp"
 #include "msgpack/v1/cpp_config_decl.hpp"
+#include "msgpack/cpp_version.hpp"
 
 #if defined(MSGPACK_USE_CPP03)
 
@@ -19,65 +19,67 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  using v1::unique_ptr;
+using v1::unique_ptr;
 
-  using v1::move;
+using v1::move;
 
-  using v1::enable_if;
+using v1::enable_if;
 
-  using v1::integral_constant;
+using v1::integral_constant;
 
-  using v1::is_same;
+using v1::is_same;
 
-  using v1::underlying_type;
+using v1::underlying_type;
 
-  using v1::is_array;
+using v1::is_array;
 
-  using v1::remove_const;
-  using v1::remove_cv;
-  using v1::remove_volatile;
+using v1::remove_const;
+using v1::remove_volatile;
+using v1::remove_cv;
 
-  using v1::is_pointer;
+using v1::is_pointer;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
+
 
 #else  // MSGPACK_USE_CPP03
 
 namespace msgpack {
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  // unique_ptr
-  using v1::unique_ptr;
-  // using v1::make_unique; // since C++14
-  using v1::hash;
+// unique_ptr
+using v1::unique_ptr;
+// using v1::make_unique; // since C++14
+using v1::hash;
 
-  // utility
-  using v1::enable_if;
-  using v1::is_array;
-  using v1::is_same;
-  using v1::move;
-  using v1::swap;
-  using v1::underlying_type;
+// utility
+using v1::move;
+using v1::swap;
+using v1::enable_if;
+using v1::is_same;
+using v1::underlying_type;
+using v1::is_array;
 
-  using v1::remove_const;
-  using v1::remove_cv;
-  using v1::remove_volatile;
+using v1::remove_const;
+using v1::remove_volatile;
+using v1::remove_cv;
 
-  using v1::is_pointer;
+using v1::is_pointer;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 }  // namespace msgpack
 
-#endif  // MSGPACK_USE_CPP03
 
-#endif  // MSGPACK_V2_CPP_CONFIG_DECL_HPP
+#endif // MSGPACK_USE_CPP03
+
+#endif // MSGPACK_V2_CPP_CONFIG_DECL_HPP

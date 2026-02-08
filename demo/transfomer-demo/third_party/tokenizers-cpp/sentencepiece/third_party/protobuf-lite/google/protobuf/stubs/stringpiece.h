@@ -142,14 +142,15 @@
 #define GOOGLE_PROTOBUF_STUBS_STRINGPIECE_H_
 
 #include <assert.h>
-#include <google/protobuf/stubs/hash.h>
 #include <stddef.h>
 #include <string.h>
-
-#include <google/protobuf/port_def.inc>
 #include <iosfwd>
 #include <limits>
 #include <string>
+
+#include <google/protobuf/stubs/hash.h>
+
+#include <google/protobuf/port_def.inc>
 
 namespace google {
 namespace protobuf {
@@ -187,7 +188,8 @@ class PROTOBUF_EXPORT StringPiece {
 #ifdef max
 #undef max
 #endif
-    if (size > static_cast<size_t>(std::numeric_limits<stringpiece_ssize_type>::max())) {
+    if (size > static_cast<size_t>(
+        std::numeric_limits<stringpiece_ssize_type>::max())) {
       // Some people grep for this message in logs
       // so take care if you ever change it.
       LogFatalSizeTooBig(size, "size_t to int conversion");
@@ -222,7 +224,8 @@ class PROTOBUF_EXPORT StringPiece {
     length_ = CheckedSsizeTFromSizeT(str.size());
   }
 
-  StringPiece(const char* offset, stringpiece_ssize_type len) : ptr_(offset), length_(len) {
+  StringPiece(const char* offset, stringpiece_ssize_type len)
+      : ptr_(offset), length_(len) {
     assert(len >= 0);
   }
 
@@ -232,7 +235,9 @@ class PROTOBUF_EXPORT StringPiece {
   // Substring of another StringPiece.
   // pos must be non-negative and <= x.length().
   // len must be non-negative and will be pinned to at most x.length() - pos.
-  StringPiece(StringPiece x, stringpiece_ssize_type pos, stringpiece_ssize_type len);
+  StringPiece(StringPiece x,
+              stringpiece_ssize_type pos,
+              stringpiece_ssize_type len);
 
   // data() may return a pointer to a buffer with embedded NULs, and the
   // returned buffer may or may not be null terminated.  Therefore it is
@@ -286,7 +291,8 @@ class PROTOBUF_EXPORT StringPiece {
 
   // returns {-1, 0, 1}
   int compare(StringPiece x) const {
-    const stringpiece_ssize_type min_size = length_ < x.length_ ? length_ : x.length_;
+    const stringpiece_ssize_type min_size =
+        length_ < x.length_ ? length_ : x.length_;
     int r = memcmp(ptr_, x.ptr_, static_cast<size_t>(min_size));
     if (r < 0) return -1;
     if (r > 0) return 1;
@@ -312,12 +318,14 @@ class PROTOBUF_EXPORT StringPiece {
   void AppendToString(std::string* target) const;
 
   bool starts_with(StringPiece x) const {
-    return (length_ >= x.length_) && (memcmp(ptr_, x.ptr_, static_cast<size_t>(x.length_)) == 0);
+    return (length_ >= x.length_) &&
+           (memcmp(ptr_, x.ptr_, static_cast<size_t>(x.length_)) == 0);
   }
 
   bool ends_with(StringPiece x) const {
     return ((length_ >= x.length_) &&
-            (memcmp(ptr_ + (length_ - x.length_), x.ptr_, static_cast<size_t>(x.length_)) == 0));
+            (memcmp(ptr_ + (length_-x.length_), x.ptr_,
+                 static_cast<size_t>(x.length_)) == 0));
   }
 
   // Checks whether StringPiece starts with x and if so advances the beginning
@@ -341,8 +349,12 @@ class PROTOBUF_EXPORT StringPiece {
   typedef std::reverse_iterator<iterator> reverse_iterator;
   iterator begin() const { return ptr_; }
   iterator end() const { return ptr_ + length_; }
-  const_reverse_iterator rbegin() const { return const_reverse_iterator(ptr_ + length_); }
-  const_reverse_iterator rend() const { return const_reverse_iterator(ptr_); }
+  const_reverse_iterator rbegin() const {
+    return const_reverse_iterator(ptr_ + length_);
+  }
+  const_reverse_iterator rend() const {
+    return const_reverse_iterator(ptr_);
+  }
   stringpiece_ssize_type max_size() const { return length_; }
   stringpiece_ssize_type capacity() const { return length_; }
 
@@ -357,12 +369,19 @@ class PROTOBUF_EXPORT StringPiece {
   stringpiece_ssize_type rfind(char c, size_type pos = npos) const;
 
   stringpiece_ssize_type find_first_of(StringPiece s, size_type pos = 0) const;
-  stringpiece_ssize_type find_first_of(char c, size_type pos = 0) const { return find(c, pos); }
-  stringpiece_ssize_type find_first_not_of(StringPiece s, size_type pos = 0) const;
+  stringpiece_ssize_type find_first_of(char c, size_type pos = 0) const {
+    return find(c, pos);
+  }
+  stringpiece_ssize_type find_first_not_of(StringPiece s,
+                                           size_type pos = 0) const;
   stringpiece_ssize_type find_first_not_of(char c, size_type pos = 0) const;
-  stringpiece_ssize_type find_last_of(StringPiece s, size_type pos = npos) const;
-  stringpiece_ssize_type find_last_of(char c, size_type pos = npos) const { return rfind(c, pos); }
-  stringpiece_ssize_type find_last_not_of(StringPiece s, size_type pos = npos) const;
+  stringpiece_ssize_type find_last_of(StringPiece s,
+                                      size_type pos = npos) const;
+  stringpiece_ssize_type find_last_of(char c, size_type pos = npos) const {
+    return rfind(c, pos);
+  }
+  stringpiece_ssize_type find_last_not_of(StringPiece s,
+                                          size_type pos = npos) const;
   stringpiece_ssize_type find_last_not_of(char c, size_type pos = npos) const;
 
   StringPiece substr(size_type pos, size_type n = npos) const;
@@ -378,22 +397,31 @@ inline bool operator==(StringPiece x, StringPiece y) {
   }
 
   return x.data() == y.data() || len <= 0 ||
-         memcmp(x.data(), y.data(), static_cast<size_t>(len)) == 0;
+      memcmp(x.data(), y.data(), static_cast<size_t>(len)) == 0;
 }
 
-inline bool operator!=(StringPiece x, StringPiece y) { return !(x == y); }
+inline bool operator!=(StringPiece x, StringPiece y) {
+  return !(x == y);
+}
 
 inline bool operator<(StringPiece x, StringPiece y) {
-  const stringpiece_ssize_type min_size = x.size() < y.size() ? x.size() : y.size();
+  const stringpiece_ssize_type min_size =
+      x.size() < y.size() ? x.size() : y.size();
   const int r = memcmp(x.data(), y.data(), static_cast<size_t>(min_size));
   return (r < 0) || (r == 0 && x.size() < y.size());
 }
 
-inline bool operator>(StringPiece x, StringPiece y) { return y < x; }
+inline bool operator>(StringPiece x, StringPiece y) {
+  return y < x;
+}
 
-inline bool operator<=(StringPiece x, StringPiece y) { return !(x > y); }
+inline bool operator<=(StringPiece x, StringPiece y) {
+  return !(x > y);
+}
 
-inline bool operator>=(StringPiece x, StringPiece y) { return !(x < y); }
+inline bool operator>=(StringPiece x, StringPiece y) {
+  return !(x < y);
+}
 
 // allow StringPiece to be logged
 extern std::ostream& operator<<(std::ostream& o, StringPiece piece);
@@ -425,9 +453,13 @@ struct StringPiecePod {
 
   const char* data() const { return data_; }
 
-  stringpiece_ssize_type size() const { return size_; }
+  stringpiece_ssize_type size() const {
+    return size_;
+  }
 
-  std::string ToString() const { return std::string(data_, static_cast<size_t>(size_)); }
+  std::string ToString() const {
+    return std::string(data_, static_cast<size_t>(size_));
+  }
 
   explicit operator std::string() const { return ToString(); }
 
@@ -441,8 +473,7 @@ struct StringPiecePod {
 }  // namespace google
 
 GOOGLE_PROTOBUF_HASH_NAMESPACE_DECLARATION_START
-template <>
-struct hash<StringPiece> {
+template<> struct hash<StringPiece> {
   size_t operator()(const StringPiece& s) const {
     size_t result = 0;
     for (const char *str = s.data(), *end = str + s.size(); str < end; str++) {

@@ -30,19 +30,21 @@ inline std::string StrCat(int v) {
   return os.str();
 }
 
-inline std::string StrCat(absl::string_view str) { return std::string(str.data(), str.size()); }
+inline std::string StrCat(absl::string_view str) {
+  return std::string(str.data(), str.size());
+}
 
 template <typename... T>
-inline std::string StrCat(absl::string_view first, const T&... rest) {
+inline std::string StrCat(absl::string_view first, const T &...rest) {
   return StrCat(first) + StrCat(rest...);
 }
 
 template <typename... T>
-inline std::string StrCat(int first, const T&... rest) {
+inline std::string StrCat(int first, const T &...rest) {
   return StrCat(first) + StrCat(rest...);
 }
 
-inline void StrAppend(std::string* base, absl::string_view str) {
+inline void StrAppend(std::string *base, absl::string_view str) {
   base->append(str.data(), str.size());
 }
 

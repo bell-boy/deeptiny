@@ -3,4 +3,7 @@
 
 #include "../fuzz/unpack_pack_fuzzer.cpp"
 
-BOOST_AUTO_TEST_CASE(works) { BOOST_CHECK_EQUAL(0, LLVMFuzzerTestOneInput(MSGPACK_NULLPTR, 0)); }
+BOOST_AUTO_TEST_CASE(works)
+{
+  BOOST_CHECK_EQUAL(0, LLVMFuzzerTestOneInput(MSGPACK_NULLPTR, 0));
+}

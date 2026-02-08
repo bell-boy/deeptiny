@@ -28,15 +28,15 @@
 namespace sentencepiece {
 namespace bpe {
 
-Model::Model(const ModelProto& model_proto) {
+Model::Model(const ModelProto &model_proto) {
   model_proto_ = &model_proto;
   InitializePieces();
 }
 
 Model::~Model() {}
 
-std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(absl::string_view normalized,
-                                                                   float alpha) const {
+std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(
+    absl::string_view normalized, float alpha) const {
   if (!status().ok() || normalized.empty()) {
     return {};
   }
@@ -50,8 +50,9 @@ std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(absl::string_
 
   class SymbolPairComparator {
    public:
-    const bool operator()(SymbolPair* h1, SymbolPair* h2) {
-      return (h1->score < h2->score || (h1->score == h2->score && h1->left > h2->left));
+    const bool operator()(SymbolPair *h1, SymbolPair *h2) {
+      return (h1->score < h2->score ||
+              (h1->score == h2->score && h1->left > h2->left));
     }
   };
 
@@ -62,30 +63,36 @@ std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(absl::string_
     absl::string_view piece;
   };
 
-  using Agenda = std::priority_queue<SymbolPair*, std::vector<SymbolPair*>, SymbolPairComparator>;
+  using Agenda = std::priority_queue<SymbolPair *, std::vector<SymbolPair *>,
+                                     SymbolPairComparator>;
   Agenda agenda;
   std::vector<Symbol> symbols;
   symbols.reserve(normalized.size());
 
   // Reverse merge rules.
   // key: merged symbol, value: pair of original symbols.
-  absl::flat_hash_map<absl::string_view, std::pair<absl::string_view, absl::string_view>> rev_merge;
+  absl::flat_hash_map<absl::string_view,
+                      std::pair<absl::string_view, absl::string_view>>
+      rev_merge;
 
   // Pre-allocates SymbolPair for efficiency.
   constexpr size_t kPreallocateSymbolPairSize = 256;
   model::FreeList<SymbolPair> symbol_pair_allocator(kPreallocateSymbolPairSize);
 
   // Lookup new symbol pair at [left, right] and inserts it to agenda.
-  auto MaybeAddNewSymbolPair = [this, &symbol_pair_allocator, &symbols, &agenda, &rev_merge](
-                                   int left, int right) {
-    if (left == -1 || right == -1 || symbols[left].freeze || symbols[right].freeze) return;
-    const absl::string_view piece(symbols[left].piece.data(),
-                                  symbols[left].piece.size() + symbols[right].piece.size());
+  auto MaybeAddNewSymbolPair = [this, &symbol_pair_allocator, &symbols, &agenda,
+                                &rev_merge](int left, int right) {
+    if (left == -1 || right == -1 || symbols[left].freeze ||
+        symbols[right].freeze)
+      return;
+    const absl::string_view piece(
+        symbols[left].piece.data(),
+        symbols[left].piece.size() + symbols[right].piece.size());
     const auto it = pieces_.find(piece);
     if (it == pieces_.end()) {
       return;
     }
-    auto* h = symbol_pair_allocator.Allocate();
+    auto *h = symbol_pair_allocator.Allocate();
     h->left = left;
     h->right = right;
     h->score = GetScore(it->second);
@@ -94,7 +101,8 @@ std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(absl::string_
 
     // Makes `rev_merge` for resegmentation.
     if (IsUnusedInlined(it->second)) {
-      rev_merge[piece] = std::make_pair(symbols[left].piece, symbols[right].piece);
+      rev_merge[piece] =
+          std::make_pair(symbols[left].piece, symbols[right].piece);
     }
   };
 
@@ -121,7 +129,7 @@ std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(absl::string_
   }
 
   // BPE-dropout: https://arxiv.org/pdf/1910.13267.pdf
-  std::mt19937* rand_gen = nullptr;
+  std::mt19937 *rand_gen = nullptr;
   auto skip_merge = [&]() {
     if (alpha <= 0.0) return false;
     if (alpha >= 1.0) return true;
@@ -132,12 +140,13 @@ std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(absl::string_
 
   // Main loop.
   while (!agenda.empty()) {
-    SymbolPair* top = agenda.top();
+    SymbolPair *top = agenda.top();
     agenda.pop();
 
     // `top` is no longer available.
     if (symbols[top->left].piece.empty() || symbols[top->right].piece.empty() ||
-        symbols[top->left].piece.size() + symbols[top->right].piece.size() != top->size) {
+        symbols[top->left].piece.size() + symbols[top->right].piece.size() !=
+            top->size) {
       continue;
     }
 
@@ -147,9 +156,9 @@ std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(absl::string_
     if (skip_merge()) continue;
 
     // Replaces symbols with `top` rule.
-    symbols[top->left].piece =
-        absl::string_view(symbols[top->left].piece.data(),
-                          symbols[top->left].piece.size() + symbols[top->right].piece.size());
+    symbols[top->left].piece = absl::string_view(
+        symbols[top->left].piece.data(),
+        symbols[top->left].piece.size() + symbols[top->right].piece.size());
 
     // Updates prev/next pointers.
     symbols[top->left].next = symbols[top->right].next;
@@ -163,8 +172,9 @@ std::vector<std::pair<absl::string_view, int>> Model::SampleEncode(absl::string_
     MaybeAddNewSymbolPair(top->left, symbols[top->left].next);
   }
 
-  std::function<void(absl::string_view, EncodeResult*)> resegment;
-  resegment = [this, &resegment, &rev_merge](absl::string_view w, EncodeResult* output) -> void {
+  std::function<void(absl::string_view, EncodeResult *)> resegment;
+  resegment = [this, &resegment, &rev_merge](absl::string_view w,
+                                             EncodeResult *output) -> void {
     const int id = PieceToId(w);
     if (id == -1 || !IsUnusedInlined(id)) {
       output->emplace_back(w, id);

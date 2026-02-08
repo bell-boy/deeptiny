@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_ARCHITECTURE_PPC_H
 #define MSGPACK_PREDEF_ARCHITECTURE_PPC_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_ARCH_PPC`]
@@ -40,26 +40,28 @@ http://www.boost.org/LICENSE_1_0.txt)
 
 #define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
-#if defined(__powerpc) || defined(__powerpc__) || defined(__POWERPC__) || defined(__ppc__) ||     \
-    defined(_M_PPC) || defined(_ARCH_PPC) || defined(__PPCGECKO__) || defined(__PPCBROADWAY__) || \
+#if defined(__powerpc) || defined(__powerpc__) || \
+    defined(__POWERPC__) || defined(__ppc__) || \
+    defined(_M_PPC) || defined(_ARCH_PPC) || \
+    defined(__PPCGECKO__) || defined(__PPCBROADWAY__) || \
     defined(_XENON)
-#undef MSGPACK_ARCH_PPC
-#if !defined(MSGPACK_ARCH_PPC) && (defined(__ppc601__) || defined(_ARCH_601))
-#define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER(6, 1, 0)
-#endif
-#if !defined(MSGPACK_ARCH_PPC) && (defined(__ppc603__) || defined(_ARCH_603))
-#define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER(6, 3, 0)
-#endif
-#if !defined(MSGPACK_ARCH_PPC) && (defined(__ppc604__) || defined(__ppc604__))
-#define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER(6, 4, 0)
-#endif
-#if !defined(MSGPACK_ARCH_PPC)
-#define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER_AVAILABLE
-#endif
+#   undef MSGPACK_ARCH_PPC
+#   if !defined (MSGPACK_ARCH_PPC) && (defined(__ppc601__) || defined(_ARCH_601))
+#       define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER(6,1,0)
+#   endif
+#   if !defined (MSGPACK_ARCH_PPC) && (defined(__ppc603__) || defined(_ARCH_603))
+#       define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER(6,3,0)
+#   endif
+#   if !defined (MSGPACK_ARCH_PPC) && (defined(__ppc604__) || defined(__ppc604__))
+#       define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER(6,4,0)
+#   endif
+#   if !defined (MSGPACK_ARCH_PPC)
+#       define MSGPACK_ARCH_PPC MSGPACK_VERSION_NUMBER_AVAILABLE
+#   endif
 #endif
 
 #if MSGPACK_ARCH_PPC
-#define MSGPACK_ARCH_PPC_AVAILABLE
+#   define MSGPACK_ARCH_PPC_AVAILABLE
 #endif
 
 #define MSGPACK_ARCH_PPC_NAME "PowerPC"
@@ -67,4 +69,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_PPC, MSGPACK_ARCH_PPC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_PPC,MSGPACK_ARCH_PPC_NAME)

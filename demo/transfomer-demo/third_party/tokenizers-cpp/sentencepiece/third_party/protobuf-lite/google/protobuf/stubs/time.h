@@ -68,7 +68,8 @@ void PROTOBUF_EXPORT GetCurrentTime(int64* seconds, int32* nanos);
 std::string PROTOBUF_EXPORT FormatTime(int64 seconds, int32 nanos);
 // Parses a time string. This method accepts RFC3339 date/time string with UTC
 // offset. For example, "2015-05-20T13:29:35.120-08:00".
-bool PROTOBUF_EXPORT ParseTime(const std::string& value, int64* seconds, int32* nanos);
+bool PROTOBUF_EXPORT ParseTime(const std::string& value, int64* seconds,
+                               int32* nanos);
 
 }  // namespace internal
 }  // namespace protobuf

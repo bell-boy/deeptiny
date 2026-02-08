@@ -33,13 +33,14 @@
 //  Sanjay Ghemawat, Jeff Dean, and others.
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
-#include <google/protobuf/stubs/casts.h>
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/logging.h>
-#include <google/protobuf/stubs/stl_util.h>
 
 #include <algorithm>
 #include <limits>
+
+#include <google/protobuf/stubs/common.h>
+#include <google/protobuf/stubs/logging.h>
+#include <google/protobuf/stubs/casts.h>
+#include <google/protobuf/stubs/stl_util.h>
 
 namespace google {
 namespace protobuf {
@@ -98,6 +99,7 @@ bool ArrayInputStream::Skip(int count) {
 
 int64_t ArrayInputStream::ByteCount() const { return position_; }
 
+
 // ===================================================================
 
 ArrayOutputStream::ArrayOutputStream(void* data, int size, int block_size)
@@ -153,9 +155,10 @@ bool StringOutputStream::Next(void** data, int* size) {
   // Avoid integer overflow in returned '*size'.
   new_size = std::min(new_size, old_size + std::numeric_limits<int>::max());
   // Increase the size, also make sure that it is at least kMinimumSize.
-  STLStringResizeUninitialized(target_,
-                               std::max(new_size,
-                                        kMinimumSize + 0));  // "+ 0" works around GCC4 weirdness.
+  STLStringResizeUninitialized(
+      target_,
+      std::max(new_size,
+               kMinimumSize + 0));  // "+ 0" works around GCC4 weirdness.
 
   *data = mutable_string_data(target_) + old_size;
   *size = target_->size() - old_size;
@@ -180,7 +183,8 @@ int CopyingInputStream::Skip(int count) {
   char junk[4096];
   int skipped = 0;
   while (skipped < count) {
-    int bytes = Read(junk, std::min(count - skipped, implicit_cast<int>(sizeof(junk))));
+    int bytes = Read(junk, std::min(count - skipped,
+                                    implicit_cast<int>(sizeof(junk))));
     if (bytes <= 0) {
       // EOF or read error.
       return skipped;
@@ -190,8 +194,8 @@ int CopyingInputStream::Skip(int count) {
   return skipped;
 }
 
-CopyingInputStreamAdaptor::CopyingInputStreamAdaptor(CopyingInputStream* copying_stream,
-                                                     int block_size)
+CopyingInputStreamAdaptor::CopyingInputStreamAdaptor(
+    CopyingInputStream* copying_stream, int block_size)
     : copying_stream_(copying_stream),
       owns_copying_stream_(false),
       failed_(false),
@@ -274,7 +278,9 @@ bool CopyingInputStreamAdaptor::Skip(int count) {
   return skipped == count;
 }
 
-int64_t CopyingInputStreamAdaptor::ByteCount() const { return position_ - backup_bytes_; }
+int64_t CopyingInputStreamAdaptor::ByteCount() const {
+  return position_ - backup_bytes_;
+}
 
 void CopyingInputStreamAdaptor::AllocateBufferIfNeeded() {
   if (buffer_.get() == NULL) {
@@ -290,8 +296,8 @@ void CopyingInputStreamAdaptor::FreeBuffer() {
 
 // ===================================================================
 
-CopyingOutputStreamAdaptor::CopyingOutputStreamAdaptor(CopyingOutputStream* copying_stream,
-                                                       int block_size)
+CopyingOutputStreamAdaptor::CopyingOutputStreamAdaptor(
+    CopyingOutputStream* copying_stream, int block_size)
     : copying_stream_(copying_stream),
       owns_copying_stream_(false),
       failed_(false),
@@ -323,7 +329,8 @@ bool CopyingOutputStreamAdaptor::Next(void** data, int* size) {
 
 void CopyingOutputStreamAdaptor::BackUp(int count) {
   GOOGLE_CHECK_GE(count, 0);
-  GOOGLE_CHECK_EQ(buffer_used_, buffer_size_) << " BackUp() can only be called after Next().";
+  GOOGLE_CHECK_EQ(buffer_used_, buffer_size_)
+      << " BackUp() can only be called after Next().";
   GOOGLE_CHECK_LE(count, buffer_used_)
       << " Can't back up over more bytes than were returned by the last call"
          " to Next().";
@@ -331,7 +338,9 @@ void CopyingOutputStreamAdaptor::BackUp(int count) {
   buffer_used_ -= count;
 }
 
-int64_t CopyingOutputStreamAdaptor::ByteCount() const { return position_ + buffer_used_; }
+int64_t CopyingOutputStreamAdaptor::ByteCount() const {
+  return position_ + buffer_used_;
+}
 
 bool CopyingOutputStreamAdaptor::WriteAliasedRaw(const void* data, int size) {
   if (size >= buffer_size_) {
@@ -362,6 +371,7 @@ bool CopyingOutputStreamAdaptor::WriteAliasedRaw(const void* data, int size) {
   }
   return true;
 }
+
 
 bool CopyingOutputStreamAdaptor::WriteBuffer() {
   if (failed_) {
@@ -395,7 +405,8 @@ void CopyingOutputStreamAdaptor::FreeBuffer() {
 
 // ===================================================================
 
-LimitingInputStream::LimitingInputStream(ZeroCopyInputStream* input, int64 limit)
+LimitingInputStream::LimitingInputStream(ZeroCopyInputStream* input,
+                                         int64 limit)
     : input_(input), limit_(limit) {
   prior_bytes_read_ = input_->ByteCount();
 }
@@ -447,6 +458,7 @@ int64_t LimitingInputStream::ByteCount() const {
     return input_->ByteCount() - prior_bytes_read_;
   }
 }
+
 
 // ===================================================================
 

@@ -31,8 +31,8 @@
 #ifndef GOOGLE_PROTOBUF_HAS_BITS_H__
 #define GOOGLE_PROTOBUF_HAS_BITS_H__
 
-#include <google/protobuf/port.h>
 #include <google/protobuf/stubs/common.h>
+#include <google/protobuf/port.h>
 
 #include <google/protobuf/port_def.inc>
 
@@ -49,17 +49,25 @@ class HasBits {
  public:
   constexpr HasBits() PROTOBUF_ALWAYS_INLINE : has_bits_{} {}
 
-  void Clear() PROTOBUF_ALWAYS_INLINE { memset(has_bits_, 0, sizeof(has_bits_)); }
+  void Clear() PROTOBUF_ALWAYS_INLINE {
+    memset(has_bits_, 0, sizeof(has_bits_));
+  }
 
-  uint32& operator[](int index) PROTOBUF_ALWAYS_INLINE { return has_bits_[index]; }
+  uint32& operator[](int index) PROTOBUF_ALWAYS_INLINE {
+    return has_bits_[index];
+  }
 
-  const uint32& operator[](int index) const PROTOBUF_ALWAYS_INLINE { return has_bits_[index]; }
+  const uint32& operator[](int index) const PROTOBUF_ALWAYS_INLINE {
+    return has_bits_[index];
+  }
 
   bool operator==(const HasBits<doublewords>& rhs) const {
     return memcmp(has_bits_, rhs.has_bits_, sizeof(has_bits_)) == 0;
   }
 
-  bool operator!=(const HasBits<doublewords>& rhs) const { return !(*this == rhs); }
+  bool operator!=(const HasBits<doublewords>& rhs) const {
+    return !(*this == rhs);
+  }
 
   void Or(const HasBits<doublewords>& rhs) {
     for (size_t i = 0; i < doublewords; i++) has_bits_[i] |= rhs[i];

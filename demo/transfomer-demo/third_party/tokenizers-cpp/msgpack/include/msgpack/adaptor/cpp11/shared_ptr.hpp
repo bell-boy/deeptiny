@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp11/shared_ptr.hpp"
 
-#endif  // MSGPACK_TYPE_CPP11_SHARED_PTR_HPP
+#endif // MSGPACK_TYPE_CPP11_SHARED_PTR_HPP

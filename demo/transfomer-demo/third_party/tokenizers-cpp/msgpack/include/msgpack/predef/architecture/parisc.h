@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_ARCHITECTURE_PARISC_H
 #define MSGPACK_PREDEF_ARCHITECTURE_PARISC_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_ARCH_PARISC`]
@@ -37,25 +37,23 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__hppa__) || defined(__hppa) || defined(__HPPA__)
-#undef MSGPACK_ARCH_PARISC
-#if !defined(MSGPACK_ARCH_PARISC) && (defined(_PA_RISC1_0))
-#define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER(1, 0, 0)
-#endif
-#if !defined(MSGPACK_ARCH_PARISC) && \
-    (defined(_PA_RISC1_1) || defined(__HPPA11__) || defined(__PA7100__))
-#define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER(1, 1, 0)
-#endif
-#if !defined(MSGPACK_ARCH_PARISC) && \
-    (defined(_PA_RISC2_0) || defined(__RISC2_0__) || defined(__HPPA20__) || defined(__PA8000__))
-#define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER(2, 0, 0)
-#endif
-#if !defined(MSGPACK_ARCH_PARISC)
-#define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER_AVAILABLE
-#endif
+#   undef MSGPACK_ARCH_PARISC
+#   if !defined(MSGPACK_ARCH_PARISC) && (defined(_PA_RISC1_0))
+#       define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER(1,0,0)
+#   endif
+#   if !defined(MSGPACK_ARCH_PARISC) && (defined(_PA_RISC1_1) || defined(__HPPA11__) || defined(__PA7100__))
+#       define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER(1,1,0)
+#   endif
+#   if !defined(MSGPACK_ARCH_PARISC) && (defined(_PA_RISC2_0) || defined(__RISC2_0__) || defined(__HPPA20__) || defined(__PA8000__))
+#       define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER(2,0,0)
+#   endif
+#   if !defined(MSGPACK_ARCH_PARISC)
+#       define MSGPACK_ARCH_PARISC MSGPACK_VERSION_NUMBER_AVAILABLE
+#   endif
 #endif
 
 #if MSGPACK_ARCH_PARISC
-#define MSGPACK_ARCH_PARISC_AVAILABLE
+#   define MSGPACK_ARCH_PARISC_AVAILABLE
 #endif
 
 #define MSGPACK_ARCH_PARISC_NAME "HP/PA RISC"
@@ -63,4 +61,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_PARISC, MSGPACK_ARCH_PARISC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_PARISC,MSGPACK_ARCH_PARISC_NAME)

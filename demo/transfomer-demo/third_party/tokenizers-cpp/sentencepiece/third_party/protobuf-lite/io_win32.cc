@@ -49,11 +49,12 @@
 // debug failing tests if that's caused by the long path support.
 #define SUPPORT_LONGPATHS
 
+#include <google/protobuf/io/io_win32.h>
+
 #include <ctype.h>
 #include <direct.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <google/protobuf/io/io_win32.h>
 #include <io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -111,7 +112,8 @@ bool has_drive_letter(const char_type* ch) {
 // Returns true if the path starts with a longpath prefix ("\\?\").
 template <typename char_type>
 bool has_longpath_prefix(const char_type* path) {
-  return path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\';
+  return path[0] == '\\' && path[1] == '\\' && path[2] == '?' &&
+         path[3] == '\\';
 }
 
 template <typename char_type>
@@ -131,7 +133,8 @@ bool is_drive_relative(const char_type* path) {
 }
 
 wstring join_paths(const wstring& path1, const wstring& path2) {
-  if (path1.empty() || is_path_absolute(path2.c_str()) || has_longpath_prefix(path2.c_str())) {
+  if (path1.empty() || is_path_absolute(path2.c_str()) ||
+      has_longpath_prefix(path2.c_str())) {
     return path2;
   }
   if (path2.empty()) {
@@ -139,9 +142,11 @@ wstring join_paths(const wstring& path1, const wstring& path2) {
   }
 
   if (is_separator(path1[path1.size() - 1])) {
-    return is_separator(path2[0]) ? (path1 + path2.substr(1)) : (path1 + path2);
+    return is_separator(path2[0]) ? (path1 + path2.substr(1))
+                                       : (path1 + path2);
   } else {
-    return is_separator(path2[0]) ? (path1 + path2) : (path1 + L'\\' + path2);
+    return is_separator(path2[0]) ? (path1 + path2)
+                                       : (path1 + L'\\' + path2);
   }
 }
 
@@ -170,7 +175,8 @@ wstring normalize(wstring path) {
       wstring segment(p, segment_start, i - segment_start);
       segment_start = -1;
       if (segment == dotdot) {
-        if (!segments.empty() && (!has_drive_letter(segments[0].c_str()) || segments.size() > 1)) {
+        if (!segments.empty() &&
+            (!has_drive_letter(segments[0].c_str()) || segments.size() > 1)) {
           segments.pop_back();
         }
       } else if (segment != dot && !segment.empty()) {
@@ -184,7 +190,8 @@ wstring normalize(wstring path) {
 
   // Handle the case when `path` is just a drive specifier (or some degenerate
   // form of it, e.g. "c:\..").
-  if (segments.size() == 1 && segments[0].size() == 2 && has_drive_letter(segments[0].c_str())) {
+  if (segments.size() == 1 && segments[0].size() == 2 &&
+      has_drive_letter(segments[0].c_str())) {
     return segments[0] + L'\\';
   }
 
@@ -221,6 +228,7 @@ bool as_windows_path(const char* path, wstring* result) {
   if (is_separator(path[0]) || is_drive_relative(path)) {
     return false;
   }
+
 
   if (!is_path_absolute(wpath.c_str())) {
     int size = ::GetCurrentDirectoryW(0, nullptr);
@@ -338,19 +346,23 @@ int dup(int fd) { return ::_dup(fd); }
 
 int dup2(int fd1, int fd2) { return ::_dup2(fd1, fd2); }
 
-int read(int fd, void* buffer, size_t size) { return ::_read(fd, buffer, size); }
+int read(int fd, void* buffer, size_t size) {
+  return ::_read(fd, buffer, size);
+}
 
 int setmode(int fd, int mode) { return ::_setmode(fd, mode); }
 
-int write(int fd, const void* buffer, size_t size) { return ::_write(fd, buffer, size); }
+int write(int fd, const void* buffer, size_t size) {
+  return ::_write(fd, buffer, size);
+}
 
 wstring testonly_utf8_to_winpath(const char* path) {
   wstring wpath;
   return as_windows_path(path, &wpath) ? wpath : wstring();
 }
 
-ExpandWildcardsResult ExpandWildcards(const string& path,
-                                      std::function<void(const string&)> consume) {
+ExpandWildcardsResult ExpandWildcards(
+    const string& path, std::function<void(const string&)> consume) {
   if (path.find_first_of("*?") == string::npos) {
     // There are no wildcards in the path, we don't need to expand it.
     consume(path);
@@ -380,8 +392,8 @@ ExpandWildcardsResult ExpandWildcards(const string& path,
   ExpandWildcardsResult matched = ExpandWildcardsResult::kErrorNoMatchingFile;
   do {
     // Ignore ".", "..", and directories.
-    if ((metadata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0 && kDot != metadata.cFileName &&
-        kDotDot != metadata.cFileName) {
+    if ((metadata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0 &&
+        kDot != metadata.cFileName && kDotDot != metadata.cFileName) {
       matched = ExpandWildcardsResult::kSuccess;
       string filename;
       if (!strings::wcs_to_utf8(metadata.cFileName, &filename)) {
@@ -408,13 +420,16 @@ bool wcs_to_mbs(const WCHAR* s, string* out, bool outUtf8) {
   }
   BOOL usedDefaultChar = FALSE;
   SetLastError(0);
-  int size = WideCharToMultiByte(outUtf8 ? CP_UTF8 : CP_ACP, 0, s, -1, nullptr, 0, nullptr,
-                                 outUtf8 ? nullptr : &usedDefaultChar);
-  if ((size == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER) || usedDefaultChar) {
+  int size = WideCharToMultiByte(
+      outUtf8 ? CP_UTF8 : CP_ACP, 0, s, -1, nullptr, 0, nullptr,
+      outUtf8 ? nullptr : &usedDefaultChar);
+  if ((size == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+      || usedDefaultChar) {
     return false;
   }
   std::unique_ptr<CHAR[]> astr(new CHAR[size]);
-  WideCharToMultiByte(outUtf8 ? CP_UTF8 : CP_ACP, 0, s, -1, astr.get(), size, nullptr, nullptr);
+  WideCharToMultiByte(
+      outUtf8 ? CP_UTF8 : CP_ACP, 0, s, -1, astr.get(), size, nullptr, nullptr);
   out->assign(astr.get());
   return true;
 }
@@ -426,19 +441,25 @@ bool mbs_to_wcs(const char* s, wstring* out, bool inUtf8) {
   }
 
   SetLastError(0);
-  int size = MultiByteToWideChar(inUtf8 ? CP_UTF8 : CP_ACP, 0, s, -1, nullptr, 0);
+  int size =
+      MultiByteToWideChar(inUtf8 ? CP_UTF8 : CP_ACP, 0, s, -1, nullptr, 0);
   if (size == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
     return false;
   }
   std::unique_ptr<WCHAR[]> wstr(new WCHAR[size]);
-  MultiByteToWideChar(inUtf8 ? CP_UTF8 : CP_ACP, 0, s, -1, wstr.get(), size + 1);
+  MultiByteToWideChar(
+      inUtf8 ? CP_UTF8 : CP_ACP, 0, s, -1, wstr.get(), size + 1);
   out->assign(wstr.get());
   return true;
 }
 
-bool utf8_to_wcs(const char* input, wstring* out) { return mbs_to_wcs(input, out, true); }
+bool utf8_to_wcs(const char* input, wstring* out) {
+  return mbs_to_wcs(input, out, true);
+}
 
-bool wcs_to_utf8(const wchar_t* input, string* out) { return wcs_to_mbs(input, out, true); }
+bool wcs_to_utf8(const wchar_t* input, string* out) {
+  return wcs_to_mbs(input, out, true);
+}
 
 }  // namespace strings
 }  // namespace win32

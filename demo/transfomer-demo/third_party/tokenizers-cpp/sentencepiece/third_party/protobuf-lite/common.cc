@@ -30,12 +30,12 @@
 
 // Author: kenton@google.com (Kenton Varda)
 
-#include <errno.h>
 #include <google/protobuf/stubs/common.h>
-#include <stdio.h>
 
 #include <atomic>
+#include <errno.h>
 #include <sstream>
+#include <stdio.h>
 #include <vector>
 
 #ifdef _WIN32
@@ -43,7 +43,7 @@
 #define WIN32_LEAN_AND_MEAN  // We only need minimal includes
 #endif
 #include <windows.h>
-#define snprintf _snprintf  // see comment in strutil.cc
+#define snprintf _snprintf    // see comment in strutil.cc
 #elif defined(HAVE_PTHREAD)
 #include <pthread.h>
 #else
@@ -54,12 +54,12 @@
 #endif
 
 #include <google/protobuf/stubs/callback.h>
-#include <google/protobuf/stubs/int128.h>
 #include <google/protobuf/stubs/logging.h>
 #include <google/protobuf/stubs/once.h>
 #include <google/protobuf/stubs/status.h>
 #include <google/protobuf/stubs/stringpiece.h>
 #include <google/protobuf/stubs/strutil.h>
+#include <google/protobuf/stubs/int128.h>
 
 #include <google/protobuf/port_def.inc>
 
@@ -68,31 +68,31 @@ namespace protobuf {
 
 namespace internal {
 
-void VerifyVersion(int headerVersion, int minLibraryVersion, const char* filename) {
+void VerifyVersion(int headerVersion,
+                   int minLibraryVersion,
+                   const char* filename) {
   if (GOOGLE_PROTOBUF_VERSION < minLibraryVersion) {
     // Library is too old for headers.
-    GOOGLE_LOG(FATAL) << "This program requires version " << VersionString(minLibraryVersion)
-                      << " of the Protocol Buffer runtime library, but the installed version "
-                         "is "
-                      << VersionString(GOOGLE_PROTOBUF_VERSION)
-                      << ".  Please update "
-                         "your library.  If you compiled the program yourself, make sure that "
-                         "your headers are from the same version of Protocol Buffers as your "
-                         "link-time library.  (Version verification failed in \""
-                      << filename << "\".)";
+    GOOGLE_LOG(FATAL)
+      << "This program requires version " << VersionString(minLibraryVersion)
+      << " of the Protocol Buffer runtime library, but the installed version "
+         "is " << VersionString(GOOGLE_PROTOBUF_VERSION) << ".  Please update "
+         "your library.  If you compiled the program yourself, make sure that "
+         "your headers are from the same version of Protocol Buffers as your "
+         "link-time library.  (Version verification failed in \""
+      << filename << "\".)";
   }
   if (headerVersion < kMinHeaderVersionForLibrary) {
     // Headers are too old for library.
-    GOOGLE_LOG(FATAL) << "This program was compiled against version "
-                      << VersionString(headerVersion)
-                      << " of the Protocol Buffer runtime "
-                         "library, which is not compatible with the installed version ("
-                      << VersionString(GOOGLE_PROTOBUF_VERSION)
-                      << ").  Contact the program "
-                         "author for an update.  If you compiled the program yourself, make "
-                         "sure that your headers are from the same version of Protocol Buffers "
-                         "as your link-time library.  (Version verification failed in \""
-                      << filename << "\".)";
+    GOOGLE_LOG(FATAL)
+      << "This program was compiled against version "
+      << VersionString(headerVersion) << " of the Protocol Buffer runtime "
+         "library, which is not compatible with the installed version ("
+      << VersionString(GOOGLE_PROTOBUF_VERSION) <<  ").  Contact the program "
+         "author for an update.  If you compiled the program yourself, make "
+         "sure that your headers are from the same version of Protocol Buffers "
+         "as your link-time library.  (Version verification failed in \""
+      << filename << "\".)";
   }
 }
 
@@ -107,7 +107,7 @@ std::string VersionString(int version) {
   snprintf(buffer, sizeof(buffer), "%d.%d.%d", major, minor, micro);
 
   // Guard against broken MSVC snprintf().
-  buffer[sizeof(buffer) - 1] = '\0';
+  buffer[sizeof(buffer)-1] = '\0';
 
   return buffer;
 }
@@ -143,38 +143,41 @@ inline void DefaultLogHandler(LogLevel level, const char* filename, int line,
   // Bound the logging level.
   const int android_log_level = android_log_levels[level];
   ::std::ostringstream ostr;
-  ostr << "[libprotobuf " << level_names[level] << " " << filename << ":" << line << "] "
-       << message.c_str();
+  ostr << "[libprotobuf " << level_names[level] << " " << filename << ":"
+       << line << "] " << message.c_str();
 
   // Output the log string the Android log at the appropriate level.
-  __android_log_write(android_log_level, "libprotobuf-native", ostr.str().c_str());
+  __android_log_write(android_log_level, "libprotobuf-native",
+                      ostr.str().c_str());
   // Also output to std::cerr.
   fprintf(stderr, "%s", ostr.str().c_str());
   fflush(stderr);
 
   // Indicate termination if needed.
   if (android_log_level == ANDROID_LOG_FATAL) {
-    __android_log_write(ANDROID_LOG_FATAL, "libprotobuf-native", "terminating.\n");
+    __android_log_write(ANDROID_LOG_FATAL, "libprotobuf-native",
+                        "terminating.\n");
   }
 }
 
 #else
-void DefaultLogHandler(LogLevel level, const char* filename, int line, const std::string& message) {
+void DefaultLogHandler(LogLevel level, const char* filename, int line,
+                       const std::string& message) {
   if (level < GOOGLE_PROTOBUF_MIN_LOG_LEVEL) {
     return;
   }
-  static const char* level_names[] = {"INFO", "WARNING", "ERROR", "FATAL"};
+  static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
 
   // We use fprintf() instead of cerr because we want this to work at static
   // initialization time.
-  fprintf(stderr, "[libprotobuf %s %s:%d] %s\n", level_names[level], filename, line,
-          message.c_str());
+  fprintf(stderr, "[libprotobuf %s %s:%d] %s\n",
+          level_names[level], filename, line, message.c_str());
   fflush(stderr);  // Needed on MSVC.
 }
 #endif
 
-void NullLogHandler(LogLevel /* level */, const char* /* filename */, int /* line */,
-                    const std::string& /* message */) {
+void NullLogHandler(LogLevel /* level */, const char* /* filename */,
+                    int /* line */, const std::string& /* message */) {
   // Nothing.
 }
 
@@ -212,32 +215,32 @@ LogMessage& LogMessage::operator<<(const uint128& value) {
 // the results -- in fact, we probably prefer that.  So we use snprintf()
 // instead of Simple*toa().
 #undef DECLARE_STREAM_OPERATOR
-#define DECLARE_STREAM_OPERATOR(TYPE, FORMAT)                      \
-  LogMessage& LogMessage::operator<<(TYPE value) {                 \
-    /* 128 bytes should be big enough for any of the primitive */  \
-    /* values which we print with this, but well use snprintf() */ \
-    /* anyway to be extra safe. */                                 \
-    char buffer[128];                                              \
-    snprintf(buffer, sizeof(buffer), FORMAT, value);               \
-    /* Guard against broken MSVC snprintf(). */                    \
-    buffer[sizeof(buffer) - 1] = '\0';                             \
-    message_ += buffer;                                            \
-    return *this;                                                  \
+#define DECLARE_STREAM_OPERATOR(TYPE, FORMAT)                       \
+  LogMessage& LogMessage::operator<<(TYPE value) {                  \
+    /* 128 bytes should be big enough for any of the primitive */   \
+    /* values which we print with this, but well use snprintf() */  \
+    /* anyway to be extra safe. */                                  \
+    char buffer[128];                                               \
+    snprintf(buffer, sizeof(buffer), FORMAT, value);                \
+    /* Guard against broken MSVC snprintf(). */                     \
+    buffer[sizeof(buffer)-1] = '\0';                                \
+    message_ += buffer;                                             \
+    return *this;                                                   \
   }
 
-DECLARE_STREAM_OPERATOR(char, "%c")
-DECLARE_STREAM_OPERATOR(int, "%d")
-DECLARE_STREAM_OPERATOR(unsigned int, "%u")
-DECLARE_STREAM_OPERATOR(long, "%ld")
+DECLARE_STREAM_OPERATOR(char         , "%c" )
+DECLARE_STREAM_OPERATOR(int          , "%d" )
+DECLARE_STREAM_OPERATOR(unsigned int , "%u" )
+DECLARE_STREAM_OPERATOR(long         , "%ld")
 DECLARE_STREAM_OPERATOR(unsigned long, "%lu")
-DECLARE_STREAM_OPERATOR(double, "%g")
-DECLARE_STREAM_OPERATOR(void*, "%p")
-DECLARE_STREAM_OPERATOR(long long, "%" PROTOBUF_LL_FORMAT "d")
+DECLARE_STREAM_OPERATOR(double       , "%g" )
+DECLARE_STREAM_OPERATOR(void*        , "%p" )
+DECLARE_STREAM_OPERATOR(long long         , "%" PROTOBUF_LL_FORMAT "d")
 DECLARE_STREAM_OPERATOR(unsigned long long, "%" PROTOBUF_LL_FORMAT "u")
 #undef DECLARE_STREAM_OPERATOR
 
 LogMessage::LogMessage(LogLevel level, const char* filename, int line)
-    : level_(level), filename_(filename), line_(line) {}
+  : level_(level), filename_(filename), line_(line) {}
 LogMessage::~LogMessage() {}
 
 void LogMessage::Finish() {
@@ -260,7 +263,9 @@ void LogMessage::Finish() {
   }
 }
 
-void LogFinisher::operator=(LogMessage& other) { other.Finish(); }
+void LogFinisher::operator=(LogMessage& other) {
+  other.Finish();
+}
 
 }  // namespace internal
 
@@ -277,18 +282,20 @@ LogHandler* SetLogHandler(LogHandler* new_func) {
   return old;
 }
 
-LogSilencer::LogSilencer() { ++internal::log_silencer_count_; };
+LogSilencer::LogSilencer() {
+  ++internal::log_silencer_count_;
+};
 
-LogSilencer::~LogSilencer() { --internal::log_silencer_count_; };
+LogSilencer::~LogSilencer() {
+  --internal::log_silencer_count_;
+};
 
 // ===================================================================
 // emulates google3/base/callback.cc
 
 Closure::~Closure() {}
 
-namespace internal {
-FunctionClosure0::~FunctionClosure0() {}
-}  // namespace internal
+namespace internal { FunctionClosure0::~FunctionClosure0() {} }
 
 void DoNothing() {}
 
@@ -313,7 +320,9 @@ uint32 ghtonl(uint32 x) {
 #if PROTOBUF_USE_EXCEPTIONS
 FatalException::~FatalException() throw() {}
 
-const char* FatalException::what() const throw() { return message_.c_str(); }
+const char* FatalException::what() const throw() {
+  return message_.c_str();
+}
 #endif
 
 }  // namespace protobuf

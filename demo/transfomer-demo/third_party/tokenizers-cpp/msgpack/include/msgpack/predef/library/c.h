@@ -11,6 +11,7 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/library/c/_prefix.h>
+
 #include <msgpack/predef/library/c/cloudabi.h>
 #include <msgpack/predef/library/c/gnu.h>
 #include <msgpack/predef/library/c/uc.h>

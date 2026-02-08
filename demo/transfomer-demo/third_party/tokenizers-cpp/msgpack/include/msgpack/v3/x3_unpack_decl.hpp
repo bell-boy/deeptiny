@@ -18,43 +18,48 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
+/// @endcond
 
-  namespace detail {
+namespace detail {
 
-  using v2::detail::unpack_imp;
+using v2::detail::unpack_imp;
 
-  }  // namespace detail
+} // detail
 
-  template <typename Iterator>
-  msgpack::object_handle unpack(Iterator && begin, Iterator && end, bool& referenced,
-                                unpack_reference_func f = MSGPACK_NULLPTR,
-                                void* user_data = MSGPACK_NULLPTR,
-                                unpack_limit const& limit = unpack_limit());
+template <typename Iterator>
+msgpack::object_handle unpack(
+    Iterator&& begin, Iterator&& end,
+    bool& referenced,
+    unpack_reference_func f = MSGPACK_NULLPTR, void* user_data = MSGPACK_NULLPTR,
+    unpack_limit const& limit = unpack_limit());
 
-  template <typename Iterator>
-  msgpack::object_handle unpack(
-      Iterator && begin, Iterator && end, unpack_reference_func f = MSGPACK_NULLPTR,
-      void* user_data = MSGPACK_NULLPTR, unpack_limit const& limit = unpack_limit());
+template <typename Iterator>
+msgpack::object_handle unpack(
+    Iterator&& begin, Iterator&& end,
+    unpack_reference_func f = MSGPACK_NULLPTR, void* user_data = MSGPACK_NULLPTR,
+    unpack_limit const& limit = unpack_limit());
 
-  template <typename Iterator>
-  msgpack::object unpack(msgpack::zone & z, Iterator && begin, Iterator && end, bool& referenced,
-                         unpack_reference_func f = MSGPACK_NULLPTR,
-                         void* user_data = MSGPACK_NULLPTR,
-                         unpack_limit const& limit = unpack_limit());
+template <typename Iterator>
+msgpack::object unpack(
+    msgpack::zone& z,
+    Iterator&& begin, Iterator&& end,
+    bool& referenced,
+    unpack_reference_func f = MSGPACK_NULLPTR, void* user_data = MSGPACK_NULLPTR,
+    unpack_limit const& limit = unpack_limit());
 
-  template <typename Iterator>
-  msgpack::object unpack(msgpack::zone & z, Iterator && begin, Iterator && end,
-                         unpack_reference_func f = MSGPACK_NULLPTR,
-                         void* user_data = MSGPACK_NULLPTR,
-                         unpack_limit const& limit = unpack_limit());
+template <typename Iterator>
+msgpack::object unpack(
+    msgpack::zone& z,
+    Iterator&& begin, Iterator&& end,
+    unpack_reference_func f = MSGPACK_NULLPTR, void* user_data = MSGPACK_NULLPTR,
+    unpack_limit const& limit = unpack_limit());
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // defined(MSGPACK_USE_X3_PARSE)
+#endif // defined(MSGPACK_USE_X3_PARSE)
 
-#endif  // MSGPACK_V3_X3_UNPACK_DECL_HPP
+#endif // MSGPACK_V3_X3_UNPACK_DECL_HPP

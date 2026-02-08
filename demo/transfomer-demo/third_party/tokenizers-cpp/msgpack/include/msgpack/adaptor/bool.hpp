@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/bool.hpp"
 
-#endif  // MSGPACK_TYPE_BOOL_HPP
+#endif // MSGPACK_TYPE_BOOL_HPP

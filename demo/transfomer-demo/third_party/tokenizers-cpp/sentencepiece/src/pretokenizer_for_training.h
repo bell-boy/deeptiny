@@ -54,7 +54,7 @@ class PretokenizerForTrainingInterface {
 
  private:
   static std::string Preprocess(absl::string_view text);
-  static std::vector<std::string> Postprocess(const SentencePieceText& spt);
+  static std::vector<std::string> Postprocess(const SentencePieceText &spt);
 };
 
 }  // namespace pretokenizer

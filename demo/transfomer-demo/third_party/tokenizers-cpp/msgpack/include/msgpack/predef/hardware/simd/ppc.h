@@ -9,8 +9,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_HARDWARE_SIMD_PPC_H
 #define MSGPACK_PREDEF_HARDWARE_SIMD_PPC_H
 
-#include <msgpack/predef/hardware/simd/ppc/versions.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/hardware/simd/ppc/versions.h>
 
 /*`
  [heading `MSGPACK_HW_SIMD_PPC`]
@@ -46,19 +46,19 @@ http://www.boost.org/LICENSE_1_0.txt)
 
 #undef MSGPACK_HW_SIMD_PPC
 #if !defined(MSGPACK_HW_SIMD_PPC) && defined(__VECTOR4DOUBLE__)
-#define MSGPACK_HW_SIMD_PPC MSGPACK_HW_SIMD_PPC_QPX_VERSION
+#   define MSGPACK_HW_SIMD_PPC MSGPACK_HW_SIMD_PPC_QPX_VERSION
 #endif
 #if !defined(MSGPACK_HW_SIMD_PPC) && defined(__VSX__)
-#define MSGPACK_HW_SIMD_PPC MSGPACK_HW_SIMD_PPC_VSX_VERSION
+#   define MSGPACK_HW_SIMD_PPC MSGPACK_HW_SIMD_PPC_VSX_VERSION
 #endif
 #if !defined(MSGPACK_HW_SIMD_PPC) && (defined(__ALTIVEC__) || defined(__VEC__))
-#define MSGPACK_HW_SIMD_PPC MSGPACK_HW_SIMD_PPC_VMX_VERSION
+#   define MSGPACK_HW_SIMD_PPC MSGPACK_HW_SIMD_PPC_VMX_VERSION
 #endif
 
 #if !defined(MSGPACK_HW_SIMD_PPC)
-#define MSGPACK_HW_SIMD_PPC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
+#   define MSGPACK_HW_SIMD_PPC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 #else
-#define MSGPACK_HW_SIMD_PPC_AVAILABLE
+#   define MSGPACK_HW_SIMD_PPC_AVAILABLE
 #endif
 
 #define MSGPACK_HW_SIMD_PPC_NAME "PPC SIMD"

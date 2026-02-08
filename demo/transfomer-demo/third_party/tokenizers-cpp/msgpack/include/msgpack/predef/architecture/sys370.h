@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_ARCHITECTURE_SYS370_H
 #define MSGPACK_PREDEF_ARCHITECTURE_SYS370_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_ARCH_SYS370`]
@@ -27,12 +27,12 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_ARCH_SYS370 MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__370__) || defined(__THW_370__)
-#undef MSGPACK_ARCH_SYS370
-#define MSGPACK_ARCH_SYS370 MSGPACK_VERSION_NUMBER_AVAILABLE
+#   undef MSGPACK_ARCH_SYS370
+#   define MSGPACK_ARCH_SYS370 MSGPACK_VERSION_NUMBER_AVAILABLE
 #endif
 
 #if MSGPACK_ARCH_SYS370
-#define MSGPACK_ARCH_SYS370_AVAILABLE
+#   define MSGPACK_ARCH_SYS370_AVAILABLE
 #endif
 
 #define MSGPACK_ARCH_SYS370_NAME "System/370"
@@ -40,4 +40,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_SYS370, MSGPACK_ARCH_SYS370_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_SYS370,MSGPACK_ARCH_SYS370_NAME)

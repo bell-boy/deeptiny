@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/deque.hpp"
 
-#endif  // MSGPACK_TYPE_DEQUE_HPP
+#endif // MSGPACK_TYPE_DEQUE_HPP

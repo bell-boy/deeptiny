@@ -10,29 +10,29 @@
 #ifndef MSGPACK_V1_CPP11_DEFINE_MAP_DECL_HPP
 #define MSGPACK_V1_CPP11_DEFINE_MAP_DECL_HPP
 
+#include "msgpack/versioning.hpp"
 #include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/object.hpp"
-#include "msgpack/versioning.hpp"
 
 namespace msgpack {
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
-  namespace type {
+/// @endcond
+namespace type {
 
-  template <typename Tuple, std::size_t N>
-  struct define_map_imp;
+template <typename Tuple, std::size_t N>
+struct define_map_imp;
 
-  template <typename... Args>
-  struct define_map;
+template <typename... Args>
+struct define_map;
 
-  template <typename... Args>
-  define_map<Args...> make_define_map(Args&... args);
+template <typename... Args>
+define_map<Args...> make_define_map(Args&... args);
 
-  }  // namespace type
-  /// @cond
+}  // namespace type
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_CPP11_DEFINE_MAP_DECL_HPP
+#endif // MSGPACK_V1_CPP11_DEFINE_MAP_DECL_HPP

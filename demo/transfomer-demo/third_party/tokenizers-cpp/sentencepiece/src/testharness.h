@@ -47,16 +47,17 @@ int RunAllTests();
 // the execution of an assertion.
 class Tester {
  public:
-  Tester(const char* fname, int line) : ok_(true), fname_(fname), line_(line) {}
+  Tester(const char *fname, int line) : ok_(true), fname_(fname), line_(line) {}
 
   ~Tester() {
     if (!ok_) {
-      std::cerr << "[       NG ] " << fname_ << ":" << line_ << ":" << ss_.str() << std::endl;
+      std::cerr << "[       NG ] " << fname_ << ":" << line_ << ":" << ss_.str()
+                << std::endl;
       exit(-1);
     }
   }
 
-  Tester& Is(bool b, const char* msg) {
+  Tester &Is(bool b, const char *msg) {
     if (!b) {
       ss_ << " failed: " << msg;
       ok_ = false;
@@ -64,11 +65,12 @@ class Tester {
     return *this;
   }
 
-  Tester& IsNear(double val1, double val2, double abs_error, const char* msg1, const char* msg2) {
+  Tester &IsNear(double val1, double val2, double abs_error, const char *msg1,
+                 const char *msg2) {
     const double diff = std::fabs(val1 - val2);
     if (diff > abs_error) {
-      ss_ << "The difference between (" << msg1 << ") and (" << msg2 << ") is " << diff
-          << ", which exceeds " << abs_error << ", where\n"
+      ss_ << "The difference between (" << msg1 << ") and (" << msg2 << ") is "
+          << diff << ", which exceeds " << abs_error << ", where\n"
           << msg1 << " evaluates to " << val1 << ",\n"
           << msg2 << " evaluates to " << val2;
       ok_ = false;
@@ -78,7 +80,7 @@ class Tester {
 
 #define BINARY_OP(name, op)                                                  \
   template <class X, class Y>                                                \
-  Tester& name(const X& x, const Y& y, const char* msg1, const char* msg2) { \
+  Tester &name(const X &x, const Y &y, const char *msg1, const char *msg2) { \
     if (!(x op y)) {                                                         \
       ss_ << " failed: " << msg1 << (" " #op " ") << msg2;                   \
       ok_ = false;                                                           \
@@ -96,7 +98,7 @@ class Tester {
 
   // Attach the specified value to the error message if an error has occurred
   template <class V>
-  Tester& operator<<(const V& value) {
+  Tester &operator<<(const V &value) {
     if (!ok_) {
       ss_ << " " << value;
     }
@@ -105,21 +107,30 @@ class Tester {
 
  private:
   bool ok_;
-  const char* fname_;
+  const char *fname_;
   int line_;
   std::stringstream ss_;
 };
 
-#define EXPECT_TRUE(c) sentencepiece::test::Tester(__FILE__, __LINE__).Is((c), #c)
-#define EXPECT_FALSE(c) sentencepiece::test::Tester(__FILE__, __LINE__).Is((!(c)), #c)
-#define EXPECT_STREQ(a, b) \
-  sentencepiece::test::Tester(__FILE__, __LINE__).IsEq(std::string(a), std::string(b), #a, #b)
-#define EXPECT_EQ(a, b) sentencepiece::test::Tester(__FILE__, __LINE__).IsEq((a), (b), #a, #b)
-#define EXPECT_NE(a, b) sentencepiece::test::Tester(__FILE__, __LINE__).IsNe((a), (b), #a, #b)
-#define EXPECT_GE(a, b) sentencepiece::test::Tester(__FILE__, __LINE__).IsGe((a), (b), #a, #b)
-#define EXPECT_GT(a, b) sentencepiece::test::Tester(__FILE__, __LINE__).IsGt((a), (b), #a, #b)
-#define EXPECT_LE(a, b) sentencepiece::test::Tester(__FILE__, __LINE__).IsLe((a), (b), #a, #b)
-#define EXPECT_LT(a, b) sentencepiece::test::Tester(__FILE__, __LINE__).IsLt((a), (b), #a, #b)
+#define EXPECT_TRUE(c) \
+  sentencepiece::test::Tester(__FILE__, __LINE__).Is((c), #c)
+#define EXPECT_FALSE(c) \
+  sentencepiece::test::Tester(__FILE__, __LINE__).Is((!(c)), #c)
+#define EXPECT_STREQ(a, b)                        \
+  sentencepiece::test::Tester(__FILE__, __LINE__) \
+      .IsEq(std::string(a), std::string(b), #a, #b)
+#define EXPECT_EQ(a, b) \
+  sentencepiece::test::Tester(__FILE__, __LINE__).IsEq((a), (b), #a, #b)
+#define EXPECT_NE(a, b) \
+  sentencepiece::test::Tester(__FILE__, __LINE__).IsNe((a), (b), #a, #b)
+#define EXPECT_GE(a, b) \
+  sentencepiece::test::Tester(__FILE__, __LINE__).IsGe((a), (b), #a, #b)
+#define EXPECT_GT(a, b) \
+  sentencepiece::test::Tester(__FILE__, __LINE__).IsGt((a), (b), #a, #b)
+#define EXPECT_LE(a, b) \
+  sentencepiece::test::Tester(__FILE__, __LINE__).IsLe((a), (b), #a, #b)
+#define EXPECT_LT(a, b) \
+  sentencepiece::test::Tester(__FILE__, __LINE__).IsLt((a), (b), #a, #b)
 #define EXPECT_NEAR(a, b, c) \
   sentencepiece::test::Tester(__FILE__, __LINE__).IsNear((a), (b), (c), #a, #b)
 #define EXPECT_OK(c) EXPECT_EQ(c, ::sentencepiece::util::OkStatus())
@@ -148,55 +159,61 @@ class TestWithParam {
 };
 
 template <typename T>
-std::vector<T> ValuesIn(const std::vector<T>& v) {
+std::vector<T> ValuesIn(const std::vector<T> &v) {
   return v;
 }
 
 #define TCONCAT(a, b, c) TCONCAT1(a, b, c)
 #define TCONCAT1(a, b, c) a##b##c
 
-#define INSTANTIATE_TEST_SUITE_P(suite_base, base, params) \
-  std::vector<base::ParamType> TCONCAT(base, _get_params_, base)() { return params; }
+#define INSTANTIATE_TEST_SUITE_P(suite_base, base, params)           \
+  std::vector<base::ParamType> TCONCAT(base, _get_params_, base)() { \
+    return params;                                                   \
+  }
 
-#define TEST(base, name)                                                                     \
-  class TCONCAT(base, _Test_, name) {                                                        \
-   public:                                                                                   \
-    void _Run();                                                                             \
-    static void _RunIt() {                                                                   \
-      TCONCAT(base, _Test_, name) t;                                                         \
-      t._Run();                                                                              \
-    }                                                                                        \
-  };                                                                                         \
-  bool TCONCAT(base, _Test_ignored_, name) =                                                 \
-      sentencepiece::test::RegisterTest(#base, #name, &TCONCAT(base, _Test_, name)::_RunIt); \
+#define TEST(base, name)                                                       \
+  class TCONCAT(base, _Test_, name) {                                          \
+   public:                                                                     \
+    void _Run();                                                               \
+    static void _RunIt() {                                                     \
+      TCONCAT(base, _Test_, name) t;                                           \
+      t._Run();                                                                \
+    }                                                                          \
+  };                                                                           \
+  bool TCONCAT(base, _Test_ignored_, name) =                                   \
+      sentencepiece::test::RegisterTest(#base, #name,                          \
+                                        &TCONCAT(base, _Test_, name)::_RunIt); \
   void TCONCAT(base, _Test_, name)::_Run()
 
-#define TEST_P(base, name)                                                                     \
-  std::vector<base::ParamType> TCONCAT(base, _get_params_, base)();                            \
-  class TCONCAT(base, _Test_p_, name) : public base {                                          \
-   public:                                                                                     \
-    std::vector<ParamType> GetParams() const { return TCONCAT(base, _get_params_, base)(); }   \
-    ParamType param_;                                                                          \
-    void SetParam(const ParamType& param) { param_ = param; }                                  \
-    ParamType GetParam() const { return param_; }                                              \
-    void _Run();                                                                               \
-    static void _RunIt() {                                                                     \
-      TCONCAT(base, _Test_p_, name) t;                                                         \
-      for (const auto& param : t.GetParams()) {                                                \
-        t.SetParam(param);                                                                     \
-        t.SetUp();                                                                             \
-        t._Run();                                                                              \
-        t.TearDown();                                                                          \
-      }                                                                                        \
-    }                                                                                          \
-  };                                                                                           \
-  bool TCONCAT(base, _Test_p_ignored_, name) =                                                 \
-      sentencepiece::test::RegisterTest(#base, #name, &TCONCAT(base, _Test_p_, name)::_RunIt); \
+#define TEST_P(base, name)                                          \
+  std::vector<base::ParamType> TCONCAT(base, _get_params_, base)(); \
+  class TCONCAT(base, _Test_p_, name) : public base {               \
+   public:                                                          \
+    std::vector<ParamType> GetParams() const {                      \
+      return TCONCAT(base, _get_params_, base)();                   \
+    }                                                               \
+    ParamType param_;                                               \
+    void SetParam(const ParamType &param) { param_ = param; }       \
+    ParamType GetParam() const { return param_; }                   \
+    void _Run();                                                    \
+    static void _RunIt() {                                          \
+      TCONCAT(base, _Test_p_, name) t;                              \
+      for (const auto &param : t.GetParams()) {                     \
+        t.SetParam(param);                                          \
+        t.SetUp();                                                  \
+        t._Run();                                                   \
+        t.TearDown();                                               \
+      }                                                             \
+    }                                                               \
+  };                                                                \
+  bool TCONCAT(base, _Test_p_ignored_, name) =                      \
+      sentencepiece::test::RegisterTest(                            \
+          #base, #name, &TCONCAT(base, _Test_p_, name)::_RunIt);    \
   void TCONCAT(base, _Test_p_, name)::_Run()
 
 // Register the specified test.  Typically not used directly, but
 // invoked via the macro expansion of TEST.
-extern bool RegisterTest(const char* base, const char* name, void (*func)());
+extern bool RegisterTest(const char *base, const char *name, void (*func)());
 }  // namespace test
 }  // namespace sentencepiece
 #endif  // TESTHARNESS_H_

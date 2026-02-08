@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp11/timespec.hpp"
 
-#endif  // MSGPACK_TYPE_CPP11_TIMESPEC_HPP
+#endif // MSGPACK_TYPE_CPP11_TIMESPEC_HPP

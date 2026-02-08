@@ -30,12 +30,13 @@
 #ifndef GOOGLE_PROTOBUF_STUBS_STATUS_H_
 #define GOOGLE_PROTOBUF_STUBS_STATUS_H_
 
+#include <iosfwd>
+#include <string>
+
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/stringpiece.h>
 
 #include <google/protobuf/port_def.inc>
-#include <iosfwd>
-#include <string>
 
 namespace google {
 namespace protobuf {
@@ -78,19 +79,31 @@ class PROTOBUF_EXPORT Status {
   ~Status() {}
 
   // Some pre-defined Status objects
-  static const Status OK;  // Identical to 0-arg constructor
+  static const Status OK;             // Identical to 0-arg constructor
   static const Status CANCELLED;
   static const Status UNKNOWN;
 
   // Accessor
-  bool ok() const { return error_code_ == error::OK; }
-  int error_code() const { return error_code_; }
-  error::Code code() const { return error_code_; }
-  StringPiece error_message() const { return error_message_; }
-  StringPiece message() const { return error_message_; }
+  bool ok() const {
+    return error_code_ == error::OK;
+  }
+  int error_code() const {
+    return error_code_;
+  }
+  error::Code code() const {
+    return error_code_;
+  }
+  StringPiece error_message() const {
+    return error_message_;
+  }
+  StringPiece message() const {
+    return error_message_;
+  }
 
   bool operator==(const Status& x) const;
-  bool operator!=(const Status& x) const { return !operator==(x); }
+  bool operator!=(const Status& x) const {
+    return !operator==(x);
+  }
 
   // Return a combination of the error code name and message.
   std::string ToString() const;

@@ -23,14 +23,14 @@
 namespace absl {
 namespace {
 template <typename T>
-inline size_t Itoa(T val, char* s) {
-  char* org = s;
+inline size_t Itoa(T val, char *s) {
+  char *org = s;
 
   if (val < 0) {
     *s++ = '-';
     val = -val;
   }
-  char* t = s;
+  char *t = s;
 
   T mod = 0;
   while (val) {
@@ -49,7 +49,8 @@ inline size_t Itoa(T val, char* s) {
 }
 }  // namespace
 
-inline std::string StrJoin(const std::vector<std::string>& tokens, absl::string_view delim) {
+inline std::string StrJoin(const std::vector<std::string> &tokens,
+                           absl::string_view delim) {
   std::string result;
   if (!tokens.empty()) {
     result.append(tokens[0]);
@@ -61,7 +62,8 @@ inline std::string StrJoin(const std::vector<std::string>& tokens, absl::string_
   return result;
 }
 
-inline std::string StrJoin(const std::vector<absl::string_view>& tokens, absl::string_view delim) {
+inline std::string StrJoin(const std::vector<absl::string_view> &tokens,
+                           absl::string_view delim) {
   std::string result;
   if (!tokens.empty()) {
     result.append(tokens[0].data(), tokens[0].size());
@@ -73,7 +75,8 @@ inline std::string StrJoin(const std::vector<absl::string_view>& tokens, absl::s
   return result;
 }
 
-inline std::string StrJoin(const std::vector<int>& tokens, absl::string_view delim) {
+inline std::string StrJoin(const std::vector<int> &tokens,
+                           absl::string_view delim) {
   std::string result;
   char buf[32];
   if (!tokens.empty()) {

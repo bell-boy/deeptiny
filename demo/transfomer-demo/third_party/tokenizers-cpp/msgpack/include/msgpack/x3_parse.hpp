@@ -12,4 +12,4 @@
 
 #include "msgpack/v2/x3_parse.hpp"
 
-#endif  // MSGPACK_X3_PARSE_HPP
+#endif // MSGPACK_X3_PARSE_HPP

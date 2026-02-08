@@ -14,4 +14,4 @@
 #include "msgpack/v2/adaptor/int_decl.hpp"
 #include "msgpack/v3/adaptor/int_decl.hpp"
 
-#endif  // MSGPACK_TYPE_INT_DECL_HPP
+#endif // MSGPACK_TYPE_INT_DECL_HPP

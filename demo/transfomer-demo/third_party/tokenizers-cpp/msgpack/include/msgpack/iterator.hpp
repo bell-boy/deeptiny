@@ -12,6 +12,7 @@
 #define MSGPACK_ITERATOR_HPP
 
 #include "msgpack/iterator_decl.hpp"
+
 #include "msgpack/v1/iterator.hpp"
 
-#endif  // MSGPACK_ITERATOR_HPP
+#endif // MSGPACK_ITERATOR_HPP

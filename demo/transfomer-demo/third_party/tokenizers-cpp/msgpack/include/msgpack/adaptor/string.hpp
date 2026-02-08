@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/string.hpp"
 
-#endif  // MSGPACK_TYPE_STRING_HPP
+#endif // MSGPACK_TYPE_STRING_HPP

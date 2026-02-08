@@ -31,12 +31,13 @@
 #ifndef GOOGLE_PROTOBUF_ANY_H__
 #define GOOGLE_PROTOBUF_ANY_H__
 
+#include <string>
+
+#include <google/protobuf/stubs/common.h>
 #include <google/protobuf/arenastring.h>
 #include <google/protobuf/message_lite.h>
-#include <google/protobuf/stubs/common.h>
 
 #include <google/protobuf/port_def.inc>
-#include <string>
 
 namespace google {
 namespace protobuf {
@@ -50,16 +51,17 @@ extern const char kAnyFullTypeName[];          // "google.protobuf.Any".
 extern const char kTypeGoogleApisComPrefix[];  // "type.googleapis.com/".
 extern const char kTypeGoogleProdComPrefix[];  // "type.googleprod.com/".
 
-std::string GetTypeUrl(StringPiece message_name, StringPiece type_url_prefix);
+std::string GetTypeUrl(StringPiece message_name,
+                       StringPiece type_url_prefix);
 
 // Helper class used to implement google::protobuf::Any.
 class PROTOBUF_EXPORT AnyMetadata {
   typedef ArenaStringPtr UrlType;
   typedef ArenaStringPtr ValueType;
-
  public:
   // AnyMetadata does not take ownership of "type_url" and "value".
-  constexpr AnyMetadata(UrlType* type_url, ValueType* value) : type_url_(type_url), value_(value) {}
+  constexpr AnyMetadata(UrlType* type_url, ValueType* value)
+      : type_url_(type_url), value_(value) {}
 
   // Packs a message using the default type URL prefix: "type.googleapis.com".
   // The resulted type URL will be "type.googleapis.com/<message_full_name>".
@@ -103,9 +105,11 @@ class PROTOBUF_EXPORT AnyMetadata {
   }
 
  private:
-  void InternalPackFrom(const MessageLite& message, StringPiece type_url_prefix,
+  void InternalPackFrom(const MessageLite& message,
+                        StringPiece type_url_prefix,
                         StringPiece type_name);
-  bool InternalUnpackTo(StringPiece type_name, MessageLite* message) const;
+  bool InternalUnpackTo(StringPiece type_name,
+                        MessageLite* message) const;
   bool InternalIs(StringPiece type_name) const;
 
   UrlType* type_url_;
@@ -128,11 +132,13 @@ bool ParseAnyTypeUrl(StringPiece type_url, std::string* full_type_name);
 // "type.googleapis.com/" in *url_prefix and "rpc.QueryOrigin" in
 // *full_type_name. Returns false if the type_url does not have a "/" in the
 // type url separating the full type name.
-bool ParseAnyTypeUrl(StringPiece type_url, std::string* url_prefix, std::string* full_type_name);
+bool ParseAnyTypeUrl(StringPiece type_url, std::string* url_prefix,
+                     std::string* full_type_name);
 
 // See if message is of type google.protobuf.Any, if so, return the descriptors
 // for "type_url" and "value" fields.
-bool GetAnyFieldDescriptors(const Message& message, const FieldDescriptor** type_url_field,
+bool GetAnyFieldDescriptors(const Message& message,
+                            const FieldDescriptor** type_url_field,
                             const FieldDescriptor** value_field);
 
 }  // namespace internal

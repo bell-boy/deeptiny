@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp11/unordered_map.hpp"
 
-#endif  // MSGPACK_TYPE_CPP11_UNORDERED_MAP_HPP
+#endif // MSGPACK_TYPE_CPP11_UNORDERED_MAP_HPP

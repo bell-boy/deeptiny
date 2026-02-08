@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp11/tuple.hpp"
 
-#endif  // MSGPACK_TYPE_CPP11_TUPLE_HPP
+#endif // MSGPACK_TYPE_CPP11_TUPLE_HPP

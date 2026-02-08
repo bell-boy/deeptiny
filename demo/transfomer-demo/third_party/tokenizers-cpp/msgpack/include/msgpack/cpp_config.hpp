@@ -11,6 +11,7 @@
 #define MSGPACK_CPP_CONFIG_HPP
 
 #include "msgpack/cpp_config_decl.hpp"
+
 #include "msgpack/v1/cpp_config.hpp"
 
-#endif  // MSGPACK_CPP_CONFIG_HPP
+#endif // MSGPACK_CPP_CONFIG_HPP

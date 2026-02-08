@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/vector.hpp"
 
-#endif  // MSGPACK_TYPE_VECTOR_HPP
+#endif // MSGPACK_TYPE_VECTOR_HPP

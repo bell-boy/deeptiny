@@ -54,7 +54,9 @@ class FreeList {
   }
 
   // Returns the element as an array.
-  T* operator[](size_t index) const { return freelist_[index / chunk_size_] + index % chunk_size_; }
+  T* operator[](size_t index) const {
+    return freelist_[index / chunk_size_] + index % chunk_size_;
+  }
 
   // Allocates new element.
   T* Allocate() {

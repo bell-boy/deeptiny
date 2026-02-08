@@ -19,7 +19,8 @@
 
 namespace absl {
 
-template <typename T, typename Compare = std::less<T>, typename Allocator = std::allocator<T>>
+template <typename T, typename Compare = std::less<T>,
+          typename Allocator = std::allocator<T>>
 using btree_set = std::set<T, Compare, Allocator>;
 
 }

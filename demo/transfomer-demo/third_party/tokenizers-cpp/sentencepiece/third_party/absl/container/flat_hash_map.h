@@ -19,7 +19,8 @@
 
 namespace absl {
 
-template <typename K, typename V, typename Hash = std::hash<K>, typename Eq = std::equal_to<K>,
+template <typename K, typename V, typename Hash = std::hash<K>,
+          typename Eq = std::equal_to<K>,
           typename Allocator = std::allocator<std::pair<const K, V>>>
 using flat_hash_map = std::unordered_map<K, V, Hash, Eq, Allocator>;
 

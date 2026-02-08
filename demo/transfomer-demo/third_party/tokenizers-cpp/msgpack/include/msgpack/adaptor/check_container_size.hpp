@@ -11,6 +11,7 @@
 #define MSGPACK_CHECK_CONTAINER_SIZE_HPP
 
 #include "msgpack/adaptor/check_container_size_decl.hpp"
+
 #include "msgpack/v1/adaptor/check_container_size.hpp"
 
-#endif  // MSGPACK_CHECK_CONTAINER_SIZE_HPP
+#endif // MSGPACK_CHECK_CONTAINER_SIZE_HPP

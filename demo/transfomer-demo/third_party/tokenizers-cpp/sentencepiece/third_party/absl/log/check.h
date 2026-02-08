@@ -19,11 +19,11 @@
 
 #include "third_party/absl/log/log.h"
 
-#define CHECK(condition)                                                                         \
-  (condition) ? 0                                                                                \
-              : ::absl::logging::Die(true) & std::cerr << ::absl::logging::BaseName(__FILE__)    \
-                                                       << "(" << __LINE__ << ") [" << #condition \
-                                                       << "] "
+#define CHECK(condition)                                                    \
+  (condition) ? 0                                                           \
+              : ::absl::logging::Die(true) &                                \
+                    std::cerr << ::absl::logging::BaseName(__FILE__) << "(" \
+                              << __LINE__ << ") [" << #condition << "] "
 
 #define CHECK_EQ(a, b) CHECK((a) == (b))
 #define CHECK_NE(a, b) CHECK((a) != (b))

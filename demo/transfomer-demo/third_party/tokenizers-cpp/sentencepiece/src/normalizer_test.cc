@@ -30,7 +30,9 @@ namespace {
 // Replacement char
 #define RC "\xEF\xBF\xBD"
 
-NormalizerSpec MakeDefaultSpec() { return SentencePieceTrainer::GetNormalizerSpec("nmt_nfkc"); }
+NormalizerSpec MakeDefaultSpec() {
+  return SentencePieceTrainer::GetNormalizerSpec("nmt_nfkc");
+}
 }  // namespace
 
 TEST(NormalizerTest, NormalizeTest) {
@@ -60,7 +62,8 @@ TEST(NormalizerTest, NormalizeTest) {
   // Half width katakana, character composition happens.
   EXPECT_EQ(WS "グーグル", normalizer.Normalize(" ｸﾞｰｸﾞﾙ "));
 
-  EXPECT_EQ(WS "I" WS "saw" WS "a" WS "girl", normalizer.Normalize(" I  saw a　 　girl　　"));
+  EXPECT_EQ(WS "I" WS "saw" WS "a" WS "girl",
+            normalizer.Normalize(" I  saw a　 　girl　　"));
 
   // Remove control chars.
   EXPECT_EQ("", normalizer.Normalize(string_util::UnicodeCharToUTF8(0x7F)));
@@ -121,7 +124,8 @@ TEST(NormalizerTest, NormalizeWithoutRemoveExtraWhitespacesTest) {
   // Sentence with heading/tailing/redundant spaces.
   EXPECT_EQ(WS "ABC", normalizer.Normalize("ABC"));
   EXPECT_EQ(WS WS "ABC" WS, normalizer.Normalize(" ABC "));
-  EXPECT_EQ(WS WS WS "A" WS WS "B" WS WS "C" WS WS, normalizer.Normalize("  A  B  C  "));
+  EXPECT_EQ(WS WS WS "A" WS WS "B" WS WS "C" WS WS,
+            normalizer.Normalize("  A  B  C  "));
 }
 
 TEST(NormalizerTest, NormalizeWithoutEscapeWhitespacesTest) {
@@ -146,7 +150,7 @@ TEST(NormalizerTest, NormalizeWithoutEscapeWhitespacesTest) {
 TEST(NormalizeTest, NomalizeWithSpaceContainedRules) {
   Builder::CharsMap charsmap;
 
-  auto AddRule = [&](const std::string& src, const std::string& trg) {
+  auto AddRule = [&](const std::string &src, const std::string &trg) {
     Builder::Chars src_chars, trg_chars;
     for (const char32 c : string_util::UTF8ToUnicodeText(src)) {
       src_chars.push_back(c);
@@ -164,7 +168,9 @@ TEST(NormalizeTest, NomalizeWithSpaceContainedRules) {
   AddRule("d", " F G ");
 
   NormalizerSpec spec;
-  EXPECT_TRUE(Builder::CompileCharsMap(charsmap, spec.mutable_precompiled_charsmap()).ok());
+  EXPECT_TRUE(
+      Builder::CompileCharsMap(charsmap, spec.mutable_precompiled_charsmap())
+          .ok());
 
   // Test default behavior
   {
@@ -235,8 +241,8 @@ TEST(NormalizeTest, NomalizeWithSpaceContainedRules) {
     bool add_dummy_prefix;
     bool remove_extra_whitespaces;
     bool escape_whitespaces;
-    const char* input;
-    const char* expected;
+    const char *input;
+    const char *expected;
   };
 
   constexpr SpacePattern kSpacePatternData[] = {
@@ -249,7 +255,7 @@ TEST(NormalizeTest, NomalizeWithSpaceContainedRules) {
       {true, false, false, " ", "  "},  {true, false, true, " ", WS WS},
       {true, true, false, " ", ""},     {true, true, true, " ", ""}};
 
-  for (const auto& c : kSpacePatternData) {
+  for (const auto &c : kSpacePatternData) {
     spec.set_add_dummy_prefix(c.add_dummy_prefix);
     spec.set_remove_extra_whitespaces(c.remove_extra_whitespaces);
     spec.set_escape_whitespaces(c.escape_whitespaces);
@@ -373,16 +379,18 @@ TEST(NormalizerTest, EncodeDecodePrecompiledCharsMapTest) {
   // some string of arbitrary length
   std::string test_normalized_blob = "<some normalizer data>";
   test_normalized_blob += '\0';  // normalized blob must be null terminated.
-  const std::string blob =
-      Normalizer::EncodePrecompiledCharsMap(test_trie_blob, test_normalized_blob);
+  const std::string blob = Normalizer::EncodePrecompiledCharsMap(
+      test_trie_blob, test_normalized_blob);
   std::string buf;
   absl::string_view trie_blob, normalized_blob;
-  util::Status status =
-      Normalizer::DecodePrecompiledCharsMap(blob, &trie_blob, &normalized_blob, &buf);
+  util::Status status = Normalizer::DecodePrecompiledCharsMap(
+      blob, &trie_blob, &normalized_blob, &buf);
   ASSERT_TRUE(status.ok());
   EXPECT_EQ(test_trie_blob, trie_blob);
   EXPECT_EQ(test_normalized_blob, normalized_blob);
-  EXPECT_FALSE(Normalizer::DecodePrecompiledCharsMap("", &trie_blob, &normalized_blob, &buf).ok());
+  EXPECT_FALSE(Normalizer::DecodePrecompiledCharsMap("", &trie_blob,
+                                                     &normalized_blob, &buf)
+                   .ok());
 }
 
 TEST(NormalizerTest, StatusTest) {

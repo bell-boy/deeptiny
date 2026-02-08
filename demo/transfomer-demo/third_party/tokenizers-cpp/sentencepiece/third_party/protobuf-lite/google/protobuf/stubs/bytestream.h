@@ -50,12 +50,13 @@
 #ifndef GOOGLE_PROTOBUF_STUBS_BYTESTREAM_H_
 #define GOOGLE_PROTOBUF_STUBS_BYTESTREAM_H_
 
+#include <stddef.h>
+#include <string>
+
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/stringpiece.h>
-#include <stddef.h>
 
 #include <google/protobuf/port_def.inc>
-#include <string>
 
 class CordByteSink;
 
@@ -301,7 +302,7 @@ class PROTOBUF_EXPORT ArrayByteSource : public ByteSource {
   virtual void Skip(size_t n) override;
 
  private:
-  StringPiece input_;
+  StringPiece   input_;
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(ArrayByteSource);
 };
 

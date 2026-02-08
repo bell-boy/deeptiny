@@ -35,11 +35,6 @@
 #ifndef GOOGLE_PROTOBUF_COMMON_H__
 #define GOOGLE_PROTOBUF_COMMON_H__
 
-#include <google/protobuf/stubs/macros.h>
-#include <google/protobuf/stubs/platform_macros.h>
-#include <google/protobuf/stubs/port.h>
-#include <google/protobuf/stubs/stringpiece.h>
-
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -48,13 +43,18 @@
 #include <string>
 #include <vector>
 
+#include <google/protobuf/stubs/macros.h>
+#include <google/protobuf/stubs/platform_macros.h>
+#include <google/protobuf/stubs/port.h>
+#include <google/protobuf/stubs/stringpiece.h>
+
 #ifndef PROTOBUF_USE_EXCEPTIONS
 #if defined(_MSC_VER) && defined(_CPPUNWIND)
-#define PROTOBUF_USE_EXCEPTIONS 1
+  #define PROTOBUF_USE_EXCEPTIONS 1
 #elif defined(__EXCEPTIONS)
-#define PROTOBUF_USE_EXCEPTIONS 1
+  #define PROTOBUF_USE_EXCEPTIONS 1
 #else
-#define PROTOBUF_USE_EXCEPTIONS 0
+  #define PROTOBUF_USE_EXCEPTIONS 0
 #endif
 #endif
 
@@ -65,8 +65,7 @@
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE
 #endif
 
-#if defined(__ANDROID__) || defined(GOOGLE_PROTOBUF_OS_ANDROID) || \
-    (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || defined(GOOGLE_PROTOBUF_OS_IPHONE)
+#if defined(__ANDROID__) || defined(GOOGLE_PROTOBUF_OS_ANDROID) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || defined(GOOGLE_PROTOBUF_OS_IPHONE)
 #include <pthread.h>
 #endif
 
@@ -103,7 +102,8 @@ static const int kMinHeaderVersionForProtoc = 3014000;
 
 // Verifies that the headers and libraries are compatible.  Use the macro
 // below to call this.
-void PROTOBUF_EXPORT VerifyVersion(int headerVersion, int minLibraryVersion, const char* filename);
+void PROTOBUF_EXPORT VerifyVersion(int headerVersion, int minLibraryVersion,
+                                   const char* filename);
 
 // Converts a numeric version number to a string.
 std::string PROTOBUF_EXPORT VersionString(int version);
@@ -114,9 +114,11 @@ std::string PROTOBUF_EXPORT VersionString(int version);
 // to use the protobuf library) to verify that the version you link against
 // matches the headers you compiled against.  If a version mismatch is
 // detected, the process will abort.
-#define GOOGLE_PROTOBUF_VERIFY_VERSION                                 \
-  ::google::protobuf::internal::VerifyVersion(GOOGLE_PROTOBUF_VERSION, \
-                                              GOOGLE_PROTOBUF_MIN_LIBRARY_VERSION, __FILE__)
+#define GOOGLE_PROTOBUF_VERIFY_VERSION                                    \
+  ::google::protobuf::internal::VerifyVersion(                            \
+    GOOGLE_PROTOBUF_VERSION, GOOGLE_PROTOBUF_MIN_LIBRARY_VERSION,         \
+    __FILE__)
+
 
 // ===================================================================
 // from google3/util/utf8/public/unilib.h
@@ -147,7 +149,8 @@ PROTOBUF_EXPORT int UTF8SpnStructurallyValid(StringPiece str);
 //
 // Optimized for: all structurally valid and no byte copying is done.
 //
-PROTOBUF_EXPORT char* UTF8CoerceToStructurallyValid(StringPiece str, char* dst, char replace_char);
+PROTOBUF_EXPORT char* UTF8CoerceToStructurallyValid(StringPiece str, char* dst,
+                                                    char replace_char);
 
 }  // namespace internal
 

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.!
 
-#include "word_model_trainer.h"
-
 #include <string>
 #include <vector>
 
@@ -23,6 +21,7 @@
 #include "third_party/absl/strings/str_cat.h"
 #include "third_party/absl/strings/str_join.h"
 #include "util.h"
+#include "word_model_trainer.h"
 
 namespace sentencepiece {
 namespace word {
@@ -31,12 +30,14 @@ namespace {
 // Space symbol (U+2581)
 #define WS "\xE2\x96\x81"
 
-std::string RunTrainer(const std::vector<std::string>& input, int size) {
-  const std::string input_file = util::JoinPath(::testing::TempDir(), "input");
-  const std::string model_prefix = util::JoinPath(::testing::TempDir(), "model");
+std::string RunTrainer(const std::vector<std::string> &input, int size) {
+  const std::string input_file =
+      util::JoinPath(::testing::TempDir(), "input");
+  const std::string model_prefix =
+      util::JoinPath(::testing::TempDir(), "model");
   {
     auto output = filesystem::NewWritableFile(input_file);
-    for (const auto& line : input) {
+    for (const auto &line : input) {
       output->WriteLine(line);
     }
   }
@@ -59,7 +60,7 @@ std::string RunTrainer(const std::vector<std::string>& input, int size) {
   SentencePieceProcessor processor;
   EXPECT_TRUE(processor.Load(model_prefix + ".model").ok());
 
-  const auto& model = processor.model_proto();
+  const auto &model = processor.model_proto();
   std::vector<std::string> pieces;
 
   // remove <unk>, <s>, </s>

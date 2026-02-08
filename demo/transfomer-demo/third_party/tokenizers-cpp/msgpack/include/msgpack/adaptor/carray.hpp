@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/carray.hpp"
 
-#endif  // MSGPACK_TYPE_CARRAY_HPP
+#endif // MSGPACK_TYPE_CARRAY_HPP

@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_LANGUAGE_STDC_H
 #define MSGPACK_PREDEF_LANGUAGE_STDC_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LANG_STDC`]
@@ -29,20 +29,20 @@ If available, the year of the standard is detected as YYYY.MM.1 from the Epoc da
 #define MSGPACK_LANG_STDC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__STDC__)
-#undef MSGPACK_LANG_STDC
-#if defined(__STDC_VERSION__)
-#if (__STDC_VERSION__ > 100)
-#define MSGPACK_LANG_STDC MSGPACK_PREDEF_MAKE_YYYYMM(__STDC_VERSION__)
-#else
-#define MSGPACK_LANG_STDC MSGPACK_VERSION_NUMBER_AVAILABLE
-#endif
-#else
-#define MSGPACK_LANG_STDC MSGPACK_VERSION_NUMBER_AVAILABLE
-#endif
+#   undef MSGPACK_LANG_STDC
+#   if defined(__STDC_VERSION__)
+#       if (__STDC_VERSION__ > 100)
+#           define MSGPACK_LANG_STDC MSGPACK_PREDEF_MAKE_YYYYMM(__STDC_VERSION__)
+#       else
+#           define MSGPACK_LANG_STDC MSGPACK_VERSION_NUMBER_AVAILABLE
+#       endif
+#   else
+#       define MSGPACK_LANG_STDC MSGPACK_VERSION_NUMBER_AVAILABLE
+#   endif
 #endif
 
 #if MSGPACK_LANG_STDC
-#define MSGPACK_LANG_STDC_AVAILABLE
+#   define MSGPACK_LANG_STDC_AVAILABLE
 #endif
 
 #define MSGPACK_LANG_STDC_NAME "Standard C"
@@ -50,4 +50,4 @@ If available, the year of the standard is detected as YYYY.MM.1 from the Epoc da
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LANG_STDC, MSGPACK_LANG_STDC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LANG_STDC,MSGPACK_LANG_STDC_NAME)

@@ -35,7 +35,8 @@ class PosixReadableFile : public ReadableFile {
       : is_(filename.empty()
                 ? &std::cin
                 : new std::ifstream(WPATH(filename),
-                                    is_binary ? std::ios::binary | std::ios::in : std::ios::in)) {
+                                    is_binary ? std::ios::binary | std::ios::in
+                                              : std::ios::in)) {
     if (!*is_ || (is_->peek() && is_->fail())) {
       status_ = util::StatusBuilder(util::StatusCode::kNotFound, GTL_LOC)
                 << "\"" << filename.data() << "\": " << util::StrError(errno);
@@ -48,20 +49,23 @@ class PosixReadableFile : public ReadableFile {
 
   util::Status status() const { return status_; }
 
-  bool ReadLine(std::string* line) { return static_cast<bool>(std::getline(*is_, *line)); }
+  bool ReadLine(std::string *line) {
+    return static_cast<bool>(std::getline(*is_, *line));
+  }
 
-  bool ReadAll(std::string* line) {
+  bool ReadAll(std::string *line) {
     if (is_ == &std::cin) {
       LOG(ERROR) << "ReadAll is not supported for stdin.";
       return false;
     }
-    line->assign(std::istreambuf_iterator<char>(*is_), std::istreambuf_iterator<char>());
+    line->assign(std::istreambuf_iterator<char>(*is_),
+                 std::istreambuf_iterator<char>());
     return true;
   }
 
  private:
   util::Status status_;
-  std::istream* is_;
+  std::istream *is_;
 };
 
 class PosixWritableFile : public WritableFile {
@@ -70,10 +74,12 @@ class PosixWritableFile : public WritableFile {
       : os_(filename.empty()
                 ? &std::cout
                 : new std::ofstream(WPATH(filename),
-                                    is_binary ? std::ios::binary | std::ios::out : std::ios::out)) {
+                                    is_binary ? std::ios::binary | std::ios::out
+                                              : std::ios::out)) {
     if (!*os_)
-      status_ = util::StatusBuilder(util::StatusCode::kPermissionDenied, GTL_LOC)
-                << "\"" << filename.data() << "\": " << util::StrError(errno);
+      status_ =
+          util::StatusBuilder(util::StatusCode::kPermissionDenied, GTL_LOC)
+          << "\"" << filename.data() << "\": " << util::StrError(errno);
   }
 
   ~PosixWritableFile() {
@@ -91,17 +97,19 @@ class PosixWritableFile : public WritableFile {
 
  private:
   util::Status status_;
-  std::ostream* os_;
+  std::ostream *os_;
 };
 
 using DefaultReadableFile = PosixReadableFile;
 using DefaultWritableFile = PosixWritableFile;
 
-std::unique_ptr<ReadableFile> NewReadableFile(absl::string_view filename, bool is_binary) {
+std::unique_ptr<ReadableFile> NewReadableFile(absl::string_view filename,
+                                              bool is_binary) {
   return std::make_unique<DefaultReadableFile>(filename, is_binary);
 }
 
-std::unique_ptr<WritableFile> NewWritableFile(absl::string_view filename, bool is_binary) {
+std::unique_ptr<WritableFile> NewWritableFile(absl::string_view filename,
+                                              bool is_binary) {
   return std::make_unique<DefaultWritableFile>(filename, is_binary);
 }
 

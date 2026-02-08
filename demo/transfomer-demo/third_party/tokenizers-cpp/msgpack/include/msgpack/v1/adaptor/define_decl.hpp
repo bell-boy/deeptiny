@@ -18,6 +18,6 @@
 #else  // MSGPACK_USE_CPP03
 #include "msgpack/v1/adaptor/detail/cpp11_define_array_decl.hpp"
 #include "msgpack/v1/adaptor/detail/cpp11_define_map_decl.hpp"
-#endif  // MSGPACK_USE_CPP03
+#endif // MSGPACK_USE_CPP03
 
-#endif  // MSGPACK_V1_DEFINE_DECL_HPP
+#endif // MSGPACK_V1_DEFINE_DECL_HPP

@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.!
 
-#include "trainer_factory.h"
-
 #include "testharness.h"
+#include "trainer_factory.h"
 
 namespace sentencepiece {
 
@@ -28,22 +27,26 @@ TEST(TrainerFactoryTest, BasicTest) {
 
   {
     trainer_spec.set_model_type(TrainerSpec::UNIGRAM);
-    auto m = TrainerFactory::Create(trainer_spec, normalizer_spec, denormalizer_spec);
+    auto m = TrainerFactory::Create(trainer_spec, normalizer_spec,
+                                    denormalizer_spec);
   }
 
   {
     trainer_spec.set_model_type(TrainerSpec::BPE);
-    auto m = TrainerFactory::Create(trainer_spec, normalizer_spec, denormalizer_spec);
+    auto m = TrainerFactory::Create(trainer_spec, normalizer_spec,
+                                    denormalizer_spec);
   }
 
   {
     trainer_spec.set_model_type(TrainerSpec::WORD);
-    auto m = TrainerFactory::Create(trainer_spec, normalizer_spec, denormalizer_spec);
+    auto m = TrainerFactory::Create(trainer_spec, normalizer_spec,
+                                    denormalizer_spec);
   }
 
   {
     trainer_spec.set_model_type(TrainerSpec::CHAR);
-    auto m = TrainerFactory::Create(trainer_spec, normalizer_spec, denormalizer_spec);
+    auto m = TrainerFactory::Create(trainer_spec, normalizer_spec,
+                                    denormalizer_spec);
   }
 }
 }  // namespace sentencepiece

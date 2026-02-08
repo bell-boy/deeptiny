@@ -14,9 +14,10 @@ http://www.boost.org/LICENSE_1_0.txt)
  but only if we detect iOS first. Hence we will force include iOS detection
  * before doing any MacOS detection.
  */
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/os/ios.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_OS_MACOS`]
@@ -38,20 +39,22 @@ http://www.boost.org/LICENSE_1_0.txt)
 
 #define MSGPACK_OS_MACOS MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
-#if !defined(MSGPACK_PREDEF_DETAIL_OS_DETECTED) && \
-    (defined(macintosh) || defined(Macintosh) || (defined(__APPLE__) && defined(__MACH__)))
-#undef MSGPACK_OS_MACOS
-#if !defined(MSGPACK_OS_MACOS) && defined(__APPLE__) && defined(__MACH__)
-#define MSGPACK_OS_MACOS MSGPACK_VERSION_NUMBER(10, 0, 0)
-#endif
-#if !defined(MSGPACK_OS_MACOS)
-#define MSGPACK_OS_MACOS MSGPACK_VERSION_NUMBER(9, 0, 0)
-#endif
+#if !defined(MSGPACK_PREDEF_DETAIL_OS_DETECTED) && ( \
+    defined(macintosh) || defined(Macintosh) || \
+    (defined(__APPLE__) && defined(__MACH__)) \
+    )
+#   undef MSGPACK_OS_MACOS
+#   if !defined(MSGPACK_OS_MACOS) && defined(__APPLE__) && defined(__MACH__)
+#       define MSGPACK_OS_MACOS MSGPACK_VERSION_NUMBER(10,0,0)
+#   endif
+#   if !defined(MSGPACK_OS_MACOS)
+#       define MSGPACK_OS_MACOS MSGPACK_VERSION_NUMBER(9,0,0)
+#   endif
 #endif
 
 #if MSGPACK_OS_MACOS
-#define MSGPACK_OS_MACOS_AVAILABLE
-#include <msgpack/predef/detail/os_detected.h>
+#   define MSGPACK_OS_MACOS_AVAILABLE
+#   include <msgpack/predef/detail/os_detected.h>
 #endif
 
 #define MSGPACK_OS_MACOS_NAME "Mac OS"
@@ -59,4 +62,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_OS_MACOS, MSGPACK_OS_MACOS_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_OS_MACOS,MSGPACK_OS_MACOS_NAME)

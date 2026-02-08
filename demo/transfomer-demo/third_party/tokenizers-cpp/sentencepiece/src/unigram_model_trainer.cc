@@ -50,8 +50,8 @@ double Digamma(double x) {
   const double xx = 1.0 / x;
   const double xx2 = xx * xx;
   const double xx4 = xx2 * xx2;
-  result += std::log(x) + (1.0 / 24.0) * xx2 - (7.0 / 960.0) * xx4 + (31.0 / 8064.0) * xx4 * xx2 -
-            (127.0 / 30720.0) * xx4 * xx4;
+  result += std::log(x) + (1.0 / 24.0) * xx2 - (7.0 / 960.0) * xx4 +
+            (31.0 / 8064.0) * xx4 * xx2 - (127.0 / 30720.0) * xx4 * xx4;
   return result;
 }
 
@@ -75,19 +75,21 @@ class BoundedPriorityQueue {
 
   void push(T elem, int64_t score) {
     if (queue_.size() > 4 * size_) resize();
-    if (sorted && queue_.size() >= size_ && queue_[size_ - 1].second > score) return;
+    if (sorted && queue_.size() >= size_ && queue_[size_ - 1].second > score)
+      return;
     queue_.emplace_back(elem, score);
   }
 
-  const std::vector<std::pair<T, int64_t>>& get() {
+  const std::vector<std::pair<T, int64_t>> &get() {
     resize();
     return queue_;
   }
 
  private:
   void resize() {
-    std::sort(queue_.begin(), queue_.end(), [](const auto& p1, const auto& p2) {
-      return (p1.second > p2.second || (p1.second == p2.second && p1.first < p2.first));
+    std::sort(queue_.begin(), queue_.end(), [](const auto &p1, const auto &p2) {
+      return (p1.second > p2.second ||
+              (p1.second == p2.second && p1.first < p2.first));
     });
     sorted = true;
     if (queue_.size() > size_) queue_.resize(size_);
@@ -100,16 +102,17 @@ class BoundedPriorityQueue {
 
 }  // namespace
 
-TrainerModel::TrainerModel(const TrainerSpec& trainer_spec, const NormalizerSpec& normalizer_spec)
+TrainerModel::TrainerModel(const TrainerSpec &trainer_spec,
+                           const NormalizerSpec &normalizer_spec)
     : trainer_spec_(trainer_spec), normalizer_spec_(normalizer_spec) {}
 
 TrainerModel::~TrainerModel() {}
 
-const TrainerModel::SentencePieces& TrainerModel::GetSentencePieces() const {
+const TrainerModel::SentencePieces &TrainerModel::GetSentencePieces() const {
   return sentencepieces_;
 }
 
-void TrainerModel::SetSentencePieces(SentencePieces&& sentencepieces) {
+void TrainerModel::SetSentencePieces(SentencePieces &&sentencepieces) {
   sentencepieces_ = std::move(sentencepieces);
   CHECK(!sentencepieces_.empty());
 
@@ -124,7 +127,7 @@ void TrainerModel::SetSentencePieces(SentencePieces&& sentencepieces) {
     CHECK(!std::isnan(score));
     pieces.emplace_back(w, i);
     min_score_ = std::min(min_score_, score);
-    auto* piece = model_proto_data_.add_pieces();
+    auto *piece = model_proto_data_.add_pieces();
     piece->set_piece(w.data(), w.size());
     piece->set_score(score);
   }
@@ -134,8 +137,9 @@ void TrainerModel::SetSentencePieces(SentencePieces&& sentencepieces) {
 }
 
 TrainerModel::SentencePieces Trainer::MakeSeedSentencePieces() {
-  return trainer_spec_.train_extremely_large_corpus() ? MakeSeedSentencePiecesInternal<int64_t>()
-                                                      : MakeSeedSentencePiecesInternal<int32_t>();
+  return trainer_spec_.train_extremely_large_corpus()
+             ? MakeSeedSentencePiecesInternal<int64_t>()
+             : MakeSeedSentencePiecesInternal<int32_t>();
 }
 
 // Returns seed sentencepieces for EM training.
@@ -146,13 +150,13 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
 
   // Pretokenizer applied only in training time.
   // Pretokenizer is used as a constraint of piece extractions.
-  const auto* pretokenizer = SentencePieceTrainer::GetPretokenizerForTraining();
+  const auto *pretokenizer = SentencePieceTrainer::GetPretokenizerForTraining();
 
-  auto pretokenize_or_rewrite = [&](std::pair<std::string, int64_t>* w) {
+  auto pretokenize_or_rewrite = [&](std::pair<std::string, int64_t> *w) {
     if (pretokenizer) {
       std::vector<char32> chars;
-      for (const auto& w : pretokenizer->PreTokenize(w->first)) {
-        for (const auto& c : string_util::UTF8ToUnicodeText(w)) {
+      for (const auto &w : pretokenizer->PreTokenize(w->first)) {
+        for (const auto &c : string_util::UTF8ToUnicodeText(w)) {
           chars.push_back(c);
         }
         chars.push_back(kSentenceBoundary);
@@ -164,8 +168,8 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
       // rewrite the original sentence.
       std::vector<char32> chars;
       absl::string_view delimiter = trainer_spec_.pretokenization_delimiter();
-      for (const auto& w : absl::StrSplit(w->first, delimiter)) {
-        for (const auto& c : string_util::UTF8ToUnicodeText(w)) {
+      for (const auto &w : absl::StrSplit(w->first, delimiter)) {
+        for (const auto &c : string_util::UTF8ToUnicodeText(w)) {
           chars.push_back(c);
         }
         chars.push_back(kSentenceBoundary);
@@ -183,9 +187,9 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
 
   const bool is_tsv = trainer_spec_.input_format() == "tsv";
 
-  for (auto& w : sentences_) {
+  for (auto &w : sentences_) {
     const auto ut = pretokenize_or_rewrite(&w);
-    for (const auto& c : ut) {
+    for (const auto &c : ut) {
       array.push_back(c);
       if (c != kUNKChar && c != kSentenceBoundary) {
         all_chars[string_util::UnicodeCharToUTF8(c)] += w.second;
@@ -198,28 +202,29 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
     // we can at least extract all pieces by copying the input because
     // the occurrence gets at least larger than or equals to 2.
     if (is_tsv) {
-      for (const auto& c : ut) array.push_back(c);
+      for (const auto &c : ut) array.push_back(c);
       array.push_back(kSentenceBoundary);
     }
   }
 
   // all_chars must be included in the seed sentencepieces.
   TrainerModel::SentencePieces seed_sentencepieces;
-  for (const auto& it : Sorted(all_chars)) {
+  for (const auto &it : Sorted(all_chars)) {
     seed_sentencepieces.emplace_back(it);
   }
 
   if (!trainer_spec_.seed_sentencepieces_file().empty()) {
-    auto seed_sentencepieces_file =
-        sentencepiece::filesystem::NewReadableFile(trainer_spec_.seed_sentencepieces_file());
+    auto seed_sentencepieces_file = sentencepiece::filesystem::NewReadableFile(
+        trainer_spec_.seed_sentencepieces_file());
     std::string line;
     int64_t freq = 1;
     int skipped_sentencepieces = 0;
     while (seed_sentencepieces_file->ReadLine(&line)) {
       const std::vector<std::string> fields = absl::StrSplit(line, '\t');
       CHECK_GE(fields.size(), 2);
-      const auto& seed_sentencepiece = fields[0];
-      CHECK(absl::SimpleAtoi(fields[1], &freq)) << "Could not parse the frequency; line: " << line;
+      const auto &seed_sentencepiece = fields[0];
+      CHECK(absl::SimpleAtoi(fields[1], &freq))
+          << "Could not parse the frequency; line: " << line;
       const UnicodeText uw = string_util::UTF8ToUnicodeText(seed_sentencepiece);
       if (!IsValidSentencePiece(uw)) {
         ++skipped_sentencepieces;
@@ -228,7 +233,8 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
       // Initialise score of a piece by character coverage.
       seed_sentencepieces.emplace_back(seed_sentencepiece, freq * uw.size());
       if (seed_sentencepieces.size() % 1000000 == 0) {
-        LOG(INFO) << "loaded " << seed_sentencepieces.size() << " seed sentencepieces";
+        LOG(INFO) << "loaded " << seed_sentencepieces.size()
+                  << " seed sentencepieces";
       }
     }
 
@@ -236,12 +242,14 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
 
     // Take highest scoring pieces as initial vocab.
     seed_sentencepieces = Sorted(seed_sentencepieces);
-    seed_sentencepieces.resize(
-        std::min<size_t>(trainer_spec_.seed_sentencepiece_size(), seed_sentencepieces.size()));
+    seed_sentencepieces.resize(std::min<size_t>(
+        trainer_spec_.seed_sentencepiece_size(), seed_sentencepieces.size()));
 
-    LOG(INFO) << "Initialized " << seed_sentencepieces.size() << " seed sentencepieces from file.";
+    LOG(INFO) << "Initialized " << seed_sentencepieces.size()
+              << " seed sentencepieces from file.";
   } else {
-    CHECK_LE(array.size(), static_cast<size_t>(std::numeric_limits<node_int_type>::max()))
+    CHECK_LE(array.size(),
+             static_cast<size_t>(std::numeric_limits<node_int_type>::max()))
         << "Input corpus too large, try with train_extremely_large_corpus=true";
     const node_int_type n = array.size();
 
@@ -255,8 +263,8 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
     constexpr node_int_type kAlphabetSize = 0x110000;  // All UCS4 range.
     node_int_type node_num = 0;
     LOG(INFO) << "Making suffix array...";
-    CHECK_EQ(0, esaxx(array.begin(), SA.begin(), L.begin(), R.begin(), D.begin(), n, kAlphabetSize,
-                      node_num));
+    CHECK_EQ(0, esaxx(array.begin(), SA.begin(), L.begin(), R.begin(),
+                      D.begin(), n, kAlphabetSize, node_num));
 
     LOG(INFO) << "Extracting frequent sub strings... node_num=" << node_num;
     BoundedPriorityQueue<node_int_type> queue(
@@ -268,8 +276,8 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
       if (len <= 1 || offset >= array.size() || offset + len >= array.size()) {
         continue;
       }
-      const char32* begin = &array[offset];
-      const char32* end = &array[offset + len];
+      const char32 *begin = &array[offset];
+      const char32 *end = &array[offset + len];
       // Skips if a substring contains a sentence boundary.
       if (std::find(begin, end, kSentenceBoundary) != end) {
         continue;
@@ -285,12 +293,12 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
       queue.push(i, score);
     }
 
-    for (const auto& p : queue.get()) {
+    for (const auto &p : queue.get()) {
       const node_int_type offset = SA[L[p.first]];
       const node_int_type len = D[p.first];
       CHECK_GT(len, 0);
-      const char32* begin = &array[offset];
-      const char32* end = &array[offset + len];
+      const char32 *begin = &array[offset];
+      const char32 *end = &array[offset + len];
       const UnicodeText uw(begin, end);
       const std::string w = string_util::UnicodeTextToUTF8(uw);
       CHECK(IsValidSentencePiece(uw));  // just in case.
@@ -301,13 +309,14 @@ TrainerModel::SentencePieces Trainer::MakeSeedSentencePiecesInternal() {
 
   ToLogProb(seed_sentencepieces.begin(), seed_sentencepieces.end());
 
-  LOG(INFO) << "Initialized " << seed_sentencepieces.size() << " seed sentencepieces";
+  LOG(INFO) << "Initialized " << seed_sentencepieces.size()
+            << " seed sentencepieces";
 
   return seed_sentencepieces;
 }
 
-std::vector<float> Trainer::RunEStep(const TrainerModel& model, float* obj,
-                                     int64_t* num_tokens) const {
+std::vector<float> Trainer::RunEStep(const TrainerModel &model, float *obj,
+                                     int64_t *num_tokens) const {
   std::vector<std::vector<float>> expected(trainer_spec_.num_threads());
   std::vector<float> objs(trainer_spec_.num_threads(), 0.0);
   std::vector<int64_t> ntokens(trainer_spec_.num_threads(), 0.0);
@@ -316,7 +325,7 @@ std::vector<float> Trainer::RunEStep(const TrainerModel& model, float* obj,
   pool->StartWorkers();
 
   int64_t all_sentence_freq = 0;
-  for (const auto& w : sentences_) {
+  for (const auto &w : sentences_) {
     all_sentence_freq += w.second;
   }
 
@@ -325,14 +334,16 @@ std::vector<float> Trainer::RunEStep(const TrainerModel& model, float* obj,
     pool->Schedule([&, n]() {
       Lattice lattice;
       expected[n].resize(model.GetPieceSize(), 0.0);
-      for (size_t i = n; i < sentences_.size(); i += trainer_spec_.num_threads()) {
-        const std::string& w = sentences_[i].first;
+      for (size_t i = n; i < sentences_.size();
+           i += trainer_spec_.num_threads()) {
+        const std::string &w = sentences_[i].first;
         const int64_t freq = sentences_[i].second;
         lattice.SetSentence(w);
         model.PopulateNodes(&lattice);
         const float Z = lattice.PopulateMarginal(freq, &expected[n]);
         ntokens[n] += lattice.Viterbi().first.size() * freq;
-        CHECK(!std::isnan(Z)) << "likelihood is NAN. Input sentence may be too long";
+        CHECK(!std::isnan(Z))
+            << "likelihood is NAN. Input sentence may be too long";
         objs[n] -= Z / all_sentence_freq;
       }
     });
@@ -355,9 +366,9 @@ std::vector<float> Trainer::RunEStep(const TrainerModel& model, float* obj,
   return expected[0];
 }
 
-TrainerModel::SentencePieces Trainer::RunMStep(const TrainerModel& model,
-                                               const std::vector<float>& expected) const {
-  const auto& sentencepieces = model.GetSentencePieces();
+TrainerModel::SentencePieces Trainer::RunMStep(
+    const TrainerModel &model, const std::vector<float> &expected) const {
+  const auto &sentencepieces = model.GetSentencePieces();
   CHECK_EQ(sentencepieces.size(), expected.size());
   TrainerModel::SentencePieces new_sentencepieces;
 
@@ -380,15 +391,16 @@ TrainerModel::SentencePieces Trainer::RunMStep(const TrainerModel& model,
   // https://cs.stanford.edu/~pliang/papers/tutorial-acl2007-talk.pdf
   // This modification will act as a sparse prior.
   const float logsum = Digamma(sum);
-  for (auto& w : new_sentencepieces) {
+  for (auto &w : new_sentencepieces) {
     w.second = Digamma(w.second) - logsum;
   }
 
   return new_sentencepieces;
 }
 
-TrainerModel::SentencePieces Trainer::PruneSentencePieces(const TrainerModel& model) const {
-  const auto& sentencepieces = model.GetSentencePieces();
+TrainerModel::SentencePieces Trainer::PruneSentencePieces(
+    const TrainerModel &model) const {
+  const auto &sentencepieces = model.GetSentencePieces();
 
   Lattice lattice;
   std::vector<bool> always_keep(sentencepieces.size(), true);
@@ -400,7 +412,7 @@ TrainerModel::SentencePieces Trainer::PruneSentencePieces(const TrainerModel& mo
   // To do so, we take the second best segmentation of sentencepiece[i].
   // alternatives[i] stores the sequence of second best sentencepieces.
   for (size_t i = 0; i < sentencepieces.size(); ++i) {
-    const auto& w = sentencepieces[i];
+    const auto &w = sentencepieces[i];
     lattice.SetSentence(w.first);
     model.PopulateNodes(&lattice);
     const auto nbests = lattice.NBest(2, false, 0.0);
@@ -413,7 +425,7 @@ TrainerModel::SentencePieces Trainer::PruneSentencePieces(const TrainerModel& mo
       always_keep[i] = false;
     } else if (nbests[0].first.size() == 1) {
       always_keep[i] = true;
-      for (const auto* node : nbests[1].first) {
+      for (const auto *node : nbests[1].first) {
         alternatives[i].push_back(node->id);
       }
     }
@@ -432,11 +444,12 @@ TrainerModel::SentencePieces Trainer::PruneSentencePieces(const TrainerModel& mo
 
       pool->Schedule([&, n]() {
         Lattice lattice;
-        for (size_t i = n; i < sentences_.size(); i += trainer_spec_.num_threads()) {
-          const auto& w = sentences_[i];
+        for (size_t i = n; i < sentences_.size();
+             i += trainer_spec_.num_threads()) {
+          const auto &w = sentences_[i];
           lattice.SetSentence(w.first);
           model.PopulateNodes(&lattice);
-          for (const auto* node : lattice.Viterbi().first) {
+          for (const auto *node : lattice.Viterbi().first) {
             if (node->id >= 0) {
               freqs[n][node->id] += w.second;
             }
@@ -478,13 +491,14 @@ TrainerModel::SentencePieces Trainer::PruneSentencePieces(const TrainerModel& mo
       // re-assigned to alternatives.
       // new_sum = current_sum - freq[i] + freq[i] * alternatives[i].size()
       //         = current_sum + freq[i] * (alternatives[i] - 1)
-      const float logsum_alt =
-          std::log(static_cast<double>(sum + freq[i] * (alternatives[i].size() - 1)));
+      const float logsum_alt = std::log(
+          static_cast<double>(sum + freq[i] * (alternatives[i].size() - 1)));
 
       // The frequencies of altenatives are increased by freq[i].
       float logprob_alt = 0.0;
       for (const int n : alternatives[i]) {
-        logprob_alt += (std::log(static_cast<double>(freq[n] + freq[i])) - logsum_alt);
+        logprob_alt +=
+            (std::log(static_cast<double>(freq[n] + freq[i])) - logsum_alt);
       }
 
       // loss: the diff of likelihood after removing the sentencepieces[i].
@@ -495,11 +509,12 @@ TrainerModel::SentencePieces Trainer::PruneSentencePieces(const TrainerModel& mo
   }
 
   const int pruned_size =
-      std::max<int>(desired_vocab_size_, trainer_spec_.shrinking_factor() * sentencepieces.size());
+      std::max<int>(desired_vocab_size_,
+                    trainer_spec_.shrinking_factor() * sentencepieces.size());
 
   // Keeps trainer_spec_.shrinking_factor * sentencepieces.size() pieces.
   // shrinking_factor is 0.75 by default.
-  for (const auto& w : Sorted(candidates)) {
+  for (const auto &w : Sorted(candidates)) {
     if (new_sentencepieces.size() == static_cast<size_t>(pruned_size)) {
       break;
     }
@@ -509,15 +524,17 @@ TrainerModel::SentencePieces Trainer::PruneSentencePieces(const TrainerModel& mo
   return new_sentencepieces;
 }
 
-TrainerModel::SentencePieces Trainer::FinalizeSentencePieces(const TrainerModel& model) const {
-  const auto& sentencepieces = model.GetSentencePieces();
+TrainerModel::SentencePieces Trainer::FinalizeSentencePieces(
+    const TrainerModel &model) const {
+  const auto &sentencepieces = model.GetSentencePieces();
   absl::flat_hash_map<std::string, float> final_sentencepieces;
-  absl::flat_hash_map<std::string, float> sp(sentencepieces.begin(), sentencepieces.end());
+  absl::flat_hash_map<std::string, float> sp(sentencepieces.begin(),
+                                             sentencepieces.end());
 
   // required_chars_ must be included in the final sentencepieces.
   float min_score_penalty = 0.0;
   constexpr float kMinScorePenaltyDelta = 0.0001;
-  for (const auto& w : Sorted(required_chars_)) {
+  for (const auto &w : Sorted(required_chars_)) {
     const std::string s = string_util::UnicodeCharToUTF8(w.first);
     if (port::ContainsKey(sp, s)) {
       final_sentencepieces[s] = sp[s];
@@ -534,7 +551,7 @@ TrainerModel::SentencePieces Trainer::FinalizeSentencePieces(const TrainerModel&
   CHECK_GT(vocab_size_size, 0);
 
   // Then keeps sentencepieces with higher scores.
-  for (const auto& w : Sorted(sentencepieces)) {
+  for (const auto &w : Sorted(sentencepieces)) {
     if (port::ContainsKey(final_sentencepieces, w.first)) {
       continue;
     }
@@ -583,7 +600,8 @@ util::Status Trainer::Train() {
 
       LOG(INFO) << "EM sub_iter=" << iter << " size=" << model.GetPieceSize()
                 << " obj=" << objective << " num_tokens=" << num_tokens
-                << " num_tokens/piece=" << 1.0 * num_tokens / model.GetPieceSize();
+                << " num_tokens/piece="
+                << 1.0 * num_tokens / model.GetPieceSize();
     }  // end of Sub EM iteration
 
     // Stops the iteration when the size of sentences reaches to the

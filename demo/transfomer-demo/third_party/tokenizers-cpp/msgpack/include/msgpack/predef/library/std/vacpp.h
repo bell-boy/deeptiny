@@ -9,8 +9,9 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_PREDEF_LIBRARY_STD_VACPP_H
 
 #include <msgpack/predef/library/std/_prefix.h>
-#include <msgpack/predef/make.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LIB_STD_IBM`]
@@ -27,12 +28,12 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_LIB_STD_IBM MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__IBMCPP__)
-#undef MSGPACK_LIB_STD_IBM
-#define MSGPACK_LIB_STD_IBM MSGPACK_VERSION_NUMBER_AVAILABLE
+#   undef MSGPACK_LIB_STD_IBM
+#   define MSGPACK_LIB_STD_IBM MSGPACK_VERSION_NUMBER_AVAILABLE
 #endif
 
 #if MSGPACK_LIB_STD_IBM
-#define MSGPACK_LIB_STD_IBM_AVAILABLE
+#   define MSGPACK_LIB_STD_IBM_AVAILABLE
 #endif
 
 #define MSGPACK_LIB_STD_IBM_NAME "IBM VACPP"
@@ -40,4 +41,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_IBM, MSGPACK_LIB_STD_IBM_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_IBM,MSGPACK_LIB_STD_IBM_NAME)

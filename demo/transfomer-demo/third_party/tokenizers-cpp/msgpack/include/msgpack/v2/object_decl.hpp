@@ -10,44 +10,44 @@
 #ifndef MSGPACK_V2_OBJECT_DECL_HPP
 #define MSGPACK_V2_OBJECT_DECL_HPP
 
-#include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/v1/object_decl.hpp"
+#include "msgpack/adaptor/adaptor_base.hpp"
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  using v1::object_handle;
+using v1::object_handle;
 
-  namespace detail {
+namespace detail {
 
-  using v1::detail::add_ext_type_size;
+using v1::detail::add_ext_type_size;
 
-  }  // namespace detail
+} // namespace detail
 
-  using v1::aligned_zone_size;
+using v1::aligned_zone_size;
 
-  using v1::clone;
+using v1::clone;
 
-  namespace detail {
+namespace detail {
 
-  using v1::detail::packer_serializer;
+using v1::detail::packer_serializer;
 
-  }  // namespace detail
+} // namespace detail
 
-  using v1::object_pack_visitor;
-  using v1::object_parser;
-  using v1::object_stringize_visitor;
+using v1::object_parser;
+using v1::object_pack_visitor;
+using v1::object_stringize_visitor;
 
-  using v1::operator==;
-  using v1::operator!=;
+using v1::operator==;
+using v1::operator!=;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V2_OBJECT_DECL_HPP
+#endif // MSGPACK_V2_OBJECT_DECL_HPP

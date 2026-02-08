@@ -19,7 +19,8 @@
 
 namespace sentencepiece {
 
-void ParseCommandLineFlags(const char* usage, int* argc, char*** argv, bool remove_arg = true);
+void ParseCommandLineFlags(const char *usage, int *argc, char ***argv,
+                           bool remove_arg = true);
 
 void ShutdownLibrary();
 

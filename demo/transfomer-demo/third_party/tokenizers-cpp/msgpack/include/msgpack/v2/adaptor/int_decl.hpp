@@ -15,38 +15,40 @@
 namespace msgpack {
 
 /// @cond
-MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+MSGPACK_API_VERSION_NAMESPACE(v2){
+/// @endcond
 
-  namespace type {
-  namespace detail {
+namespace type {
+namespace detail {
 
-  template <typename T, bool Signed>
-  struct convert_integer_sign;
 
-  template <typename T>
-  struct is_signed;
+template <typename T, bool Signed>
+struct convert_integer_sign;
 
-  template <bool Signed>
-  struct object_sign;
+template <typename T>
+struct is_signed;
 
-  // using v1::type::detail::convert_integer_sign;
 
-  // using v1::type::detail::is_signed;
+template <bool Signed>
+struct object_sign;
 
-  using v1::type::detail::convert_integer;
+//using v1::type::detail::convert_integer_sign;
 
-  // using v1::type::detail::object_char_sign;
+//using v1::type::detail::is_signed;
 
-  using v1::type::detail::object_char;
+using v1::type::detail::convert_integer;
 
-  }  // namespace detail
-  }  // namespace type
+//using v1::type::detail::object_char_sign;
 
-  /// @cond
+using v1::type::detail::object_char;
+
+}  // namespace detail
+}  // namespace type
+
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V2_TYPE_INT_DECL_HPP
+#endif // MSGPACK_V2_TYPE_INT_DECL_HPP

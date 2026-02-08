@@ -167,10 +167,14 @@ union AuxiliaryParseTableField {
   map_aux maps;
 
   AuxiliaryParseTableField() = default;
-  constexpr AuxiliaryParseTableField(AuxiliaryParseTableField::enum_aux e) : enums(e) {}
-  constexpr AuxiliaryParseTableField(AuxiliaryParseTableField::message_aux m) : messages(m) {}
-  constexpr AuxiliaryParseTableField(AuxiliaryParseTableField::string_aux s) : strings(s) {}
-  constexpr AuxiliaryParseTableField(AuxiliaryParseTableField::map_aux m) : maps(m) {}
+  constexpr AuxiliaryParseTableField(AuxiliaryParseTableField::enum_aux e)
+      : enums(e) {}
+  constexpr AuxiliaryParseTableField(AuxiliaryParseTableField::message_aux m)
+      : messages(m) {}
+  constexpr AuxiliaryParseTableField(AuxiliaryParseTableField::string_aux s)
+      : strings(s) {}
+  constexpr AuxiliaryParseTableField(AuxiliaryParseTableField::map_aux m)
+      : maps(m) {}
 };
 
 struct ParseTable {
@@ -216,7 +220,8 @@ bool MergePartialFromCodedStreamLite(MessageLite* msg, const ParseTable& table,
 template <typename Entry>
 bool ParseMap(io::CodedInputStream* input, void* map_field) {
   typedef typename MapEntryToMapField<Entry>::MapFieldType MapFieldType;
-  typedef Map<typename Entry::EntryKeyType, typename Entry::EntryValueType> MapType;
+  typedef Map<typename Entry::EntryKeyType, typename Entry::EntryValueType>
+      MapType;
   typedef typename Entry::template Parser<MapFieldType, MapType> ParserType;
 
   ParserType parser(static_cast<MapFieldType*>(map_field));
@@ -228,10 +233,13 @@ struct SerializationTable {
   const FieldMetadata* field_table;
 };
 
-PROTOBUF_EXPORT void SerializeInternal(const uint8* base, const FieldMetadata* table,
-                                       int32 num_fields, io::CodedOutputStream* output);
+PROTOBUF_EXPORT void SerializeInternal(const uint8* base,
+                                       const FieldMetadata* table,
+                                       int32 num_fields,
+                                       io::CodedOutputStream* output);
 
-inline void TableSerialize(const MessageLite& msg, const SerializationTable* table,
+inline void TableSerialize(const MessageLite& msg,
+                           const SerializationTable* table,
                            io::CodedOutputStream* output) {
   const FieldMetadata* field_table = table->field_table;
   int num_fields = table->num_fields - 1;
@@ -245,15 +253,18 @@ inline void TableSerialize(const MessageLite& msg, const SerializationTable* tab
   SerializeInternal(base, field_table + 1, num_fields, output);
 }
 
-uint8* SerializeInternalToArray(const uint8* base, const FieldMetadata* table, int32 num_fields,
-                                bool is_deterministic, uint8* buffer);
+uint8* SerializeInternalToArray(const uint8* base, const FieldMetadata* table,
+                                int32 num_fields, bool is_deterministic,
+                                uint8* buffer);
 
-inline uint8* TableSerializeToArray(const MessageLite& msg, const SerializationTable* table,
+inline uint8* TableSerializeToArray(const MessageLite& msg,
+                                    const SerializationTable* table,
                                     bool is_deterministic, uint8* buffer) {
   const uint8* base = reinterpret_cast<const uint8*>(&msg);
   const FieldMetadata* field_table = table->field_table + 1;
   int num_fields = table->num_fields - 1;
-  return SerializeInternalToArray(base, field_table, num_fields, is_deterministic, buffer);
+  return SerializeInternalToArray(base, field_table, num_fields,
+                                  is_deterministic, buffer);
 }
 
 template <typename T>
@@ -270,7 +281,8 @@ struct CompareHelper<ArenaStringPtr> {
 
 struct CompareMapKey {
   template <typename T>
-  bool operator()(const MapEntryHelper<T>& a, const MapEntryHelper<T>& b) const {
+  bool operator()(const MapEntryHelper<T>& a,
+                  const MapEntryHelper<T>& b) const {
     return Compare(a.key_, b.key_);
   }
   template <typename T>
@@ -280,33 +292,37 @@ struct CompareMapKey {
 };
 
 template <typename MapFieldType, const SerializationTable* table>
-void MapFieldSerializer(const uint8* base, uint32 offset, uint32 tag, uint32 has_offset,
-                        io::CodedOutputStream* output) {
+void MapFieldSerializer(const uint8* base, uint32 offset, uint32 tag,
+                        uint32 has_offset, io::CodedOutputStream* output) {
   typedef MapEntryHelper<typename MapFieldType::EntryTypeTrait> Entry;
   typedef typename MapFieldType::MapType::const_iterator Iter;
 
-  const MapFieldType& map_field = *reinterpret_cast<const MapFieldType*>(base + offset);
+  const MapFieldType& map_field =
+      *reinterpret_cast<const MapFieldType*>(base + offset);
   const SerializationTable* t =
-      table + has_offset;  // has_offset is overloaded for maps to mean table offset
+      table +
+      has_offset;  // has_offset is overloaded for maps to mean table offset
   if (!output->IsSerializationDeterministic()) {
-    for (Iter it = map_field.GetMap().begin(); it != map_field.GetMap().end(); ++it) {
+    for (Iter it = map_field.GetMap().begin(); it != map_field.GetMap().end();
+         ++it) {
       Entry map_entry(*it);
       output->WriteVarint32(tag);
       output->WriteVarint32(map_entry._cached_size_);
-      SerializeInternal(reinterpret_cast<const uint8*>(&map_entry), t->field_table, t->num_fields,
-                        output);
+      SerializeInternal(reinterpret_cast<const uint8*>(&map_entry),
+                        t->field_table, t->num_fields, output);
     }
   } else {
     std::vector<Entry> v;
-    for (Iter it = map_field.GetMap().begin(); it != map_field.GetMap().end(); ++it) {
+    for (Iter it = map_field.GetMap().begin(); it != map_field.GetMap().end();
+         ++it) {
       v.push_back(Entry(*it));
     }
     std::sort(v.begin(), v.end(), CompareMapKey());
     for (int i = 0; i < v.size(); i++) {
       output->WriteVarint32(tag);
       output->WriteVarint32(v[i]._cached_size_);
-      SerializeInternal(reinterpret_cast<const uint8*>(&v[i]), t->field_table, t->num_fields,
-                        output);
+      SerializeInternal(reinterpret_cast<const uint8*>(&v[i]), t->field_table,
+                        t->num_fields, output);
     }
   }
 }

@@ -7,71 +7,78 @@
 //    http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <iostream>
 #include <msgpack.hpp>
-#include <sstream>
 #include <string>
+#include <iostream>
+#include <sstream>
 
 // This example uses obsolete APIs
 // See protocol_new.cpp
 namespace myprotocol {
-struct Get {
-  Get() {}
-  Get(uint32_t f, const std::string& k) : flags(f), key(k) {}
-  uint32_t flags;
-  std::string key;
-  MSGPACK_DEFINE(flags, key);
-};
+    struct Get {
+        Get() {}
+        Get(uint32_t f, const std::string& k) : flags(f), key(k) {}
+        uint32_t flags;
+        std::string key;
+        MSGPACK_DEFINE(flags, key);
+    };
 
-typedef std::vector<Get> MultiGet;
-}  // namespace myprotocol
+    typedef std::vector<Get> MultiGet;
+}
 
-int main(void) {
-  // send Get request
-  std::stringstream stream;
-  {
-    myprotocol::Get req;
-    req.flags = 0;
-    req.key = "key0";
-    msgpack::pack(stream, req);
-  }
 
-  stream.seekg(0);
+int main(void)
+{
+    // send Get request
+    std::stringstream stream;
+    {
+        myprotocol::Get req;
+        req.flags = 0;
+        req.key   = "key0";
+        msgpack::pack(stream, req);
+    }
 
-  // receive Get request
-  {
-    std::string buffer(stream.str());
+    stream.seekg(0);
 
-    msgpack::object_handle oh = msgpack::unpack(buffer.data(), buffer.size());
-    msgpack::object o = oh.get();
+    // receive Get request
+    {
+        std::string buffer(stream.str());
 
-    myprotocol::Get req;
-    o.convert(req);
-    std::cout << "received: " << o << std::endl;
-  }
+        msgpack::object_handle oh =
+            msgpack::unpack(buffer.data(), buffer.size());
+        msgpack::object o = oh.get();
 
-  stream.str("");
+        myprotocol::Get req;
+        o.convert(req);
+        std::cout << "received: " << o << std::endl;
+    }
 
-  // send MultiGet request
-  {
-    myprotocol::MultiGet req;
-    req.push_back(myprotocol::Get(1, "key1"));
-    req.push_back(myprotocol::Get(2, "key2"));
-    req.push_back(myprotocol::Get(3, "key3"));
-    msgpack::pack(stream, req);
-  }
 
-  stream.seekg(0);
+    stream.str("");
 
-  // receive MultiGet request
-  {
-    std::string buffer(stream.str());
 
-    msgpack::object_handle oh = msgpack::unpack(buffer.data(), buffer.size());
-    msgpack::object o = oh.get();
+    // send MultiGet request
+    {
+        myprotocol::MultiGet req;
+        req.push_back( myprotocol::Get(1, "key1") );
+        req.push_back( myprotocol::Get(2, "key2") );
+        req.push_back( myprotocol::Get(3, "key3") );
+        msgpack::pack(stream, req);
+    }
 
-    myprotocol::MultiGet req;
-    o.convert(req);
-    std::cout << "received: " << o << std::endl;
-  }
+    stream.seekg(0);
+
+    // receive MultiGet request
+    {
+        std::string buffer(stream.str());
+
+        msgpack::object_handle oh =
+            msgpack::unpack(buffer.data(), buffer.size());
+        msgpack::object o = oh.get();
+
+
+        myprotocol::MultiGet req;
+        o.convert(req);
+        std::cout << "received: " << o << std::endl;
+    }
 }

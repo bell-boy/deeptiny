@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp17/variant.hpp"
 
-#endif  // MSGPACK_TYPE_CPP17_VARIANT_HPP
+#endif // MSGPACK_TYPE_CPP17_VARIANT_HPP

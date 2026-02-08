@@ -32,18 +32,22 @@
 ABSL_FLAG(bool, quiet, false, "Suppress logging message.");
 
 namespace sentencepiece {
-void ParseCommandLineFlags(const char* usage, int* argc, char*** argv, bool remove_arg) {
-  absl::SetProgramUsageMessage(
-      absl::StrCat(PACKAGE_STRING, " ", VERSION, "\n\n", "Usage: ", *argv[0], " [options] files"));
+void ParseCommandLineFlags(const char *usage, int *argc, char ***argv,
+                           bool remove_arg) {
+  absl::SetProgramUsageMessage(absl::StrCat(PACKAGE_STRING, " ", VERSION,
+                                            "\n\n", "Usage: ", *argv[0],
+                                            " [options] files"));
 
   absl::FlagsUsageConfig usage_config;
-  usage_config.version_string = [&]() { return absl::StrCat(PACKAGE_STRING, " ", VERSION, "\n"); };
+  usage_config.version_string = [&]() {
+    return absl::StrCat(PACKAGE_STRING, " ", VERSION, "\n");
+  };
   absl::SetFlagsUsageConfig(usage_config);
 
   const auto unused_args = absl::ParseCommandLine(*argc, *argv);
 
   if (remove_arg) {
-    char** argv_val = *argv;
+    char **argv_val = *argv;
     *argv = argv_val = argv_val + *argc - unused_args.size();
     std::copy(unused_args.begin(), unused_args.end(), argv_val);
     *argc = static_cast<int>(unused_args.size());

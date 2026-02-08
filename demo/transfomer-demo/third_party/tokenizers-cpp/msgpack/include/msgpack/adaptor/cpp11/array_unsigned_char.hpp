@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp11/array_unsigned_char.hpp"
 
-#endif  // MSGPACK_TYPE_CPP11_ARRAY_UNSIGNED_CHAR_HPP
+#endif // MSGPACK_TYPE_CPP11_ARRAY_UNSIGNED_CHAR_HPP

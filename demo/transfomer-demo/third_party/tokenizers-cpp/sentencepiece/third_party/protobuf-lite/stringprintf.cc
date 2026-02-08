@@ -30,14 +30,15 @@
 
 // from google3/base/stringprintf.cc
 
+#include <google/protobuf/stubs/stringprintf.h>
+
 #include <errno.h>
+#include <stdarg.h> // For va_list and related operations
+#include <stdio.h> // MSVC requires this for _vsnprintf
+#include <vector>
+
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/logging.h>
-#include <google/protobuf/stubs/stringprintf.h>
-#include <stdarg.h>  // For va_list and related operations
-#include <stdio.h>   // MSVC requires this for _vsnprintf
-
-#include <vector>
 
 namespace google {
 namespace protobuf {
@@ -89,7 +90,7 @@ void StringAppendV(std::string* dst, const char* format, va_list ap) {
 
   // Increase the buffer size to the size requested by vsnprintf,
   // plus one for the closing \0.
-  int length = result + 1;
+  int length = result+1;
   char* buf = new char[length];
 
   // Restore the va_list before we use it again
@@ -135,12 +136,13 @@ const int kStringPrintfVectorMaxArgs = 32;
 // An empty block of zero for filler arguments.  This is const so that if
 // printf tries to write to it (via %n) then the program gets a SIGSEGV
 // and we can fix the problem or protect against an attack.
-static const char string_printf_empty_block[256] = {'\0'};
+static const char string_printf_empty_block[256] = { '\0' };
 
-std::string StringPrintfVector(const char* format, const std::vector<std::string>& v) {
+std::string StringPrintfVector(const char* format,
+                               const std::vector<std::string>& v) {
   GOOGLE_CHECK_LE(v.size(), kStringPrintfVectorMaxArgs)
-      << "StringPrintfVector currently only supports up to " << kStringPrintfVectorMaxArgs
-      << " arguments. "
+      << "StringPrintfVector currently only supports up to "
+      << kStringPrintfVectorMaxArgs << " arguments. "
       << "Feel free to add support for more if you need it.";
 
   // Add filler arguments so that bogus format+args have a harder time
@@ -161,11 +163,14 @@ std::string StringPrintfVector(const char* format, const std::vector<std::string
   // this COMPILE_ASSERT right next to the actual statement.
 
   GOOGLE_COMPILE_ASSERT(kStringPrintfVectorMaxArgs == 32, arg_count_mismatch);
-  return StringPrintf(format, cstr[0], cstr[1], cstr[2], cstr[3], cstr[4], cstr[5], cstr[6],
-                      cstr[7], cstr[8], cstr[9], cstr[10], cstr[11], cstr[12], cstr[13], cstr[14],
-                      cstr[15], cstr[16], cstr[17], cstr[18], cstr[19], cstr[20], cstr[21],
-                      cstr[22], cstr[23], cstr[24], cstr[25], cstr[26], cstr[27], cstr[28],
-                      cstr[29], cstr[30], cstr[31]);
+  return StringPrintf(format,
+                      cstr[0], cstr[1], cstr[2], cstr[3], cstr[4],
+                      cstr[5], cstr[6], cstr[7], cstr[8], cstr[9],
+                      cstr[10], cstr[11], cstr[12], cstr[13], cstr[14],
+                      cstr[15], cstr[16], cstr[17], cstr[18], cstr[19],
+                      cstr[20], cstr[21], cstr[22], cstr[23], cstr[24],
+                      cstr[25], cstr[26], cstr[27], cstr[28], cstr[29],
+                      cstr[30], cstr[31]);
 }
 }  // namespace protobuf
 }  // namespace google

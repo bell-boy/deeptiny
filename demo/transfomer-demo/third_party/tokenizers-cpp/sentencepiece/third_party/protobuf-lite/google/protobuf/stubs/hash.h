@@ -38,12 +38,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#define GOOGLE_PROTOBUF_HASH_NAMESPACE_DECLARATION_START \
-  namespace google {                                     \
+# define GOOGLE_PROTOBUF_HASH_NAMESPACE_DECLARATION_START \
+  namespace google {                                      \
   namespace protobuf {
-#define GOOGLE_PROTOBUF_HASH_NAMESPACE_DECLARATION_END \
-  }                                                    \
-  }
+# define GOOGLE_PROTOBUF_HASH_NAMESPACE_DECLARATION_END }}
 
 namespace google {
 namespace protobuf {
@@ -53,7 +51,9 @@ struct hash : public std::hash<Key> {};
 
 template <typename Key>
 struct hash<const Key*> {
-  inline size_t operator()(const Key* key) const { return reinterpret_cast<size_t>(key); }
+  inline size_t operator()(const Key* key) const {
+    return reinterpret_cast<size_t>(key);
+  }
 };
 
 // Unlike the old SGI version, the TR1 "hash" does not special-case char*.  So,
@@ -69,9 +69,11 @@ struct hash<const char*> {
   }
 };
 
-template <>
+template<>
 struct hash<bool> {
-  size_t operator()(bool x) const { return static_cast<size_t>(x); }
+  size_t operator()(bool x) const {
+    return static_cast<size_t>(x);
+  }
 };
 
 template <>
@@ -82,7 +84,9 @@ struct hash<std::string> {
 
   static const size_t bucket_size = 4;
   static const size_t min_buckets = 8;
-  inline bool operator()(const std::string& a, const std::string& b) const { return a < b; }
+  inline bool operator()(const std::string& a, const std::string& b) const {
+    return a < b;
+  }
 };
 
 template <typename First, typename Second>
@@ -99,7 +103,7 @@ struct hash<std::pair<First, Second> > {
   static const size_t bucket_size = 4;
   static const size_t min_buckets = 8;
   inline bool operator()(const std::pair<First, Second>& a,
-                         const std::pair<First, Second>& b) const {
+                           const std::pair<First, Second>& b) const {
     return a < b;
   }
 };

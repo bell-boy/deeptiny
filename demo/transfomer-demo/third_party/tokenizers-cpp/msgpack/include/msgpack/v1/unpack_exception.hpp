@@ -10,91 +10,113 @@
 #ifndef MSGPACK_V1_UNPACK_EXCEPTION_HPP
 #define MSGPACK_V1_UNPACK_EXCEPTION_HPP
 
-#include <stdexcept>
-#include <string>
-
 #include "msgpack/versioning.hpp"
+
+#include <string>
+#include <stdexcept>
+
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  struct unpack_error : public std::runtime_error {
-    explicit unpack_error(const std::string& msg) : std::runtime_error(msg) {}
+struct unpack_error : public std::runtime_error {
+    explicit unpack_error(const std::string& msg)
+        :std::runtime_error(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    explicit unpack_error(const char* msg) : std::runtime_error(msg) {}
-#endif  // !defined(MSGPACK_USE_CPP03)
-  };
+    explicit unpack_error(const char* msg):
+        std::runtime_error(msg) {}
+#endif // !defined(MSGPACK_USE_CPP03)
+};
 
-  struct parse_error : public unpack_error {
-    explicit parse_error(const std::string& msg) : unpack_error(msg) {}
+struct parse_error : public unpack_error {
+    explicit parse_error(const std::string& msg)
+        :unpack_error(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    explicit parse_error(const char* msg) : unpack_error(msg) {}
-#endif  // !defined(MSGPACK_USE_CPP03)
-  };
+    explicit parse_error(const char* msg)
+        :unpack_error(msg) {}
+#endif // !defined(MSGPACK_USE_CPP03)
+};
 
-  struct insufficient_bytes : public unpack_error {
-    explicit insufficient_bytes(const std::string& msg) : unpack_error(msg) {}
+struct insufficient_bytes : public unpack_error {
+    explicit insufficient_bytes(const std::string& msg)
+        :unpack_error(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    explicit insufficient_bytes(const char* msg) : unpack_error(msg) {}
-#endif  // !defined(MSGPACK_USE_CPP03)
-  };
+    explicit insufficient_bytes(const char* msg)
+        :unpack_error(msg) {}
+#endif // !defined(MSGPACK_USE_CPP03)
+};
 
-  struct size_overflow : public unpack_error {
-    explicit size_overflow(const std::string& msg) : unpack_error(msg) {}
+struct size_overflow : public unpack_error {
+    explicit size_overflow(const std::string& msg)
+        :unpack_error(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    explicit size_overflow(const char* msg) : unpack_error(msg) {}
+    explicit size_overflow(const char* msg)
+        :unpack_error(msg) {}
 #endif
-  };
+};
 
-  struct array_size_overflow : public size_overflow {
-    array_size_overflow(const std::string& msg) : size_overflow(msg) {}
+struct array_size_overflow : public size_overflow {
+    array_size_overflow(const std::string& msg)
+        :size_overflow(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    array_size_overflow(const char* msg) : size_overflow(msg) {}
+    array_size_overflow(const char* msg)
+        :size_overflow(msg) {}
 #endif
-  };
+};
 
-  struct map_size_overflow : public size_overflow {
-    map_size_overflow(const std::string& msg) : size_overflow(msg) {}
+struct map_size_overflow : public size_overflow {
+    map_size_overflow(const std::string& msg)
+        :size_overflow(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    map_size_overflow(const char* msg) : size_overflow(msg) {}
+    map_size_overflow(const char* msg)
+        :size_overflow(msg) {}
 #endif
-  };
+};
 
-  struct str_size_overflow : public size_overflow {
-    str_size_overflow(const std::string& msg) : size_overflow(msg) {}
+struct str_size_overflow : public size_overflow {
+    str_size_overflow(const std::string& msg)
+        :size_overflow(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    str_size_overflow(const char* msg) : size_overflow(msg) {}
+    str_size_overflow(const char* msg)
+        :size_overflow(msg) {}
 #endif
-  };
+};
 
-  struct bin_size_overflow : public size_overflow {
-    bin_size_overflow(const std::string& msg) : size_overflow(msg) {}
+struct bin_size_overflow : public size_overflow {
+    bin_size_overflow(const std::string& msg)
+        :size_overflow(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    bin_size_overflow(const char* msg) : size_overflow(msg) {}
+    bin_size_overflow(const char* msg)
+        :size_overflow(msg) {}
 #endif
-  };
+};
 
-  struct ext_size_overflow : public size_overflow {
-    ext_size_overflow(const std::string& msg) : size_overflow(msg) {}
+struct ext_size_overflow : public size_overflow {
+    ext_size_overflow(const std::string& msg)
+        :size_overflow(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    ext_size_overflow(const char* msg) : size_overflow(msg) {}
+    ext_size_overflow(const char* msg)
+        :size_overflow(msg) {}
 #endif
-  };
+};
 
-  struct depth_size_overflow : public size_overflow {
-    depth_size_overflow(const std::string& msg) : size_overflow(msg) {}
+struct depth_size_overflow : public size_overflow {
+    depth_size_overflow(const std::string& msg)
+        :size_overflow(msg) {}
 #if !defined(MSGPACK_USE_CPP03)
-    depth_size_overflow(const char* msg) : size_overflow(msg) {}
+    depth_size_overflow(const char* msg)
+        :size_overflow(msg) {}
 #endif
-  };
+};
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_UNPACK_EXCEPTION_HPP
+
+#endif // MSGPACK_V1_UNPACK_EXCEPTION_HPP

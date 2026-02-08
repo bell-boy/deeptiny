@@ -31,19 +31,21 @@
 #ifndef GOOGLE_PROTOBUF_ARENASTRING_H__
 #define GOOGLE_PROTOBUF_ARENASTRING_H__
 
-#include <google/protobuf/arena.h>
-#include <google/protobuf/port.h>
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/logging.h>
-
-#include <google/protobuf/port_def.inc>
 #include <string>
 #include <type_traits>
 #include <utility>
 
+#include <google/protobuf/stubs/logging.h>
+#include <google/protobuf/stubs/common.h>
+#include <google/protobuf/arena.h>
+#include <google/protobuf/port.h>
+
+#include <google/protobuf/port_def.inc>
+
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
 #endif
+
 
 namespace google {
 namespace protobuf {
@@ -86,7 +88,8 @@ template <typename T>
 class TaggedPtr {
  public:
   TaggedPtr() = default;
-  explicit constexpr TaggedPtr(const std::string* ptr) : ptr_(const_cast<std::string*>(ptr)) {}
+  explicit constexpr TaggedPtr(const std::string* ptr)
+      : ptr_(const_cast<std::string*>(ptr)) {}
 
   void SetTagged(T* p) {
     Set(p);
@@ -107,7 +110,8 @@ class TaggedPtr {
   void* ptr_;
 };
 
-static_assert(std::is_trivial<TaggedPtr<std::string>>::value, "TaggedPtr must be trivial");
+static_assert(std::is_trivial<TaggedPtr<std::string>>::value,
+              "TaggedPtr must be trivial");
 
 // This class encapsulates a pointer to a std::string with or without a donated
 // buffer, tagged by bottom bit. It is a high-level wrapper that almost directly
@@ -179,7 +183,8 @@ struct PROTOBUF_EXPORT ArenaStringPtr {
 
   void Set(const std::string* default_value, ConstStringParam value,
            ::google::protobuf::Arena* arena);
-  void Set(const std::string* default_value, std::string&& value, ::google::protobuf::Arena* arena);
+  void Set(const std::string* default_value, std::string&& value,
+           ::google::protobuf::Arena* arena);
   void Set(EmptyDefault, ConstStringParam value, ::google::protobuf::Arena* arena);
   void Set(EmptyDefault, std::string&& value, ::google::protobuf::Arena* arena);
   void Set(NonEmptyDefault, ConstStringParam value, ::google::protobuf::Arena* arena);
@@ -204,7 +209,8 @@ struct PROTOBUF_EXPORT ArenaStringPtr {
   // Own()'d by any arena. If the field is not set, this returns NULL. The
   // caller retains ownership. Clears this field back to NULL state. Used to
   // implement release_<field>() methods on generated classes.
-  std::string* Release(const std::string* default_value, ::google::protobuf::Arena* arena);
+  std::string* Release(const std::string* default_value,
+                       ::google::protobuf::Arena* arena);
   std::string* ReleaseNonDefault(const std::string* default_value,
                                  ::google::protobuf::Arena* arena);
 
@@ -254,14 +260,17 @@ struct PROTOBUF_EXPORT ArenaStringPtr {
   // Get a mutable pointer with unspecified contents.
   // Similar to `MutableNoArenaNoDefault`, but also handles the arena case.
   // If the value was donated, the contents are discarded.
-  std::string* MutableNoCopy(const std::string* default_value, ::google::protobuf::Arena* arena);
+  std::string* MutableNoCopy(const std::string* default_value,
+                             ::google::protobuf::Arena* arena);
 
   // Destroy the string. Assumes `arena == nullptr`.
   void DestroyNoArena(const std::string* default_value);
 
   // Internal setter used only at parse time to directly set a donated string
   // value.
-  void UnsafeSetTaggedPointer(TaggedPtr<std::string> value) { tagged_ptr_ = value; }
+  void UnsafeSetTaggedPointer(TaggedPtr<std::string> value) {
+    tagged_ptr_ = value;
+  }
   // Generated code only! An optimization, in certain cases the generated
   // code is certain we can obtain a std::string with no default checks and
   // tag tests.
@@ -286,13 +295,15 @@ struct PROTOBUF_EXPORT ArenaStringPtr {
   // Variadic to support 0 args for EmptyDefault and 1 arg for LazyString.
   template <typename... Lazy>
   std::string* MutableSlow(::google::protobuf::Arena* arena, const Lazy&... lazy_default);
+
 };
 
 inline void ArenaStringPtr::UnsafeSetDefault(const std::string* value) {
   tagged_ptr_.Set(const_cast<std::string*>(value));
 }
 
-inline void ArenaStringPtr::Swap(ArenaStringPtr* other, const std::string* default_value,
+inline void ArenaStringPtr::Swap(ArenaStringPtr* other,
+                                 const std::string* default_value,
                                  Arena* arena) {
 #ifndef NDEBUG
   // For debug builds, we swap the contents of the string, rather than the
@@ -327,7 +338,8 @@ inline void ArenaStringPtr::ClearNonDefaultToEmpty() {
   tagged_ptr_.Get()->clear();
 }
 
-inline std::string* ArenaStringPtr::MutableNoArenaNoDefault(const std::string* default_value) {
+inline std::string* ArenaStringPtr::MutableNoArenaNoDefault(
+    const std::string* default_value) {
   // VERY IMPORTANT for performance and code size: this will reduce to a member
   // variable load, a pointer check (against |default_value|, in practice a
   // static global) and a branch to the slowpath (which calls operator new and
@@ -352,6 +364,7 @@ inline std::string* ArenaStringPtr::UnsafeMutablePointer() {
   GOOGLE_DCHECK(tagged_ptr_.UnsafeGet() != nullptr);
   return tagged_ptr_.UnsafeGet();
 }
+
 
 }  // namespace internal
 }  // namespace protobuf

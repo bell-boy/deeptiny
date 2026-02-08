@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/vector_bool.hpp"
 
-#endif  // MSGPACK_TYPE_VECTOR_BOOL_HPP
+#endif // MSGPACK_TYPE_VECTOR_BOOL_HPP

@@ -33,28 +33,30 @@
 namespace sentencepiece {
 
 template <typename K, typename V>
-std::vector<std::pair<K, V>> Sorted(const std::vector<std::pair<K, V>>& m) {
+std::vector<std::pair<K, V>> Sorted(const std::vector<std::pair<K, V>> &m) {
   std::vector<std::pair<K, V>> v = m;
-  std::sort(v.begin(), v.end(), [](const std::pair<K, V>& p1, const std::pair<K, V>& p2) {
-    return (p1.second > p2.second || (p1.second == p2.second && p1.first < p2.first));
-  });
+  std::sort(v.begin(), v.end(),
+            [](const std::pair<K, V> &p1, const std::pair<K, V> &p2) {
+              return (p1.second > p2.second ||
+                      (p1.second == p2.second && p1.first < p2.first));
+            });
   return v;
 }
 
 template <typename K, typename V>
-std::vector<std::pair<K, V>> Sorted(const absl::flat_hash_map<K, V>& m) {
+std::vector<std::pair<K, V>> Sorted(const absl::flat_hash_map<K, V> &m) {
   std::vector<std::pair<K, V>> v(m.begin(), m.end());
   return Sorted(v);
 }
 
 class MultiFileSentenceIterator : public SentenceIterator {
  public:
-  explicit MultiFileSentenceIterator(const std::vector<std::string>& files);
+  explicit MultiFileSentenceIterator(const std::vector<std::string> &files);
   ~MultiFileSentenceIterator() {}
 
   bool done() const override;
   void Next() override;
-  const std::string& value() const override { return value_; }
+  const std::string &value() const override { return value_; }
   util::Status status() const override;
 
  private:
@@ -80,14 +82,16 @@ class TrainerInterface {
   static const char kUNKStr[];
   static const char kUPPBoundaryStr[];
 
-  TrainerInterface(const TrainerSpec& trainer_spec, const NormalizerSpec& normalizer_spec,
-                   const NormalizerSpec& denormalizer_spec);
+  TrainerInterface(const TrainerSpec &trainer_spec,
+                   const NormalizerSpec &normalizer_spec,
+                   const NormalizerSpec &denormalizer_spec);
 
   virtual ~TrainerInterface();
 
   // Loads sentence from `sentence_iterator` and stores the model
   // to `output_model_proto`.
-  virtual util::Status Train(SentenceIterator* sentence_iterator, ModelProto* output_model_proto) {
+  virtual util::Status Train(SentenceIterator *sentence_iterator,
+                             ModelProto *output_model_proto) {
     sentence_iterator_ = sentence_iterator;
     output_model_proto_ = output_model_proto;
     return Train();
@@ -111,7 +115,7 @@ class TrainerInterface {
   // Returns true if |piece| is valid sentence piece.
   // The result is affected by
   // max_sentencepiece_length, split_by_whiespace, split_by_unicode_script.
-  bool IsValidSentencePiece(const string_util::UnicodeText& piece) const;
+  bool IsValidSentencePiece(const string_util::UnicodeText &piece) const;
 
   // Splits all sentencecs by whitespaces and
   // replace the |sentences_| with tokenized string.
@@ -144,20 +148,21 @@ class TrainerInterface {
 
   // Reserved control pieces. e.g., <unk>, <s>, </s>.
   // key is vocab id.
-  std::map<int, std::pair<std::string, ModelProto::SentencePiece::Type>> meta_pieces_;
+  std::map<int, std::pair<std::string, ModelProto::SentencePiece::Type>>
+      meta_pieces_;
 
   // Detect errors on initialization.
   util::Status status_;
 
   // Loads sentences from SentenceIterator if not null.
-  SentenceIterator* sentence_iterator_ = nullptr;
+  SentenceIterator *sentence_iterator_ = nullptr;
 
   // Emits model to this proto instead of file.
-  ModelProto* output_model_proto_ = nullptr;
+  ModelProto *output_model_proto_ = nullptr;
 
  private:
   // Serialize final_pieces_ to |model_proto|.
-  util::Status Serialize(ModelProto* model_proto) const;
+  util::Status Serialize(ModelProto *model_proto) const;
 
   // Saves the best sentence split with the current model for debugging.
   util::Status SaveSplits(absl::string_view filename) const;

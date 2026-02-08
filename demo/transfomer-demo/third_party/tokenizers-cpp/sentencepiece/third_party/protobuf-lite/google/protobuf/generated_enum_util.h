@@ -31,11 +31,12 @@
 #ifndef GOOGLE_PROTOBUF_GENERATED_ENUM_UTIL_H__
 #define GOOGLE_PROTOBUF_GENERATED_ENUM_UTIL_H__
 
+#include <type_traits>
+
 #include <google/protobuf/message_lite.h>
 #include <google/protobuf/stubs/strutil.h>
 
 #include <google/protobuf/port_def.inc>
-#include <type_traits>
 
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
@@ -60,11 +61,12 @@ struct EnumEntry {
 };
 
 // Looks up a numeric enum value given the string name.
-PROTOBUF_EXPORT bool LookUpEnumValue(const EnumEntry* enums, size_t size, StringPiece name,
-                                     int* value);
+PROTOBUF_EXPORT bool LookUpEnumValue(const EnumEntry* enums, size_t size,
+                                     StringPiece name, int* value);
 
 // Looks up an enum name given the numeric value.
-PROTOBUF_EXPORT int LookUpEnumName(const EnumEntry* enums, const int* sorted_indices, size_t size,
+PROTOBUF_EXPORT int LookUpEnumName(const EnumEntry* enums,
+                                   const int* sorted_indices, size_t size,
                                    int value);
 
 // Initializes the list of enum names in std::string form.

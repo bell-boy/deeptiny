@@ -10,26 +10,26 @@
 #ifndef MSGPACK_V1_TYPE_V4RAW_DECL_HPP
 #define MSGPACK_V1_TYPE_V4RAW_DECL_HPP
 
+#include "msgpack/versioning.hpp"
 #include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/object.hpp"
-#include "msgpack/versioning.hpp"
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
-
-  namespace type {
-
-  struct v4raw_ref;
-
-  }  // namespace type
-
-  /// @cond
-}  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
-}  // namespace msgpack
+namespace type {
 
-#endif  // MSGPACK_V1_TYPE_V4RAW_DECL_HPP
+struct v4raw_ref;
+
+} // namespace type
+
+/// @cond
+} // MSGPACK_API_VERSION_NAMESPACE(v1)
+/// @endcond
+
+} // namespace msgpack
+
+#endif // MSGPACK_V1_TYPE_V4RAW_DECL_HPP

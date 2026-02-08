@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/list.hpp"
 
-#endif  // MSGPACK_TYPE_LIST_HPP
+#endif // MSGPACK_TYPE_LIST_HPP

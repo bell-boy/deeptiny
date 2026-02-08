@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.!
 
-#include "bpe_model.h"
-
 #include <cstdio>
 #include <string>
 
+#include "bpe_model.h"
 #include "model_interface.h"
 #include "testharness.h"
 
@@ -26,9 +25,9 @@ namespace {
 
 ModelProto MakeBaseModelProto() {
   ModelProto model_proto;
-  auto* sp1 = model_proto.add_pieces();
-  auto* sp2 = model_proto.add_pieces();
-  auto* sp3 = model_proto.add_pieces();
+  auto *sp1 = model_proto.add_pieces();
+  auto *sp2 = model_proto.add_pieces();
+  auto *sp3 = model_proto.add_pieces();
 
   sp1->set_type(ModelProto::SentencePiece::UNKNOWN);
   sp1->set_piece("<unk>");
@@ -40,8 +39,9 @@ ModelProto MakeBaseModelProto() {
   return model_proto;
 }
 
-void AddPiece(ModelProto* model_proto, const std::string& piece, float score = 0.0) {
-  auto* sp = model_proto->add_pieces();
+void AddPiece(ModelProto *model_proto, const std::string &piece,
+              float score = 0.0) {
+  auto *sp = model_proto->add_pieces();
   sp->set_piece(piece);
   sp->set_score(score);
 }
@@ -266,9 +266,9 @@ TEST(SampleModelTest, EncodeTest) {
   }
 
   {
-    auto get_tokens = [](const EncodeResult& result) {
+    auto get_tokens = [](const EncodeResult &result) {
       std::string out;
-      for (const auto& r : result) {
+      for (const auto &r : result) {
         if (!result.empty()) out += ' ';
         out += std::string(r.first);
       }
@@ -281,13 +281,14 @@ TEST(SampleModelTest, EncodeTest) {
       constexpr int kTrial = 100000;
       std::map<std::string, int> freq;
       for (int n = 0; n < kTrial; ++n)
-        freq[get_tokens(model.SampleEncode("abcd", static_cast<float>(alpha)))]++;
+        freq[get_tokens(
+            model.SampleEncode("abcd", static_cast<float>(alpha)))]++;
       int num = 0;
       if (alpha == 0.0)
         EXPECT_EQ(1, freq.size());
       else
         EXPECT_GT(freq.size(), 1);
-      for (const auto& it : freq) num += it.second;
+      for (const auto &it : freq) num += it.second;
       EXPECT_EQ(num, kTrial);
     }
   }

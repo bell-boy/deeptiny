@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp17/vector_byte.hpp"
 
-#endif  // MSGPACK_TYPE_CPP17_VECTOR_BYTE_HPP
+#endif // MSGPACK_TYPE_CPP17_VECTOR_BYTE_HPP

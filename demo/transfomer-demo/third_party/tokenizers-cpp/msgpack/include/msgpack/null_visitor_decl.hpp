@@ -13,4 +13,4 @@
 #include "msgpack/v2/null_visitor_decl.hpp"
 #include "msgpack/v3/null_visitor_decl.hpp"
 
-#endif  // MSGPACK_NULL_VISITOR_DECL_HPP
+#endif // MSGPACK_NULL_VISITOR_DECL_HPP

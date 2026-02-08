@@ -9,8 +9,9 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_PREDEF_LIBRARY_STD_STDCPP3_H
 
 #include <msgpack/predef/library/std/_prefix.h>
-#include <msgpack/predef/make.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LIB_STD_GNU`]
@@ -32,16 +33,16 @@ Version number available as year (from 1970), month, and day.
 #define MSGPACK_LIB_STD_GNU MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__GLIBCPP__) || defined(__GLIBCXX__)
-#undef MSGPACK_LIB_STD_GNU
-#if defined(__GLIBCXX__)
-#define MSGPACK_LIB_STD_GNU MSGPACK_PREDEF_MAKE_YYYYMMDD(__GLIBCXX__)
-#else
-#define MSGPACK_LIB_STD_GNU MSGPACK_PREDEF_MAKE_YYYYMMDD(__GLIBCPP__)
-#endif
+#   undef MSGPACK_LIB_STD_GNU
+#   if defined(__GLIBCXX__)
+#       define MSGPACK_LIB_STD_GNU MSGPACK_PREDEF_MAKE_YYYYMMDD(__GLIBCXX__)
+#   else
+#       define MSGPACK_LIB_STD_GNU MSGPACK_PREDEF_MAKE_YYYYMMDD(__GLIBCPP__)
+#   endif
 #endif
 
 #if MSGPACK_LIB_STD_GNU
-#define MSGPACK_LIB_STD_GNU_AVAILABLE
+#   define MSGPACK_LIB_STD_GNU_AVAILABLE
 #endif
 
 #define MSGPACK_LIB_STD_GNU_NAME "GNU"
@@ -49,4 +50,4 @@ Version number available as year (from 1970), month, and day.
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_GNU, MSGPACK_LIB_STD_GNU_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_GNU,MSGPACK_LIB_STD_GNU_NAME)

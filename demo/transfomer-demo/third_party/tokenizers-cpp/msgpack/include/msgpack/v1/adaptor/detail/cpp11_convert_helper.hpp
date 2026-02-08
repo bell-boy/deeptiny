@@ -17,25 +17,29 @@
 namespace msgpack {
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
-  namespace type {
+/// @endcond
+namespace type {
 
-  template <typename T>
-  inline typename std::enable_if<has_as<T>::value>::type convert_helper(msgpack::object const& o,
-                                                                        T& t) {
+template <typename T>
+inline typename std::enable_if<
+    has_as<T>::value
+>::type
+convert_helper(msgpack::object const& o, T& t) {
     t = o.as<T>();
-  }
-  template <typename T>
-  inline typename std::enable_if<!has_as<T>::value>::type convert_helper(msgpack::object const& o,
-                                                                         T& t) {
+}
+template <typename T>
+inline typename std::enable_if<
+    !has_as<T>::value
+>::type
+convert_helper(msgpack::object const& o, T& t) {
     o.convert(t);
-  }
+}
 
-  }  // namespace type
+}  // namespace type
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_CPP11_CONVERT_HELPER_HPP
+#endif // MSGPACK_V1_CPP11_CONVERT_HELPER_HPP

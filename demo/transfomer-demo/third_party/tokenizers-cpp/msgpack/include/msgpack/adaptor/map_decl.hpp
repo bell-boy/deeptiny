@@ -14,4 +14,4 @@
 #include "msgpack/v2/adaptor/map_decl.hpp"
 #include "msgpack/v3/adaptor/map_decl.hpp"
 
-#endif  // MSGPACK_TYPE_MAP_DECL_HPP
+#endif // MSGPACK_TYPE_MAP_DECL_HPP

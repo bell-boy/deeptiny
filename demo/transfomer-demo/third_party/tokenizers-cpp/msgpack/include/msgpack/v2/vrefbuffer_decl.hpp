@@ -16,14 +16,14 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  using v1::vrefbuffer;
+using v1::vrefbuffer;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V2_VREFBUFFER_DECL_HPP
+#endif // MSGPACK_V2_VREFBUFFER_DECL_HPP

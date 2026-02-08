@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.!
 
-#include "word_model_trainer.h"
-
 #include <cmath>
 #include <string>
 
@@ -21,6 +19,7 @@
 #include "third_party/absl/strings/string_view.h"
 #include "util.h"
 #include "word_model.h"
+#include "word_model_trainer.h"
 
 namespace sentencepiece {
 namespace word {
@@ -34,8 +33,8 @@ util::Status Trainer::Train() {
   RETURN_IF_ERROR(LoadSentences());
 
   absl::flat_hash_map<std::string, uint64_t> freq;
-  for (const auto& it : sentences_) {
-    for (const auto& s : SplitIntoWords(it.first)) {
+  for (const auto &it : sentences_) {
+    for (const auto &s : SplitIntoWords(it.first)) {
       freq[std::string(s)] += it.second;
     }
   }
@@ -44,21 +43,23 @@ util::Status Trainer::Train() {
   CHECK_GE_OR_RETURN(vocab_size, 0);
 
   uint64_t sum = 0;
-  for (const auto& it : freq) {
+  for (const auto &it : freq) {
     sum += it.second;
   }
 
   const auto logsum = std::log(static_cast<float>(sum));
 
   CHECK_OR_RETURN(final_pieces_.empty());
-  for (const auto& it : Sorted(freq)) {
+  for (const auto &it : Sorted(freq)) {
     if (it.first.find(kUNKStr) != std::string::npos) {
       continue;
     }
-    if (!trainer_spec_.use_all_vocab() && final_pieces_.size() == static_cast<size_t>(vocab_size)) {
+    if (!trainer_spec_.use_all_vocab() &&
+        final_pieces_.size() == static_cast<size_t>(vocab_size)) {
       break;
     }
-    final_pieces_.emplace_back(it.first, std::log(static_cast<float>(it.second)) - logsum);
+    final_pieces_.emplace_back(
+        it.first, std::log(static_cast<float>(it.second)) - logsum);
   }
 
   if (trainer_spec_.use_all_vocab()) {

@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/char_ptr.hpp"
 
-#endif  // MSGPACK_TYPE_CHAR_PTR_HPP
+#endif // MSGPACK_TYPE_CHAR_PTR_HPP

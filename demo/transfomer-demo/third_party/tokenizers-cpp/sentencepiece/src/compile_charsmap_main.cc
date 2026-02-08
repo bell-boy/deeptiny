@@ -28,14 +28,17 @@
 
 using sentencepiece::normalizer::Builder;
 
-ABSL_FLAG(bool, output_precompiled_header, false, "make normalization_rule.h file");
-ABSL_FLAG(bool, output_precompiled_data, false, "make pre-compiled <name>.bin file");
+ABSL_FLAG(bool, output_precompiled_header, false,
+          "make normalization_rule.h file");
+ABSL_FLAG(bool, output_precompiled_data, false,
+          "make pre-compiled <name>.bin file");
 
 namespace sentencepiece {
 namespace {
 
-std::string ToHexUInt64Array(const std::vector<std::pair<std::string, std::string>>& data,
-                             std::vector<size_t>* offset) {
+std::string ToHexUInt64Array(
+    const std::vector<std::pair<std::string, std::string>> &data,
+    std::vector<size_t> *offset) {
   std::stringstream os;
   os.setf(std::ios_base::hex, std::ios_base::basefield);
   os.setf(std::ios_base::uppercase);
@@ -44,14 +47,14 @@ std::string ToHexUInt64Array(const std::vector<std::pair<std::string, std::strin
   os.unsetf(std::ios_base::showbase);
 
   size_t num = 0;
-  for (const auto& p : data) {
-    const char* begin = p.second.data();
-    const char* end = p.second.data() + p.second.size();
+  for (const auto &p : data) {
+    const char *begin = p.second.data();
+    const char *end = p.second.data() + p.second.size();
 
     offset->push_back(num);
     while (begin < end) {
       unsigned long long int n = 0;
-      unsigned char* buf = reinterpret_cast<unsigned char*>(&n);
+      unsigned char *buf = reinterpret_cast<unsigned char *>(&n);
       const size_t size = std::min<size_t>(end - begin, sizeof(n));
       for (size_t i = 0; i < size; ++i) {
         buf[i] = static_cast<unsigned char>(begin[i]);
@@ -68,8 +71,8 @@ std::string ToHexUInt64Array(const std::vector<std::pair<std::string, std::strin
 }
 
 std::string ToHexData(absl::string_view data) {
-  const char* begin = data.data();
-  const char* end = data.data() + data.size();
+  const char *begin = data.data();
+  const char *end = data.data() + data.size();
   constexpr char kHex[] = "0123456789ABCDEF";
   constexpr size_t kNumOfBytesOnOneLine = 20;
 
@@ -77,7 +80,8 @@ std::string ToHexData(absl::string_view data) {
   std::stringstream os;
   while (begin < end) {
     const size_t bucket_size =
-        std::min<size_t>(end - begin, kNumOfBytesOnOneLine - output_count % kNumOfBytesOnOneLine);
+        std::min<size_t>(end - begin, kNumOfBytesOnOneLine -
+                                          output_count % kNumOfBytesOnOneLine);
     if (output_count % kNumOfBytesOnOneLine == 0 && bucket_size > 0) {
       os << "\"";
     }
@@ -86,7 +90,8 @@ std::string ToHexData(absl::string_view data) {
       ++begin;
     }
     output_count += bucket_size;
-    if (output_count % kNumOfBytesOnOneLine == 0 && bucket_size > 0 && begin < end) {
+    if (output_count % kNumOfBytesOnOneLine == 0 && bucket_size > 0 &&
+        begin < end) {
       os << "\"\n";
     }
   }
@@ -95,7 +100,8 @@ std::string ToHexData(absl::string_view data) {
   return os.str();
 }
 
-std::string MakeHeader(const std::vector<std::pair<std::string, std::string>>& data) {
+std::string MakeHeader(
+    const std::vector<std::pair<std::string, std::string>> &data) {
   constexpr char kHeader[] =
       R"(#ifndef NORMALIZATION_RULE_H_
 #define NORMALIZATION_RULE_H_
@@ -130,8 +136,8 @@ struct BinaryBlob {
   os << "const BinaryBlob kNormalizationRules_blob[] = {\n";
   for (size_t i = 0; i < data.size(); ++i) {
     os << "{ \"" << data[i].first << "\", " << data[i].second.size() << ", ";
-    os << "reinterpret_cast<const char *>(kNormalizationRules_blob_uint64_t + " << offset[i]
-       << ") },\n";
+    os << "reinterpret_cast<const char *>(kNormalizationRules_blob_uint64_t + "
+       << offset[i] << ") },\n";
   }
   os << "};\n";
   os << "#else\n";
@@ -152,21 +158,26 @@ struct BinaryBlob {
 }  // namespace
 }  // namespace sentencepiece
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   sentencepiece::ScopedResourceDestructor cleaner;
   sentencepiece::ParseCommandLineFlags(argv[0], &argc, &argv, true);
 
-  const std::vector<
-      std::pair<std::string, std::function<sentencepiece::util::Status(Builder::CharsMap*)>>>
-      kRuleList = {
-          {"nfkc", Builder::BuildNFKCMap},       {"nmt_nfkc", Builder::BuildNmtNFKCMap},
-          {"nfkc_cf", Builder::BuildNFKC_CFMap}, {"nmt_nfkc_cf", Builder::BuildNmtNFKC_CFMap},
-          {"nfkd", Builder::BuildNFKDMap},       {"nfc", Builder::BuildNFCMap},
-          {"nfd", Builder::BuildNFDMap},         {"nfkd_cf", Builder::BuildNFKD_CFMap},
-          {"nfc_cf", Builder::BuildNFC_CFMap},   {"nfd_cf", Builder::BuildNFD_CFMap}};
+  const std::vector<std::pair<
+      std::string,
+      std::function<sentencepiece::util::Status(Builder::CharsMap *)>>>
+      kRuleList = {{"nfkc", Builder::BuildNFKCMap},
+                   {"nmt_nfkc", Builder::BuildNmtNFKCMap},
+                   {"nfkc_cf", Builder::BuildNFKC_CFMap},
+                   {"nmt_nfkc_cf", Builder::BuildNmtNFKC_CFMap},
+                   {"nfkd", Builder::BuildNFKDMap},
+                   {"nfc", Builder::BuildNFCMap},
+                   {"nfd", Builder::BuildNFDMap},
+                   {"nfkd_cf", Builder::BuildNFKD_CFMap},
+                   {"nfc_cf", Builder::BuildNFC_CFMap},
+                   {"nfd_cf", Builder::BuildNFD_CFMap}};
 
   std::vector<std::pair<std::string, std::string>> data;
-  for (const auto& [name, func] : kRuleList) {
+  for (const auto &[name, func] : kRuleList) {
     Builder::CharsMap normalized_map;
     CHECK_OK(func(&normalized_map));
 
@@ -178,8 +189,8 @@ int main(int argc, char** argv) {
     CHECK_OK(Builder::SaveCharsMap(absl::StrCat(name, ".tsv"), normalized_map));
 
     // Do not make NFKD map as it is optionally created.
-    if (name == "nfkd" || name == "nfd" || name == "nfc" || name == "nfkd_cf" || name == "nfd_cf" ||
-        name == "nfc_cf") {
+    if (name == "nfkd" || name == "nfd" || name == "nfc" || name == "nfkd_cf" ||
+        name == "nfd_cf" || name == "nfc_cf") {
       continue;
     }
 
@@ -188,15 +199,17 @@ int main(int argc, char** argv) {
 
   if (absl::GetFlag(FLAGS_output_precompiled_header)) {
     constexpr char kPrecompiledHeaderFileName[] = "normalization_rule.h";
-    auto output = sentencepiece::filesystem::NewWritableFile(kPrecompiledHeaderFileName);
+    auto output =
+        sentencepiece::filesystem::NewWritableFile(kPrecompiledHeaderFileName);
     CHECK_OK(output->status());
     output->Write(sentencepiece::MakeHeader(data));
   }
 
   if (absl::GetFlag(FLAGS_output_precompiled_data)) {
-    for (const auto& [name, index] : data) {
+    for (const auto &[name, index] : data) {
       const auto filename = absl::StrCat(name, ".bin");
-      auto output = sentencepiece::filesystem::NewWritableFile(filename, true /* is_binary */);
+      auto output = sentencepiece::filesystem::NewWritableFile(
+          filename, true /* is_binary */);
       output->Write(index);
     }
   }

@@ -27,11 +27,13 @@ class MockPretokenizer : public PretokenizerForTrainingInterface {
   MockPretokenizer() {}
   ~MockPretokenizer() {}
 
-  SentencePieceText Tokenize(absl::string_view text) const override { return spt_; }
+  SentencePieceText Tokenize(absl::string_view text) const override {
+    return spt_;
+  }
 
   util::Status status() const override { return util::OkStatus(); }
 
-  void SetOutput(const SentencePieceText& spt) { spt_ = spt; }
+  void SetOutput(const SentencePieceText &spt) { spt_ = spt; }
 
  private:
   SentencePieceText spt_;
@@ -43,52 +45,54 @@ TEST(PretokenizerForTrainingTest, BaseTest) {
   {
     SentencePieceText spt;
     spt.set_text("I love sentencepiece");
-    auto* p1 = spt.add_pieces();
+    auto *p1 = spt.add_pieces();
     p1->set_surface("I");
     p1->set_begin(0);
     p1->set_end(1);
 
-    auto* p2 = spt.add_pieces();
+    auto *p2 = spt.add_pieces();
     p2->set_surface("love");
     p2->set_begin(2);
     p2->set_end(6);
 
-    auto* p3 = spt.add_pieces();
+    auto *p3 = spt.add_pieces();
     p3->set_surface("sentence");
     p3->set_begin(7);
     p3->set_end(15);
 
-    auto* p4 = spt.add_pieces();
+    auto *p4 = spt.add_pieces();
     p4->set_surface("piece");
     p4->set_begin(15);
     p4->set_end(20);
 
     mock.SetOutput(spt);
 
-    const auto expected = absl::StrCat("I", TrainerInterface::kWSStr, "love",
-                                       TrainerInterface::kWSStr, "sentence||||piece");
-    EXPECT_EQ(expected, absl::StrJoin(mock.PreTokenize("I love sentencepiece"), "||||"));
+    const auto expected =
+        absl::StrCat("I", TrainerInterface::kWSStr, "love",
+                     TrainerInterface::kWSStr, "sentence||||piece");
+    EXPECT_EQ(expected,
+              absl::StrJoin(mock.PreTokenize("I love sentencepiece"), "||||"));
   }
 
   {
     SentencePieceText spt;
     spt.set_text("これはペンです");
-    auto* p1 = spt.add_pieces();
+    auto *p1 = spt.add_pieces();
     p1->set_surface("これ");
     p1->set_begin(0);
     p1->set_end(6);
 
-    auto* p2 = spt.add_pieces();
+    auto *p2 = spt.add_pieces();
     p2->set_surface("は");
     p2->set_begin(6);
     p2->set_end(9);
 
-    auto* p3 = spt.add_pieces();
+    auto *p3 = spt.add_pieces();
     p3->set_surface("ペン");
     p3->set_begin(9);
     p3->set_end(15);
 
-    auto* p4 = spt.add_pieces();
+    auto *p4 = spt.add_pieces();
     p4->set_surface("です");
     p4->set_begin(15);
     p4->set_end(21);
@@ -96,7 +100,8 @@ TEST(PretokenizerForTrainingTest, BaseTest) {
     mock.SetOutput(spt);
 
     const auto expected = "これ||||は||||ペン||||です";
-    EXPECT_EQ(expected, absl::StrJoin(mock.PreTokenize("これはペンです"), "||||"));
+    EXPECT_EQ(expected,
+              absl::StrJoin(mock.PreTokenize("これはペンです"), "||||"));
   }
 }
 

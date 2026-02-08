@@ -28,8 +28,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <google/protobuf/stubs/logging.h>
 #include <google/protobuf/stubs/statusor.h>
+
+#include <google/protobuf/stubs/logging.h>
 
 namespace google {
 namespace protobuf {
@@ -37,7 +38,8 @@ namespace util {
 namespace internal {
 
 void StatusOrHelper::Crash(const Status& status) {
-  GOOGLE_LOG(FATAL) << "Attempting to fetch value instead of handling error " << status.ToString();
+  GOOGLE_LOG(FATAL) << "Attempting to fetch value instead of handling error "
+                    << status.ToString();
 }
 
 }  // namespace internal

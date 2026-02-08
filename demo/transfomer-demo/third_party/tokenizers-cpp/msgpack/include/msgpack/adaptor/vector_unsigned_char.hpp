@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/vector_unsigned_char.hpp"
 
-#endif  // MSGPACK_TYPE_VECTOR_UNSIGNED_CHAR_HPP
+#endif // MSGPACK_TYPE_VECTOR_UNSIGNED_CHAR_HPP

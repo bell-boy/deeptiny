@@ -44,7 +44,9 @@ namespace protobuf {
 // improve performance.  However, since it's totally non-portable it has no
 // place in open source code.  Feel free to fill this function in with your
 // own disgusting hack if you want the perf boost.
-inline void STLStringResizeUninitialized(std::string* s, size_t new_size) { s->resize(new_size); }
+inline void STLStringResizeUninitialized(std::string* s, size_t new_size) {
+  s->resize(new_size);
+}
 
 // Return a mutable char* pointing to a string's internal buffer,
 // which may not be null-terminated. Writing through this pointer will

@@ -16,24 +16,24 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
-
-  namespace type {
-
-  using v2::type::basic_variant;
-  using v2::type::variant;
-  using v2::type::variant_ref;
-
-  using v2::type::operator<;
-
-  using v2::type::operator==;
-
-  }  // namespace type
-
-  /// @cond
-}  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 
-}  // namespace msgpack
+namespace type {
 
-#endif  // MSGPACK_V3_TYPE_BOOST_MSGPACK_VARIANT_DECL_HPP
+using v2::type::basic_variant;
+using v2::type::variant;
+using v2::type::variant_ref;
+
+using v2::type::operator<;
+
+using v2::type::operator==;
+
+} // namespace type
+
+/// @cond
+} // MSGPACK_API_VERSION_NAMESPACE(v3)
+/// @endcond
+
+} // namespace msgpack
+
+#endif // MSGPACK_V3_TYPE_BOOST_MSGPACK_VARIANT_DECL_HPP

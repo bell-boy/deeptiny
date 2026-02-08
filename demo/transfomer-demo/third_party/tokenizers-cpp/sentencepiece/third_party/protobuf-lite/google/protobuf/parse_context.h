@@ -31,21 +31,23 @@
 #ifndef GOOGLE_PROTOBUF_PARSE_CONTEXT_H__
 #define GOOGLE_PROTOBUF_PARSE_CONTEXT_H__
 
+#include <cstdint>
+#include <cstring>
+#include <string>
+
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/arenastring.h>
 #include <google/protobuf/implicit_weak_message.h>
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/metadata_lite.h>
 #include <google/protobuf/port.h>
 #include <google/protobuf/repeated_field.h>
-#include <google/protobuf/stubs/strutil.h>
 #include <google/protobuf/wire_format_lite.h>
+#include <google/protobuf/stubs/strutil.h>
 
-#include <cstdint>
-#include <cstring>
 #include <google/protobuf/port_def.inc>
-#include <string>
+
 
 namespace google {
 namespace protobuf {
@@ -58,10 +60,13 @@ namespace internal {
 
 // Template code below needs to know about the existence of these functions.
 PROTOBUF_EXPORT void WriteVarint(uint32 num, uint64 val, std::string* s);
-PROTOBUF_EXPORT void WriteLengthDelimited(uint32 num, StringPiece val, std::string* s);
+PROTOBUF_EXPORT void WriteLengthDelimited(uint32 num, StringPiece val,
+                                          std::string* s);
 // Inline because it is just forwarding to s->WriteVarint
 inline void WriteVarint(uint32 num, uint64 val, UnknownFieldSet* s);
-inline void WriteLengthDelimited(uint32 num, StringPiece val, UnknownFieldSet* s);
+inline void WriteLengthDelimited(uint32 num, StringPiece val,
+                                 UnknownFieldSet* s);
+
 
 // The basic abstraction the parser is designed for is a slight modification
 // of the ZeroCopyInputStream (ZCIS) abstraction. A ZCIS presents a serialized
@@ -145,14 +150,16 @@ class PROTOBUF_EXPORT EpsCopyInputStream {
     }
     return SkipFallback(ptr, size);
   }
-  PROTOBUF_MUST_USE_RESULT const char* ReadString(const char* ptr, int size, std::string* s) {
+  PROTOBUF_MUST_USE_RESULT const char* ReadString(const char* ptr, int size,
+                                                  std::string* s) {
     if (size <= buffer_end_ + kSlopBytes - ptr) {
       s->assign(ptr, size);
       return ptr + size;
     }
     return ReadStringFallback(ptr, size, s);
   }
-  PROTOBUF_MUST_USE_RESULT const char* AppendString(const char* ptr, int size, std::string* s) {
+  PROTOBUF_MUST_USE_RESULT const char* AppendString(const char* ptr, int size,
+                                                    std::string* s) {
     if (size <= buffer_end_ + kSlopBytes - ptr) {
       s->append(ptr, size);
       return ptr + size;
@@ -161,14 +168,17 @@ class PROTOBUF_EXPORT EpsCopyInputStream {
   }
 
   template <typename Tag, typename T>
-  PROTOBUF_MUST_USE_RESULT const char* ReadRepeatedFixed(const char* ptr, Tag expected_tag,
+  PROTOBUF_MUST_USE_RESULT const char* ReadRepeatedFixed(const char* ptr,
+                                                         Tag expected_tag,
                                                          RepeatedField<T>* out);
 
   template <typename T>
-  PROTOBUF_MUST_USE_RESULT const char* ReadPackedFixed(const char* ptr, int size,
+  PROTOBUF_MUST_USE_RESULT const char* ReadPackedFixed(const char* ptr,
+                                                       int size,
                                                        RepeatedField<T>* out);
   template <typename Add>
-  PROTOBUF_MUST_USE_RESULT const char* ReadPackedVarint(const char* ptr, Add add);
+  PROTOBUF_MUST_USE_RESULT const char* ReadPackedVarint(const char* ptr,
+                                                        Add add);
 
   uint32 LastTag() const { return last_tag_minus_1_ + 1; }
   bool ConsumeEndGroup(uint32 start_tag) {
@@ -181,7 +191,8 @@ class PROTOBUF_EXPORT EpsCopyInputStream {
   void SetLastTag(uint32 tag) { last_tag_minus_1_ = tag - 1; }
   void SetEndOfStream() { last_tag_minus_1_ = 1; }
   bool IsExceedingLimit(const char* ptr) {
-    return ptr > limit_end_ && (next_chunk_ == nullptr || ptr - buffer_end_ > limit_);
+    return ptr > limit_end_ &&
+           (next_chunk_ == nullptr || ptr - buffer_end_ > limit_);
   }
   int BytesUntilLimit(const char* ptr) const {
     return limit_ + static_cast<int>(buffer_end_ - ptr);
@@ -199,7 +210,8 @@ class PROTOBUF_EXPORT EpsCopyInputStream {
     if (PROTOBUF_PREDICT_TRUE(*ptr < limit_end_)) return false;
     int overrun = *ptr - buffer_end_;
     GOOGLE_DCHECK_LE(overrun, kSlopBytes);  // Guaranteed by parse loop.
-    if (overrun == limit_) {                //  No need to flip buffers if we ended on a limit.
+    if (overrun ==
+        limit_) {  //  No need to flip buffers if we ended on a limit.
       // If we actually overrun the buffer and next_chunk_ is null. It means
       // the stream ended and we passed the stream end.
       if (overrun > 0 && next_chunk_ == nullptr) *ptr = nullptr;
@@ -348,8 +360,10 @@ class PROTOBUF_EXPORT EpsCopyInputStream {
     return end;
   }
 
-  PROTOBUF_MUST_USE_RESULT const char* AppendString(const char* ptr, std::string* str) {
-    return AppendUntilEnd(ptr, [str](const char* p, ptrdiff_t s) { str->append(p, s); });
+  PROTOBUF_MUST_USE_RESULT const char* AppendString(const char* ptr,
+                                                    std::string* str) {
+    return AppendUntilEnd(
+        ptr, [str](const char* p, ptrdiff_t s) { str->append(p, s); });
   }
   friend class ImplicitWeakMessage;
 };
@@ -387,8 +401,8 @@ class PROTOBUF_EXPORT ParseContext : public EpsCopyInputStream {
   const char* ParseMessage(Message* msg, const char* ptr);
 
   template <typename T>
-  PROTOBUF_MUST_USE_RESULT PROTOBUF_ALWAYS_INLINE const char* ParseGroup(T* msg, const char* ptr,
-                                                                         uint32 tag) {
+  PROTOBUF_MUST_USE_RESULT PROTOBUF_ALWAYS_INLINE const char* ParseGroup(
+      T* msg, const char* ptr, uint32 tag) {
     if (--depth_ < 0) return nullptr;
     group_depth_++;
     ptr = msg->_InternalParse(ptr, this);
@@ -624,7 +638,8 @@ inline int32 ReadVarintZigZag32(const char** p) {
 }
 
 template <typename T>
-PROTOBUF_MUST_USE_RESULT const char* ParseContext::ParseMessage(T* msg, const char* ptr) {
+PROTOBUF_MUST_USE_RESULT const char* ParseContext::ParseMessage(
+    T* msg, const char* ptr) {
   int size = ReadSize(&ptr);
   if (!ptr) return nullptr;
   auto old = PushLimit(ptr, size);
@@ -692,23 +707,25 @@ inline bool VerifyUTF8(const std::string* s, const char* field_name) {
 }
 
 // All the string parsers with or without UTF checking and for all CTypes.
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* InlineGreedyStringParser(std::string* s,
-                                                                              const char* ptr,
-                                                                              ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* InlineGreedyStringParser(
+    std::string* s, const char* ptr, ParseContext* ctx);
+
 
 // Add any of the following lines to debug which parse function is failing.
 
 #define GOOGLE_PROTOBUF_ASSERT_RETURN(predicate, ret) \
-  if (!(predicate)) {                                 \
-    /*  ::raise(SIGINT);  */                          \
-    /*  GOOGLE_LOG(ERROR) << "Parse failure";  */     \
-    return ret;                                       \
+  if (!(predicate)) {                                  \
+    /*  ::raise(SIGINT);  */                           \
+    /*  GOOGLE_LOG(ERROR) << "Parse failure";  */             \
+    return ret;                                        \
   }
 
-#define GOOGLE_PROTOBUF_PARSER_ASSERT(predicate) GOOGLE_PROTOBUF_ASSERT_RETURN(predicate, nullptr)
+#define GOOGLE_PROTOBUF_PARSER_ASSERT(predicate) \
+  GOOGLE_PROTOBUF_ASSERT_RETURN(predicate, nullptr)
 
 template <typename T>
-PROTOBUF_MUST_USE_RESULT const char* FieldParser(uint64 tag, T& field_parser, const char* ptr,
+PROTOBUF_MUST_USE_RESULT const char* FieldParser(uint64 tag, T& field_parser,
+                                                 const char* ptr,
                                                  ParseContext* ctx) {
   uint32 number = tag >> 3;
   GOOGLE_PROTOBUF_PARSER_ASSERT(number != 0);
@@ -754,7 +771,8 @@ PROTOBUF_MUST_USE_RESULT const char* FieldParser(uint64 tag, T& field_parser, co
 }
 
 template <typename T>
-PROTOBUF_MUST_USE_RESULT const char* WireFormatParser(T& field_parser, const char* ptr,
+PROTOBUF_MUST_USE_RESULT const char* WireFormatParser(T& field_parser,
+                                                      const char* ptr,
                                                       ParseContext* ctx) {
   while (!ctx->Done(&ptr)) {
     uint32 tag;
@@ -774,85 +792,73 @@ PROTOBUF_MUST_USE_RESULT const char* WireFormatParser(T& field_parser, const cha
 // corresponding field
 
 // These are packed varints
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedInt32Parser(void* object,
-                                                                       const char* ptr,
-                                                                       ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedUInt32Parser(void* object,
-                                                                        const char* ptr,
-                                                                        ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedInt64Parser(void* object,
-                                                                       const char* ptr,
-                                                                       ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedUInt64Parser(void* object,
-                                                                        const char* ptr,
-                                                                        ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedSInt32Parser(void* object,
-                                                                        const char* ptr,
-                                                                        ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedSInt64Parser(void* object,
-                                                                        const char* ptr,
-                                                                        ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedEnumParser(void* object, const char* ptr,
-                                                                      ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedInt32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedUInt32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedInt64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedUInt64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedSInt32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedSInt64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedEnumParser(
+    void* object, const char* ptr, ParseContext* ctx);
 
 template <typename T>
-PROTOBUF_MUST_USE_RESULT const char* PackedEnumParser(void* object, const char* ptr,
-                                                      ParseContext* ctx, bool (*is_valid)(int),
-                                                      InternalMetadata* metadata, int field_num) {
-  return ctx->ReadPackedVarint(ptr, [object, is_valid, metadata, field_num](uint64 val) {
-    if (is_valid(val)) {
-      static_cast<RepeatedField<int>*>(object)->Add(val);
-    } else {
-      WriteVarint(field_num, val, metadata->mutable_unknown_fields<T>());
-    }
-  });
+PROTOBUF_MUST_USE_RESULT const char* PackedEnumParser(
+    void* object, const char* ptr, ParseContext* ctx, bool (*is_valid)(int),
+    InternalMetadata* metadata, int field_num) {
+  return ctx->ReadPackedVarint(
+      ptr, [object, is_valid, metadata, field_num](uint64 val) {
+        if (is_valid(val)) {
+          static_cast<RepeatedField<int>*>(object)->Add(val);
+        } else {
+          WriteVarint(field_num, val, metadata->mutable_unknown_fields<T>());
+        }
+      });
 }
 
 template <typename T>
 PROTOBUF_MUST_USE_RESULT const char* PackedEnumParserArg(
-    void* object, const char* ptr, ParseContext* ctx, bool (*is_valid)(const void*, int),
-    const void* data, InternalMetadata* metadata, int field_num) {
-  return ctx->ReadPackedVarint(ptr, [object, is_valid, data, metadata, field_num](uint64 val) {
-    if (is_valid(data, val)) {
-      static_cast<RepeatedField<int>*>(object)->Add(val);
-    } else {
-      WriteVarint(field_num, val, metadata->mutable_unknown_fields<T>());
-    }
-  });
+    void* object, const char* ptr, ParseContext* ctx,
+    bool (*is_valid)(const void*, int), const void* data,
+    InternalMetadata* metadata, int field_num) {
+  return ctx->ReadPackedVarint(
+      ptr, [object, is_valid, data, metadata, field_num](uint64 val) {
+        if (is_valid(data, val)) {
+          static_cast<RepeatedField<int>*>(object)->Add(val);
+        } else {
+          WriteVarint(field_num, val, metadata->mutable_unknown_fields<T>());
+        }
+      });
 }
 
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedBoolParser(void* object, const char* ptr,
-                                                                      ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedFixed32Parser(void* object,
-                                                                         const char* ptr,
-                                                                         ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedSFixed32Parser(void* object,
-                                                                          const char* ptr,
-                                                                          ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedFixed64Parser(void* object,
-                                                                         const char* ptr,
-                                                                         ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedSFixed64Parser(void* object,
-                                                                          const char* ptr,
-                                                                          ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedFloatParser(void* object,
-                                                                       const char* ptr,
-                                                                       ParseContext* ctx);
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedDoubleParser(void* object,
-                                                                        const char* ptr,
-                                                                        ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedBoolParser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedFixed32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedSFixed32Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedFixed64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedSFixed64Parser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedFloatParser(
+    void* object, const char* ptr, ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* PackedDoubleParser(
+    void* object, const char* ptr, ParseContext* ctx);
 
 // This is the only recursive parser.
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* UnknownGroupLiteParse(std::string* unknown,
-                                                                           const char* ptr,
-                                                                           ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* UnknownGroupLiteParse(
+    std::string* unknown, const char* ptr, ParseContext* ctx);
 // This is a helper to for the UnknownGroupLiteParse but is actually also
 // useful in the generated code. It uses overload on std::string* vs
 // UnknownFieldSet* to make the generated code isomorphic between full and lite.
-PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* UnknownFieldParse(uint32 tag,
-                                                                       std::string* unknown,
-                                                                       const char* ptr,
-                                                                       ParseContext* ctx);
+PROTOBUF_EXPORT PROTOBUF_MUST_USE_RESULT const char* UnknownFieldParse(
+    uint32 tag, std::string* unknown, const char* ptr, ParseContext* ctx);
 
 }  // namespace internal
 }  // namespace protobuf

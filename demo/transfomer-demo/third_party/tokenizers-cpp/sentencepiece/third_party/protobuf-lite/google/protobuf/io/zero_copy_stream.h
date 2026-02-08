@@ -107,10 +107,12 @@
 #ifndef GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_H__
 #define GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_H__
 
-#include <google/protobuf/stubs/common.h>
 
-#include <google/protobuf/port_def.inc>
 #include <string>
+
+#include <google/protobuf/stubs/common.h>
+#include <google/protobuf/port_def.inc>
+
 
 namespace google {
 namespace protobuf {
@@ -171,6 +173,7 @@ class PROTOBUF_EXPORT ZeroCopyInputStream {
 
   // Returns the total number of bytes read since this object was created.
   virtual int64_t ByteCount() const = 0;
+
 
  private:
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(ZeroCopyInputStream);
@@ -235,6 +238,7 @@ class PROTOBUF_EXPORT ZeroCopyOutputStream {
   // remains live until all of the data has been consumed from the stream.
   virtual bool WriteAliasedRaw(const void* data, int size);
   virtual bool AllowsAliasing() const { return false; }
+
 
  private:
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(ZeroCopyOutputStream);

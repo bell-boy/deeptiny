@@ -16,61 +16,64 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  namespace detail {
+namespace detail {
 
-  template <typename VisitorHolder>
-  class context;
+template <typename VisitorHolder>
+class context;
 
-  }  // namespace detail
+} // detail
 
-  /// Parsing class for a stream deserialization.
 
-  template <typename VisitorHolder, typename ReferencedBufferHook>
-  class parser;
+/// Parsing class for a stream deserialization.
 
-  /// Unpack msgpack formatted data via a visitor
-  /**
-   * @param data The pointer to the buffer.
-   * @param len The length of the buffer.
-   * @param off The offset position of the buffer. It is read and overwritten.
-   * @param v The visitor that satisfies visitor concept.
-   * https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_visitor#visitor-concept
-   *
-   * @return if unpacking process finishes without error then return true, otherwise return false.
-   *
-   */
-  template <typename Visitor>
-  bool parse(const char* data, size_t len, size_t& off, Visitor& v);
+template <typename VisitorHolder, typename ReferencedBufferHook>
+class parser;
 
-  /// Unpack msgpack formatted data via a visitor
-  /**
-   * @param data The pointer to the buffer.
-   * @param len The length of the buffer.
-   * @param v The visitor that satisfies visitor concept.
-   * https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_visitor#visitor-concept
-   *
-   * @return if unpacking process finishes without error then return true, otherwise return false.
-   *
-   */
-  template <typename Visitor>
-  bool parse(const char* data, size_t len, Visitor& v);
 
-  namespace detail {
+/// Unpack msgpack formatted data via a visitor
+/**
+ * @param data The pointer to the buffer.
+ * @param len The length of the buffer.
+ * @param off The offset position of the buffer. It is read and overwritten.
+ * @param v The visitor that satisfies visitor concept. https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_visitor#visitor-concept
+ *
+ * @return if unpacking process finishes without error then return true, otherwise return false.
+ *
+ */
+template <typename Visitor>
+bool parse(const char* data, size_t len, size_t& off, Visitor& v);
 
-  template <typename Visitor>
-  struct parse_helper;
 
-  template <typename Visitor>
-  inline parse_return parse_imp(const char* data, size_t len, size_t& off, Visitor& v);
+/// Unpack msgpack formatted data via a visitor
+/**
+ * @param data The pointer to the buffer.
+ * @param len The length of the buffer.
+ * @param v The visitor that satisfies visitor concept. https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_visitor#visitor-concept
+ *
+ * @return if unpacking process finishes without error then return true, otherwise return false.
+ *
+ */
+template <typename Visitor>
+bool parse(const char* data, size_t len, Visitor& v);
 
-  }  // namespace detail
+namespace detail {
 
-  /// @cond
+template <typename Visitor>
+struct parse_helper;
+
+template <typename Visitor>
+inline parse_return
+parse_imp(const char* data, size_t len, size_t& off, Visitor& v);
+
+} // detail
+
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V2_PARSE_DECL_HPP
+
+#endif // MSGPACK_V2_PARSE_DECL_HPP

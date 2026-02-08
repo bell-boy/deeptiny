@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp17/string_view.hpp"
 
-#endif  // MSGPACK_TYPE_CPP17_STRING_VIEW_HPP
+#endif // MSGPACK_TYPE_CPP17_STRING_VIEW_HPP

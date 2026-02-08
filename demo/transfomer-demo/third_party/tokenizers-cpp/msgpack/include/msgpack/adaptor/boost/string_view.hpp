@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/boost/string_view.hpp"
 
-#endif  // MSGPACK_TYPE_BOOST_STRING_VIEW_HPP
+#endif // MSGPACK_TYPE_BOOST_STRING_VIEW_HPP

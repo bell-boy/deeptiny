@@ -1,8 +1,9 @@
-#include <google/protobuf/stubs/stringprintf.h>
-#include <google/protobuf/stubs/strutil.h>
 #include <google/protobuf/stubs/time.h>
 
 #include <ctime>
+
+#include <google/protobuf/stubs/stringprintf.h>
+#include <google/protobuf/stubs/strutil.h>
 
 namespace google {
 namespace protobuf {
@@ -12,7 +13,8 @@ namespace {
 static const int64 kSecondsPerMinute = 60;
 static const int64 kSecondsPerHour = 3600;
 static const int64 kSecondsPerDay = kSecondsPerHour * 24;
-static const int64 kSecondsPer400Years = kSecondsPerDay * (400 * 365 + 400 / 4 - 3);
+static const int64 kSecondsPer400Years =
+    kSecondsPerDay * (400 * 365 + 400 / 4 - 3);
 // Seconds from 0001-01-01T00:00:00 to 1970-01-01T:00:00:00
 static const int64 kSecondsFromEraToEpoch = 62135596800LL;
 // The range of timestamp values we support.
@@ -35,7 +37,8 @@ int64 SecondsPer100Years(int year) {
 // Count the seconds from the given year (start at Jan 1, 00:00) to 4 years
 // after.
 int64 SecondsPer4Years(int year) {
-  if ((year % 100 == 0 || year % 100 > 96) && !(year % 400 == 0 || year % 400 > 396)) {
+  if ((year % 100 == 0 || year % 100 > 96) &&
+      !(year % 400 == 0 || year % 400 > 396)) {
     // No leap years.
     return kSecondsPerDay * (4 * 365);
   } else {
@@ -44,11 +47,17 @@ int64 SecondsPer4Years(int year) {
   }
 }
 
-bool IsLeapYear(int year) { return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0); }
+bool IsLeapYear(int year) {
+  return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
+}
 
-int64 SecondsPerYear(int year) { return kSecondsPerDay * (IsLeapYear(year) ? 366 : 365); }
+int64 SecondsPerYear(int year) {
+  return kSecondsPerDay * (IsLeapYear(year) ? 366 : 365);
+}
 
-static const int kDaysInMonth[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+static const int kDaysInMonth[13] = {
+  0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+};
 
 int64 SecondsPerMonth(int month, bool leap) {
   if (month == 2 && leap) {
@@ -58,12 +67,15 @@ int64 SecondsPerMonth(int month, bool leap) {
 }
 
 static const int kDaysSinceJan[13] = {
-    0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334,
+  0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334,
 };
 
 bool ValidateDateTime(const DateTime& time) {
-  if (time.year < 1 || time.year > 9999 || time.month < 1 || time.month > 12 || time.day < 1 ||
-      time.day > 31 || time.hour < 0 || time.hour > 23 || time.minute < 0 || time.minute > 59 ||
+  if (time.year < 1 || time.year > 9999 ||
+      time.month < 1 || time.month > 12 ||
+      time.day < 1 || time.day > 31 ||
+      time.hour < 0 || time.hour > 23 ||
+      time.minute < 0 || time.minute > 59 ||
       time.second < 0 || time.second > 59) {
     return false;
   }
@@ -105,10 +117,14 @@ int64 SecondsSinceCommonEra(const DateTime& time) {
   if (month > 2 && IsLeapYear(year)) {
     result += kSecondsPerDay;
   }
-  assert(time.day >= 1 && time.day <= (month == 2 && IsLeapYear(year) ? kDaysInMonth[month] + 1
-                                                                      : kDaysInMonth[month]));
+  assert(time.day >= 1 &&
+         time.day <= (month == 2 && IsLeapYear(year)
+                          ? kDaysInMonth[month] + 1
+                          : kDaysInMonth[month]));
   result += kSecondsPerDay * (time.day - 1);
-  result += kSecondsPerHour * time.hour + kSecondsPerMinute * time.minute + time.second;
+  result += kSecondsPerHour * time.hour +
+      kSecondsPerMinute * time.minute +
+      time.second;
   return result;
 }
 
@@ -128,7 +144,8 @@ std::string FormatNanos(int32 nanos) {
 // consumes at most "width" chars. Returns a pointer after the consumed
 // integer, or nullptr if the data does not start with an integer or the
 // integer value does not fall in the range of [min_value, max_value].
-const char* ParseInt(const char* data, int width, int min_value, int max_value, int* result) {
+const char* ParseInt(const char* data, int width, int min_value,
+                     int max_value, int* result) {
   if (!ascii_isdigit(*data)) {
     return nullptr;
   }
@@ -256,8 +273,9 @@ std::string FormatTime(int64 seconds, int32 nanos) {
   if (nanos < 0 || nanos > 999999999 || !SecondsToDateTime(seconds, &time)) {
     return "InvalidTime";
   }
-  std::string result = StringPrintf("%04d-%02d-%02dT%02d:%02d:%02d", time.year, time.month,
-                                    time.day, time.hour, time.minute, time.second);
+  std::string result =
+      StringPrintf("%04d-%02d-%02dT%02d:%02d:%02d", time.year, time.month,
+                   time.day, time.hour, time.minute, time.second);
   if (nanos != 0) {
     result += "." + FormatNanos(nanos);
   }

@@ -29,10 +29,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <google/protobuf/stubs/bytestream.h>
-#include <google/protobuf/stubs/logging.h>
-#include <string.h>
 
+#include <string.h>
 #include <algorithm>
+
+#include <google/protobuf/stubs/logging.h>
 
 namespace google {
 namespace protobuf {
@@ -65,7 +66,8 @@ void UncheckedArrayByteSink::Append(const char* data, size_t n) {
 }
 
 CheckedArrayByteSink::CheckedArrayByteSink(char* outbuf, size_t capacity)
-    : outbuf_(outbuf), capacity_(capacity), size_(0), overflowed_(false) {}
+    : outbuf_(outbuf), capacity_(capacity), size_(0), overflowed_(false) {
+}
 
 void CheckedArrayByteSink::Append(const char* bytes, size_t n) {
   size_t available = capacity_ - size_;
@@ -83,7 +85,10 @@ void CheckedArrayByteSink::Append(const char* bytes, size_t n) {
 }
 
 GrowingArrayByteSink::GrowingArrayByteSink(size_t estimated_size)
-    : capacity_(estimated_size), buf_(new char[estimated_size]), size_(0) {}
+    : capacity_(estimated_size),
+      buf_(new char[estimated_size]),
+      size_(0) {
+}
 
 GrowingArrayByteSink::~GrowingArrayByteSink() {
   delete[] buf_;  // Just in case the user didn't call GetBuffer.
@@ -136,19 +141,27 @@ void GrowingArrayByteSink::ShrinkToFit() {
   }
 }
 
-void StringByteSink::Append(const char* data, size_t n) { dest_->append(data, n); }
+void StringByteSink::Append(const char* data, size_t n) {
+  dest_->append(data, n);
+}
 
-size_t ArrayByteSource::Available() const { return input_.size(); }
+size_t ArrayByteSource::Available() const {
+  return input_.size();
+}
 
-StringPiece ArrayByteSource::Peek() { return input_; }
+StringPiece ArrayByteSource::Peek() {
+  return input_;
+}
 
 void ArrayByteSource::Skip(size_t n) {
   GOOGLE_DCHECK_LE(n, input_.size());
   input_.remove_prefix(n);
 }
 
-LimitByteSource::LimitByteSource(ByteSource* source, size_t limit)
-    : source_(source), limit_(limit) {}
+LimitByteSource::LimitByteSource(ByteSource *source, size_t limit)
+  : source_(source),
+    limit_(limit) {
+}
 
 size_t LimitByteSource::Available() const {
   size_t available = source_->Available();
@@ -174,7 +187,7 @@ void LimitByteSource::Skip(size_t n) {
   limit_ -= n;
 }
 
-void LimitByteSource::CopyTo(ByteSink* sink, size_t n) {
+void LimitByteSource::CopyTo(ByteSink *sink, size_t n) {
   GOOGLE_DCHECK_LE(n, limit_);
   source_->CopyTo(sink, n);
   limit_ -= n;

@@ -9,8 +9,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_HARDWARE_SIMD_X86_AMD_H
 #define MSGPACK_PREDEF_HARDWARE_SIMD_X86_AMD_H
 
-#include <msgpack/predef/hardware/simd/x86_amd/versions.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/hardware/simd/x86_amd/versions.h>
 
 /*`
  [heading `MSGPACK_HW_SIMD_X86_AMD`]
@@ -57,26 +57,26 @@ http://www.boost.org/LICENSE_1_0.txt)
 
 #undef MSGPACK_HW_SIMD_X86_AMD
 #if !defined(MSGPACK_HW_SIMD_X86_AMD) && defined(__XOP__)
-#define MSGPACK_HW_SIMD_X86_AMD MSGPACK_HW_SIMD_X86_AMD_XOP_VERSION
+#   define MSGPACK_HW_SIMD_X86_AMD MSGPACK_HW_SIMD_X86_AMD_XOP_VERSION
 #endif
 #if !defined(MSGPACK_HW_SIMD_X86_AMD) && defined(__FMA4__)
-#define MSGPACK_HW_SIMD_X86_AMD MSGPACK_HW_SIMD_X86_AMD_FMA4_VERSION
+#   define MSGPACK_HW_SIMD_X86_AMD MSGPACK_HW_SIMD_X86_AMD_FMA4_VERSION
 #endif
 #if !defined(MSGPACK_HW_SIMD_X86_AMD) && defined(__SSE4A__)
-#define MSGPACK_HW_SIMD_X86_AMD MSGPACK_HW_SIMD_X86_AMD_SSE4A_VERSION
+#   define MSGPACK_HW_SIMD_X86_AMD MSGPACK_HW_SIMD_X86_AMD_SSE4A_VERSION
 #endif
 
 #if !defined(MSGPACK_HW_SIMD_X86_AMD)
-#define MSGPACK_HW_SIMD_X86_AMD MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
+#   define MSGPACK_HW_SIMD_X86_AMD MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 #else
-// At this point, we know that we have an AMD CPU, we do need to check for
-// other x86 extensions to determine the final version number.
-#include <msgpack/predef/hardware/simd/x86.h>
-#if MSGPACK_HW_SIMD_X86 > MSGPACK_HW_SIMD_X86_AMD
-#undef MSGPACK_HW_SIMD_X86_AMD
-#define MSGPACK_HW_SIMD_X86_AMD MSGPACK_HW_SIMD_X86
-#endif
-#define MSGPACK_HW_SIMD_X86_AMD_AVAILABLE
+    // At this point, we know that we have an AMD CPU, we do need to check for
+    // other x86 extensions to determine the final version number.
+#   include <msgpack/predef/hardware/simd/x86.h>
+#   if MSGPACK_HW_SIMD_X86 > MSGPACK_HW_SIMD_X86_AMD
+#      undef MSGPACK_HW_SIMD_X86_AMD
+#      define MSGPACK_HW_SIMD_X86_AMD MSGPACK_HW_SIMD_X86
+#   endif
+#   define MSGPACK_HW_SIMD_X86_AMD_AVAILABLE
 #endif
 
 #define MSGPACK_HW_SIMD_X86_AMD_NAME "x86 (AMD) SIMD"

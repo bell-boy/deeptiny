@@ -33,7 +33,7 @@ namespace sentencepiece {
 
 #define PARSE_REPEATED_STRING(param_name)                       \
   if (name == #param_name) {                                    \
-    for (const std::string& val : util::StrSplitAsCSV(value)) { \
+    for (const std::string &val : util::StrSplitAsCSV(value)) { \
       message->add_##param_name(val);                           \
     }                                                           \
     return util::OkStatus();                                    \
@@ -47,7 +47,7 @@ namespace sentencepiece {
 
 #define PARSE_INT32(param_name)                                               \
   if (name == #param_name) {                                                  \
-    int32_t v;                                                                \
+    int32_t v;                                                                  \
     if (!string_util::lexical_cast(value, &v))                                \
       return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC) \
              << "cannot parse \"" << value << "\" as int.";                   \
@@ -57,7 +57,7 @@ namespace sentencepiece {
 
 #define PARSE_UINT64(param_name)                                              \
   if (name == #param_name) {                                                  \
-    uint64_t v;                                                               \
+    uint64_t v;                                                                 \
     if (!string_util::lexical_cast(value, &v))                                \
       return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC) \
              << "cannot parse \"" << value << "\" as int.";                   \
@@ -85,20 +85,23 @@ namespace sentencepiece {
     return util::OkStatus();                                                  \
   }
 
-#define PARSE_ENUM(param_name, map_name)                                             \
-  if (name == #param_name) {                                                         \
-    const auto it = map_name.find(absl::AsciiStrToUpper(value));                     \
-    if (it == map_name.end())                                                        \
-      return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC)        \
-             << "unknown enumeration value of \"" << value << "\" as " << #map_name; \
-    message->set_##param_name(it->second);                                           \
-    return util::OkStatus();                                                         \
+#define PARSE_ENUM(param_name, map_name)                                      \
+  if (name == #param_name) {                                                  \
+    const auto it = map_name.find(absl::AsciiStrToUpper(value));              \
+    if (it == map_name.end())                                                 \
+      return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC) \
+             << "unknown enumeration value of \"" << value << "\" as "        \
+             << #map_name;                                                    \
+    message->set_##param_name(it->second);                                    \
+    return util::OkStatus();                                                  \
   }
 
-#define PRINT_PARAM(param_name) os << "  " << #param_name << ": " << message.param_name() << "\n";
+#define PRINT_PARAM(param_name) \
+  os << "  " << #param_name << ": " << message.param_name() << "\n";
 
-#define PRINT_REPEATED_STRING(param_name) \
-  for (const auto& v : message.param_name()) os << "  " << #param_name << ": " << v << "\n";
+#define PRINT_REPEATED_STRING(param_name)    \
+  for (const auto &v : message.param_name()) \
+    os << "  " << #param_name << ": " << v << "\n";
 
 #define PRINT_ENUM(param_name, map_name)               \
   const auto it = map_name.find(message.param_name()); \
@@ -107,7 +110,8 @@ namespace sentencepiece {
   else                                                 \
     os << "  " << #param_name << ": " << it->second << "\n";
 
-inline std::string PrintProto(const TrainerSpec& message, absl::string_view name) {
+inline std::string PrintProto(const TrainerSpec &message,
+                              absl::string_view name) {
   std::ostringstream os;
 
   os << name << " {\n";
@@ -170,7 +174,8 @@ inline std::string PrintProto(const TrainerSpec& message, absl::string_view name
   return os.str();
 }
 
-inline std::string PrintProto(const NormalizerSpec& message, absl::string_view name) {
+inline std::string PrintProto(const NormalizerSpec &message,
+                              absl::string_view name) {
   std::ostringstream os;
 
   os << name << " {\n";
@@ -186,8 +191,9 @@ inline std::string PrintProto(const NormalizerSpec& message, absl::string_view n
   return os.str();
 }
 
-util::Status SentencePieceTrainer::SetProtoField(absl::string_view name, absl::string_view value,
-                                                 TrainerSpec* message) {
+util::Status SentencePieceTrainer::SetProtoField(absl::string_view name,
+                                                 absl::string_view value,
+                                                 TrainerSpec *message) {
   CHECK_OR_RETURN(message);
 
   PARSE_REPEATED_STRING(input);
@@ -247,8 +253,9 @@ util::Status SentencePieceTrainer::SetProtoField(absl::string_view name, absl::s
          << "unknown field name \"" << name << "\" in TrainerSpec.";
 }
 
-util::Status SentencePieceTrainer::SetProtoField(absl::string_view name, absl::string_view value,
-                                                 NormalizerSpec* message) {
+util::Status SentencePieceTrainer::SetProtoField(absl::string_view name,
+                                                 absl::string_view value,
+                                                 NormalizerSpec *message) {
   CHECK_OR_RETURN(message);
 
   PARSE_STRING(name);

@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_ARCHITECTURE_PYRAMID_H
 #define MSGPACK_PREDEF_ARCHITECTURE_PYRAMID_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_ARCH_PYRAMID`]
@@ -26,12 +26,12 @@ Pyramid 9810 architecture.
 #define MSGPACK_ARCH_PYRAMID MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(pyr)
-#undef MSGPACK_ARCH_PYRAMID
-#define MSGPACK_ARCH_PYRAMID MSGPACK_VERSION_NUMBER_AVAILABLE
+#   undef MSGPACK_ARCH_PYRAMID
+#   define MSGPACK_ARCH_PYRAMID MSGPACK_VERSION_NUMBER_AVAILABLE
 #endif
 
 #if MSGPACK_ARCH_PYRAMID
-#define MSGPACK_ARCH_PYRAMID_AVAILABLE
+#   define MSGPACK_ARCH_PYRAMID_AVAILABLE
 #endif
 
 #define MSGPACK_ARCH_PYRAMID_NAME "Pyramid 9810"
@@ -39,4 +39,4 @@ Pyramid 9810 architecture.
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_PYRAMID, MSGPACK_ARCH_PYRAMID_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_PYRAMID,MSGPACK_ARCH_PYRAMID_NAME)

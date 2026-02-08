@@ -30,9 +30,11 @@ ABSL_FLAG(bool, use_internal_normalization, false,
 ABSL_FLAG(std::string, normalization_rule_name, "",
           "Normalization rule name. "
           "Choose from nfkc or identity");
-ABSL_FLAG(std::string, normalization_rule_tsv, "", "Normalization rule TSV file. ");
+ABSL_FLAG(std::string, normalization_rule_tsv, "",
+          "Normalization rule TSV file. ");
 ABSL_FLAG(bool, remove_extra_whitespaces, true, "Remove extra whitespaces");
-ABSL_FLAG(bool, decompile, false, "Decompile compiled charamap and output it as TSV.");
+ABSL_FLAG(bool, decompile, false,
+          "Decompile compiled charamap and output it as TSV.");
 ABSL_FLAG(std::string, input, "", "Input filename");
 ABSL_FLAG(std::string, output, "", "Output filename");
 
@@ -43,7 +45,7 @@ using sentencepiece::SentencePieceTrainer;
 using sentencepiece::normalizer::Builder;
 using sentencepiece::normalizer::Normalizer;
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   sentencepiece::ScopedResourceDestructor cleaner;
   sentencepiece::ParseCommandLineFlags(argv[0], &argc, &argv, true);
   std::vector<std::string> rest_args;
@@ -64,7 +66,8 @@ int main(int argc, char* argv[]) {
     QCHECK_OK(sp.Load(absl::GetFlag(FLAGS_model)));
     spec = sp.model_proto().normalizer_spec();
   } else if (!absl::GetFlag(FLAGS_normalization_rule_tsv).empty()) {
-    spec.set_normalization_rule_tsv(absl::GetFlag(FLAGS_normalization_rule_tsv));
+    spec.set_normalization_rule_tsv(
+        absl::GetFlag(FLAGS_normalization_rule_tsv));
     QCHECK_OK(SentencePieceTrainer::PopulateNormalizerSpec(&spec));
   } else if (!absl::GetFlag(FLAGS_normalization_rule_name).empty()) {
     spec.set_name(absl::GetFlag(FLAGS_normalization_rule_name));
@@ -78,16 +81,19 @@ int main(int argc, char* argv[]) {
   if (!absl::GetFlag(FLAGS_use_internal_normalization)) {
     spec.set_add_dummy_prefix(false);    // do not add dummy prefix.
     spec.set_escape_whitespaces(false);  // do not output meta symbol.
-    spec.set_remove_extra_whitespaces(absl::GetFlag(FLAGS_remove_extra_whitespaces));
+    spec.set_remove_extra_whitespaces(
+        absl::GetFlag(FLAGS_remove_extra_whitespaces));
   }
 
   if (absl::GetFlag(FLAGS_decompile)) {
     Builder::CharsMap chars_map;
-    QCHECK_OK(Builder::DecompileCharsMap(spec.precompiled_charsmap(), &chars_map));
+    QCHECK_OK(
+        Builder::DecompileCharsMap(spec.precompiled_charsmap(), &chars_map));
     QCHECK_OK(Builder::SaveCharsMap(absl::GetFlag(FLAGS_output), chars_map));
   } else {
     const Normalizer normalizer(spec);
-    auto output = sentencepiece::filesystem::NewWritableFile(absl::GetFlag(FLAGS_output));
+    auto output =
+        sentencepiece::filesystem::NewWritableFile(absl::GetFlag(FLAGS_output));
     QCHECK_OK(output->status());
 
     if (rest_args.empty()) {
@@ -95,7 +101,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string line;
-    for (const auto& filename : rest_args) {
+    for (const auto &filename : rest_args) {
       auto input = sentencepiece::filesystem::NewReadableFile(filename);
       CHECK_OK(input->status());
       while (input->ReadLine(&line)) {

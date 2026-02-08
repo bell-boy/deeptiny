@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.!
 
-#include "char_model.h"
-
 #include <string>
 
+#include "char_model.h"
 #include "testharness.h"
 #include "util.h"
 
@@ -28,9 +27,9 @@ namespace {
 
 ModelProto MakeBaseModelProto() {
   ModelProto model_proto;
-  auto* sp1 = model_proto.add_pieces();
-  auto* sp2 = model_proto.add_pieces();
-  auto* sp3 = model_proto.add_pieces();
+  auto *sp1 = model_proto.add_pieces();
+  auto *sp2 = model_proto.add_pieces();
+  auto *sp3 = model_proto.add_pieces();
 
   sp1->set_type(ModelProto::SentencePiece::UNKNOWN);
   sp1->set_piece("<unk>");
@@ -42,8 +41,9 @@ ModelProto MakeBaseModelProto() {
   return model_proto;
 }
 
-void AddPiece(ModelProto* model_proto, const std::string& piece, float score = 0.0) {
-  auto* sp = model_proto->add_pieces();
+void AddPiece(ModelProto *model_proto, const std::string &piece,
+              float score = 0.0) {
+  auto *sp = model_proto->add_pieces();
   sp->set_piece(piece);
   sp->set_score(score);
 }
@@ -57,7 +57,8 @@ TEST(ModelTest, EncodeTest) {
   AddPiece(&model_proto, "c", 0.3);
   AddPiece(&model_proto, "d", 0.4);
   AddPiece(&model_proto, "ABC", 0.4);
-  model_proto.mutable_pieces(8)->set_type(ModelProto::SentencePiece::USER_DEFINED);
+  model_proto.mutable_pieces(8)->set_type(
+      ModelProto::SentencePiece::USER_DEFINED);
 
   const Model model(model_proto);
 

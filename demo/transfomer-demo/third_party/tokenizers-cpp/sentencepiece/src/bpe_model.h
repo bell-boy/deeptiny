@@ -29,7 +29,7 @@ namespace bpe {
 // https://en.wikipedia.org/wiki/Byte_pair_encoding
 class Model : public ModelInterface {
  public:
-  explicit Model(const ModelProto& model_proto);
+  explicit Model(const ModelProto &model_proto);
   ~Model() override;
 
   EncodeResult Encode(absl::string_view normalized) const override {
@@ -40,7 +40,8 @@ class Model : public ModelInterface {
   // `alpha` is dropout probability in BPE-dropout paper.
   // Skips merge operation with `alpha` probability.
   // When alpha <= 0.0, no sampling is performed.
-  EncodeResult SampleEncode(absl::string_view normalized, float alpha) const override;
+  EncodeResult SampleEncode(absl::string_view normalized,
+                            float alpha) const override;
 
   bool IsSampleEncodeAvailable() const override { return true; }
 

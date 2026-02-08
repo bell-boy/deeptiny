@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/unpack_exception.hpp"
 
-#endif  // MSGPACK_UNPACK_EXCEPTION_HPP
+#endif // MSGPACK_UNPACK_EXCEPTION_HPP

@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp20/span.hpp"
 
-#endif  // MSGPACK_TYPE_CPP20_SPAN_HPP
+#endif // MSGPACK_TYPE_CPP20_SPAN_HPP

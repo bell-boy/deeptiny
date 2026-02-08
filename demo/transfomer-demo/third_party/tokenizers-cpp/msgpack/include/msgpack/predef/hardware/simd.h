@@ -6,10 +6,10 @@ Distributed under the Boost Software License, Version 1.0.
 http://www.boost.org/LICENSE_1_0.txt)
 */
 
-#include <msgpack/predef/hardware/simd/arm.h>
-#include <msgpack/predef/hardware/simd/ppc.h>
 #include <msgpack/predef/hardware/simd/x86.h>
 #include <msgpack/predef/hardware/simd/x86_amd.h>
+#include <msgpack/predef/hardware/simd/arm.h>
+#include <msgpack/predef/hardware/simd/ppc.h>
 
 #ifndef MSGPACK_PREDEF_HARDWARE_SIMD_H
 #define MSGPACK_PREDEF_HARDWARE_SIMD_H
@@ -71,44 +71,44 @@ http://www.boost.org/LICENSE_1_0.txt)
 //
 // NOTE: _X86_AMD implies _X86, so there is no need to check for it here!
 //
-#if defined(MSGPACK_HW_SIMD_ARM_AVAILABLE) && defined(MSGPACK_HW_SIMD_PPC_AVAILABLE) || \
-    defined(MSGPACK_HW_SIMD_ARM_AVAILABLE) && defined(MSGPACK_HW_SIMD_X86_AVAILABLE) || \
+#if defined(MSGPACK_HW_SIMD_ARM_AVAILABLE) && defined(MSGPACK_HW_SIMD_PPC_AVAILABLE) ||\
+    defined(MSGPACK_HW_SIMD_ARM_AVAILABLE) && defined(MSGPACK_HW_SIMD_X86_AVAILABLE) ||\
     defined(MSGPACK_HW_SIMD_PPC_AVAILABLE) && defined(MSGPACK_HW_SIMD_X86_AVAILABLE)
-#error "Multiple SIMD architectures detected, this cannot happen!"
+#   error "Multiple SIMD architectures detected, this cannot happen!"
 #endif
 
 #if defined(MSGPACK_HW_SIMD_X86_AVAILABLE) && defined(MSGPACK_HW_SIMD_X86_AMD_AVAILABLE)
-// If both standard _X86 and _X86_AMD are available,
-// then take the biggest version of the two!
-#if MSGPACK_HW_SIMD_X86 >= MSGPACK_HW_SIMD_X86_AMD
-#define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_X86
-#else
-#define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_X86_AMD
-#endif
+    // If both standard _X86 and _X86_AMD are available,
+    // then take the biggest version of the two!
+#   if MSGPACK_HW_SIMD_X86 >= MSGPACK_HW_SIMD_X86_AMD
+#      define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_X86
+#   else
+#      define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_X86_AMD
+#   endif
 #endif
 
 #if !defined(MSGPACK_HW_SIMD)
-// At this point, only one of these two is defined
-#if defined(MSGPACK_HW_SIMD_X86_AVAILABLE)
-#define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_X86
-#endif
-#if defined(MSGPACK_HW_SIMD_X86_AMD_AVAILABLE)
-#define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_X86_AMD
-#endif
+    // At this point, only one of these two is defined
+#   if defined(MSGPACK_HW_SIMD_X86_AVAILABLE)
+#      define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_X86
+#   endif
+#   if defined(MSGPACK_HW_SIMD_X86_AMD_AVAILABLE)
+#      define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_X86_AMD
+#   endif
 #endif
 
 #if defined(MSGPACK_HW_SIMD_ARM_AVAILABLE)
-#define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_ARM
+#   define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_ARM
 #endif
 
 #if defined(MSGPACK_HW_SIMD_PPC_AVAILABLE)
-#define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_PPC
+#   define MSGPACK_HW_SIMD MSGPACK_HW_SIMD_PPC
 #endif
 
 #if defined(MSGPACK_HW_SIMD)
-#define MSGPACK_HW_SIMD_AVAILABLE
+#   define MSGPACK_HW_SIMD_AVAILABLE
 #else
-#define MSGPACK_HW_SIMD MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
+#   define MSGPACK_HW_SIMD MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 #endif
 
 #define MSGPACK_HW_SIMD_NAME "Hardware SIMD"

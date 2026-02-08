@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/complex.hpp"
 
-#endif  // MSGPACK_TYPE_COMPLEX_HPP
+#endif // MSGPACK_TYPE_COMPLEX_HPP

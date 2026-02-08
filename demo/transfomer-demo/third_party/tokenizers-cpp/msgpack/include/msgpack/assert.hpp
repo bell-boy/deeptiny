@@ -21,6 +21,6 @@
 #include <boost/assert.hpp>
 #define MSGPACK_ASSERT BOOST_ASSERT
 
-#endif  // defined(MSGPACK_NO_BOOST)
+#endif // defined(MSGPACK_NO_BOOST)
 
-#endif  // MSGPACK_ASSERT_HPP
+#endif // MSGPACK_ASSERT_HPP

@@ -13,4 +13,4 @@
 #include "msgpack/v2/create_object_visitor_decl.hpp"
 #include "msgpack/v3/create_object_visitor_decl.hpp"
 
-#endif  // MSGPACK_CREATE_OBJECT_VISITOR_DECL_HPP
+#endif // MSGPACK_CREATE_OBJECT_VISITOR_DECL_HPP

@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp11/chrono.hpp"
 
-#endif  // MSGPACK_TYPE_CPP11_CHRONO_HPP
+#endif // MSGPACK_TYPE_CPP11_CHRONO_HPP

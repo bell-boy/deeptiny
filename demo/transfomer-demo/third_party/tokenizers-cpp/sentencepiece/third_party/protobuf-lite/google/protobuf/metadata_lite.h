@@ -31,12 +31,12 @@
 #ifndef GOOGLE_PROTOBUF_METADATA_LITE_H__
 #define GOOGLE_PROTOBUF_METADATA_LITE_H__
 
+#include <string>
+#include <google/protobuf/stubs/common.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/port.h>
-#include <google/protobuf/stubs/common.h>
 
 #include <google/protobuf/port_def.inc>
-#include <string>
 
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
@@ -77,12 +77,15 @@ class InternalMetadata {
     }
   }
 
-  PROTOBUF_ALWAYS_INLINE bool have_unknown_fields() const { return PtrTag() == kTagContainer; }
+  PROTOBUF_ALWAYS_INLINE bool have_unknown_fields() const {
+    return PtrTag() == kTagContainer;
+  }
 
   PROTOBUF_ALWAYS_INLINE void* raw_arena_ptr() const { return ptr_; }
 
   template <typename T>
-  PROTOBUF_ALWAYS_INLINE const T& unknown_fields(const T& (*default_instance)()) const {
+  PROTOBUF_ALWAYS_INLINE const T& unknown_fields(
+      const T& (*default_instance)()) const {
     if (PROTOBUF_PREDICT_FALSE(have_unknown_fields())) {
       return PtrValue<Container<T>>()->unknown_fields;
     } else {
@@ -146,7 +149,8 @@ class InternalMetadata {
 
   template <typename U>
   U* PtrValue() const {
-    return reinterpret_cast<U*>(reinterpret_cast<intptr_t>(ptr_) & kPtrValueMask);
+    return reinterpret_cast<U*>(reinterpret_cast<intptr_t>(ptr_) &
+                                kPtrValueMask);
   }
 
   // If ptr_'s tag is kTagContainer, it points to an instance of this struct.
@@ -166,7 +170,8 @@ class InternalMetadata {
     // Two-step assignment works around a bug in clang's static analyzer:
     // https://bugs.llvm.org/show_bug.cgi?id=34198.
     ptr_ = container;
-    ptr_ = reinterpret_cast<void*>(reinterpret_cast<intptr_t>(ptr_) | kTagContainer);
+    ptr_ = reinterpret_cast<void*>(reinterpret_cast<intptr_t>(ptr_) |
+                                   kTagContainer);
     container->arena = my_arena;
     return &(container->unknown_fields);
   }
@@ -197,7 +202,8 @@ inline void InternalMetadata::DoClear<std::string>() {
 }
 
 template <>
-inline void InternalMetadata::DoMergeFrom<std::string>(const std::string& other) {
+inline void InternalMetadata::DoMergeFrom<std::string>(
+    const std::string& other) {
   mutable_unknown_fields<std::string>()->append(other);
 }
 
@@ -216,13 +222,15 @@ inline void InternalMetadata::DoSwap<std::string>(std::string* other) {
 // guarantees that the string is only swapped after stream is destroyed.
 class PROTOBUF_EXPORT LiteUnknownFieldSetter {
  public:
-  explicit LiteUnknownFieldSetter(InternalMetadata* metadata) : metadata_(metadata) {
+  explicit LiteUnknownFieldSetter(InternalMetadata* metadata)
+      : metadata_(metadata) {
     if (metadata->have_unknown_fields()) {
       buffer_.swap(*metadata->mutable_unknown_fields<std::string>());
     }
   }
   ~LiteUnknownFieldSetter() {
-    if (!buffer_.empty()) metadata_->mutable_unknown_fields<std::string>()->swap(buffer_);
+    if (!buffer_.empty())
+      metadata_->mutable_unknown_fields<std::string>()->swap(buffer_);
   }
   std::string* buffer() { return &buffer_; }
 

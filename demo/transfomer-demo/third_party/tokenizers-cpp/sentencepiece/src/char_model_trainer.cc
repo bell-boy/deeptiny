@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.!
 
-#include "char_model_trainer.h"
-
 #include <cmath>
 
 #include "char_model.h"
+#include "char_model_trainer.h"
 #include "util.h"
 
 namespace sentencepiece {
@@ -34,19 +33,21 @@ util::Status Trainer::Train() {
   CHECK_GE_OR_RETURN(vocab_size, 0);
 
   uint64_t sum = 0;
-  for (const auto& it : required_chars_) {
+  for (const auto &it : required_chars_) {
     sum += it.second;
   }
 
   const auto logsum = std::log(static_cast<float>(sum));
 
   CHECK_OR_RETURN(final_pieces_.empty());
-  for (const auto& it : Sorted(required_chars_)) {
-    if (!trainer_spec_.use_all_vocab() && final_pieces_.size() == static_cast<size_t>(vocab_size)) {
+  for (const auto &it : Sorted(required_chars_)) {
+    if (!trainer_spec_.use_all_vocab() &&
+        final_pieces_.size() == static_cast<size_t>(vocab_size)) {
       break;
     }
-    final_pieces_.emplace_back(string_util::UnicodeCharToUTF8(it.first),
-                               std::log(static_cast<float>(it.second)) - logsum);
+    final_pieces_.emplace_back(
+        string_util::UnicodeCharToUTF8(it.first),
+        std::log(static_cast<float>(it.second)) - logsum);
   }
 
   if (trainer_spec_.use_all_vocab()) {

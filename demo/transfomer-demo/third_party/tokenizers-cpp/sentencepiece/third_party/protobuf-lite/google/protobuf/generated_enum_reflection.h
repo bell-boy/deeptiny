@@ -39,11 +39,11 @@
 #ifndef GOOGLE_PROTOBUF_GENERATED_ENUM_REFLECTION_H__
 #define GOOGLE_PROTOBUF_GENERATED_ENUM_REFLECTION_H__
 
+#include <string>
+
 #include <google/protobuf/generated_enum_util.h>
 #include <google/protobuf/port.h>
 #include <google/protobuf/stubs/strutil.h>
-
-#include <string>
 
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
@@ -71,11 +71,12 @@ namespace internal {
 // Helper for EnumType_Parse functions: try to parse the string 'name' as
 // an enum name of the given type, returning true and filling in value on
 // success, or returning false and leaving value unchanged on failure.
-PROTOBUF_EXPORT bool ParseNamedEnum(const EnumDescriptor* descriptor, ConstStringParam name,
-                                    int* value);
+PROTOBUF_EXPORT bool ParseNamedEnum(const EnumDescriptor* descriptor,
+                                    ConstStringParam name, int* value);
 
 template <typename EnumType>
-bool ParseNamedEnum(const EnumDescriptor* descriptor, ConstStringParam name, EnumType* value) {
+bool ParseNamedEnum(const EnumDescriptor* descriptor, ConstStringParam name,
+                    EnumType* value) {
   int tmp;
   if (!ParseNamedEnum(descriptor, name, &tmp)) return false;
   *value = static_cast<EnumType>(tmp);
@@ -85,7 +86,8 @@ bool ParseNamedEnum(const EnumDescriptor* descriptor, ConstStringParam name, Enu
 // Just a wrapper around printing the name of a value. The main point of this
 // function is not to be inlined, so that you can do this without including
 // descriptor.h.
-PROTOBUF_EXPORT const std::string& NameOfEnum(const EnumDescriptor* descriptor, int value);
+PROTOBUF_EXPORT const std::string& NameOfEnum(const EnumDescriptor* descriptor,
+                                              int value);
 
 }  // namespace internal
 }  // namespace protobuf

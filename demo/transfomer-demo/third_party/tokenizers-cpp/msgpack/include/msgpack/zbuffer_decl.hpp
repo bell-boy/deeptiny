@@ -14,4 +14,4 @@
 #include "msgpack/v2/zbuffer_decl.hpp"
 #include "msgpack/v3/zbuffer_decl.hpp"
 
-#endif  // MSGPACK_ZBUFFER_DECL_HPP
+#endif // MSGPACK_ZBUFFER_DECL_HPP

@@ -14,4 +14,4 @@
 #include "msgpack/v2/vrefbuffer_decl.hpp"
 #include "msgpack/v3/vrefbuffer_decl.hpp"
 
-#endif  // MSGPACK_VREFBUFFER_DECL_HPP
+#endif // MSGPACK_VREFBUFFER_DECL_HPP

@@ -18,7 +18,7 @@
 namespace sentencepiece {
 namespace unicode_script {
 namespace {
-void InitTable(absl::flat_hash_map<char32, ScriptType>* smap) {
+void InitTable(absl::flat_hash_map<char32, ScriptType> *smap) {
   for (char32 c = 0x0000; c <= 0x001F; ++c) (*smap)[c] = U_Common;
   (*smap)[0x0020] = U_Common;
   for (char32 c = 0x0021; c <= 0x0023; ++c) (*smap)[c] = U_Common;
@@ -1600,7 +1600,8 @@ void InitTable(absl::flat_hash_map<char32, ScriptType>* smap) {
   for (char32 c = 0xAADE; c <= 0xAADF; ++c) (*smap)[c] = U_Tai_Viet;
   for (char32 c = 0x10B00; c <= 0x10B35; ++c) (*smap)[c] = U_Avestan;
   for (char32 c = 0x10B39; c <= 0x10B3F; ++c) (*smap)[c] = U_Avestan;
-  for (char32 c = 0x13000; c <= 0x1342E; ++c) (*smap)[c] = U_Egyptian_Hieroglyphs;
+  for (char32 c = 0x13000; c <= 0x1342E; ++c)
+    (*smap)[c] = U_Egyptian_Hieroglyphs;
   for (char32 c = 0x0800; c <= 0x0815; ++c) (*smap)[c] = U_Samaritan;
   for (char32 c = 0x0816; c <= 0x0819; ++c) (*smap)[c] = U_Samaritan;
   (*smap)[0x081A] = U_Samaritan;
@@ -1655,10 +1656,14 @@ void InitTable(absl::flat_hash_map<char32, ScriptType>* smap) {
   for (char32 c = 0x10A60; c <= 0x10A7C; ++c) (*smap)[c] = U_Old_South_Arabian;
   for (char32 c = 0x10A7D; c <= 0x10A7E; ++c) (*smap)[c] = U_Old_South_Arabian;
   (*smap)[0x10A7F] = U_Old_South_Arabian;
-  for (char32 c = 0x10B40; c <= 0x10B55; ++c) (*smap)[c] = U_Inscriptional_Parthian;
-  for (char32 c = 0x10B58; c <= 0x10B5F; ++c) (*smap)[c] = U_Inscriptional_Parthian;
-  for (char32 c = 0x10B60; c <= 0x10B72; ++c) (*smap)[c] = U_Inscriptional_Pahlavi;
-  for (char32 c = 0x10B78; c <= 0x10B7F; ++c) (*smap)[c] = U_Inscriptional_Pahlavi;
+  for (char32 c = 0x10B40; c <= 0x10B55; ++c)
+    (*smap)[c] = U_Inscriptional_Parthian;
+  for (char32 c = 0x10B58; c <= 0x10B5F; ++c)
+    (*smap)[c] = U_Inscriptional_Parthian;
+  for (char32 c = 0x10B60; c <= 0x10B72; ++c)
+    (*smap)[c] = U_Inscriptional_Pahlavi;
+  for (char32 c = 0x10B78; c <= 0x10B7F; ++c)
+    (*smap)[c] = U_Inscriptional_Pahlavi;
   for (char32 c = 0x10C00; c <= 0x10C48; ++c) (*smap)[c] = U_Old_Turkic;
   for (char32 c = 0x11080; c <= 0x11081; ++c) (*smap)[c] = U_Kaithi;
   (*smap)[0x11082] = U_Kaithi;
@@ -1704,7 +1709,8 @@ void InitTable(absl::flat_hash_map<char32, ScriptType>* smap) {
   for (char32 c = 0x109BE; c <= 0x109BF; ++c) (*smap)[c] = U_Meroitic_Cursive;
   for (char32 c = 0x109C0; c <= 0x109CF; ++c) (*smap)[c] = U_Meroitic_Cursive;
   for (char32 c = 0x109D2; c <= 0x109FF; ++c) (*smap)[c] = U_Meroitic_Cursive;
-  for (char32 c = 0x10980; c <= 0x1099F; ++c) (*smap)[c] = U_Meroitic_Hieroglyphs;
+  for (char32 c = 0x10980; c <= 0x1099F; ++c)
+    (*smap)[c] = U_Meroitic_Hieroglyphs;
   for (char32 c = 0x16F00; c <= 0x16F44; ++c) (*smap)[c] = U_Miao;
   (*smap)[0x16F50] = U_Miao;
   for (char32 c = 0x16F51; c <= 0x16F7E; ++c) (*smap)[c] = U_Miao;
@@ -1875,7 +1881,8 @@ void InitTable(absl::flat_hash_map<char32, ScriptType>* smap) {
   for (char32 c = 0x1173A; c <= 0x1173B; ++c) (*smap)[c] = U_Ahom;
   for (char32 c = 0x1173C; c <= 0x1173E; ++c) (*smap)[c] = U_Ahom;
   (*smap)[0x1173F] = U_Ahom;
-  for (char32 c = 0x14400; c <= 0x14646; ++c) (*smap)[c] = U_Anatolian_Hieroglyphs;
+  for (char32 c = 0x14400; c <= 0x14646; ++c)
+    (*smap)[c] = U_Anatolian_Hieroglyphs;
   for (char32 c = 0x108E0; c <= 0x108F2; ++c) (*smap)[c] = U_Hatran;
   for (char32 c = 0x108F4; c <= 0x108F5; ++c) (*smap)[c] = U_Hatran;
   for (char32 c = 0x108FB; c <= 0x108FF; ++c) (*smap)[c] = U_Hatran;

@@ -19,7 +19,8 @@
 
 namespace absl {
 
-template <typename T, typename Hash = std::hash<T>, typename Eq = std::equal_to<T>,
+template <typename T, typename Hash = std::hash<T>,
+          typename Eq = std::equal_to<T>,
           typename Allocator = std::allocator<T>>
 using flat_hash_set = std::unordered_set<T, Hash, Eq, Allocator>;
 

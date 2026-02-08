@@ -10,44 +10,44 @@
 #ifndef MSGPACK_V3_OBJECT_DECL_HPP
 #define MSGPACK_V3_OBJECT_DECL_HPP
 
-#include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/v2/object_decl.hpp"
+#include "msgpack/adaptor/adaptor_base.hpp"
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
+/// @endcond
 
-  using v2::object_handle;
+using v2::object_handle;
 
-  namespace detail {
+namespace detail {
 
-  using v2::detail::add_ext_type_size;
+using v2::detail::add_ext_type_size;
 
-  }  // namespace detail
+} // namespace detail
 
-  using v2::aligned_zone_size;
+using v2::aligned_zone_size;
 
-  using v2::clone;
+using v2::clone;
 
-  namespace detail {
+namespace detail {
 
-  using v2::detail::packer_serializer;
+using v2::detail::packer_serializer;
 
-  }  // namespace detail
+} // namespace detail
 
-  using v2::object_pack_visitor;
-  using v2::object_parser;
-  using v2::object_stringize_visitor;
+using v2::object_parser;
+using v2::object_pack_visitor;
+using v2::object_stringize_visitor;
 
-  using v2::operator==;
-  using v2::operator!=;
+using v2::operator==;
+using v2::operator!=;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V3_OBJECT_DECL_HPP
+#endif // MSGPACK_V3_OBJECT_DECL_HPP

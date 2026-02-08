@@ -24,14 +24,14 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  class zbuffer;
+class zbuffer;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_ZBUFFER_DECL_HPP
+#endif // MSGPACK_V1_ZBUFFER_DECL_HPP

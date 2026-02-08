@@ -16,16 +16,16 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
+/// @endcond
 
-  using v2::zone;
+using v2::zone;
 
-  using v2::aligned_size;
+using v2::aligned_size;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V3_CPP03_ZONE_DECL_HPP
+#endif // MSGPACK_V3_CPP03_ZONE_DECL_HPP

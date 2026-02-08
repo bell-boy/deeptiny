@@ -14,4 +14,4 @@
 #include "msgpack/v2/parse_return.hpp"
 #include "msgpack/v3/parse_return.hpp"
 
-#endif  // MSGPACK_PARSE_RETURN_HPP
+#endif // MSGPACK_PARSE_RETURN_HPP

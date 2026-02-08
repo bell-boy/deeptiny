@@ -12,17 +12,17 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/platform/cloudabi.h>
-#include <msgpack/predef/platform/ios.h>
 #include <msgpack/predef/platform/mingw.h>
 #include <msgpack/predef/platform/mingw32.h>
 #include <msgpack/predef/platform/mingw64.h>
+#include <msgpack/predef/platform/windows_uwp.h>
 #include <msgpack/predef/platform/windows_desktop.h>
 #include <msgpack/predef/platform/windows_phone.h>
-#include <msgpack/predef/platform/windows_runtime.h>  // deprecated
 #include <msgpack/predef/platform/windows_server.h>
 #include <msgpack/predef/platform/windows_store.h>
 #include <msgpack/predef/platform/windows_system.h>
-#include <msgpack/predef/platform/windows_uwp.h>
+#include <msgpack/predef/platform/windows_runtime.h> // deprecated
+#include <msgpack/predef/platform/ios.h>
 /*#include <msgpack/predef/platform/.h>*/
 
 #endif

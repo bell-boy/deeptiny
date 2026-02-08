@@ -22,8 +22,9 @@
 
 namespace absl {
 
-inline void StringReplace(absl::string_view s, absl::string_view oldsub, absl::string_view newsub,
-                          bool replace_all, std::string* res) {
+inline void StringReplace(absl::string_view s, absl::string_view oldsub,
+                          absl::string_view newsub, bool replace_all,
+                          std::string *res) {
   if (oldsub.empty()) {
     res->append(s.data(), s.size());
     return;
@@ -51,10 +52,11 @@ inline std::string StringReplace(absl::string_view s, absl::string_view oldsub,
 
 inline std::string StrReplaceAll(
     absl::string_view s,
-    const std::vector<std::pair<absl::string_view, absl::string_view>>& patterns) {
+    const std::vector<std::pair<absl::string_view, absl::string_view>>
+        &patterns) {
   std::string prev(s.data(), s.size());
   std::string result;
-  for (const auto& it : patterns) {
+  for (const auto &it : patterns) {
     result.clear();
     StringReplace(prev, it.first, it.second, true, &result);
     prev = result;

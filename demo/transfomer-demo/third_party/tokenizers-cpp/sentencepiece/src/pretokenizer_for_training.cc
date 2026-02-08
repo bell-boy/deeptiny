@@ -33,20 +33,21 @@ std::vector<std::string> PretokenizerForTrainingInterface::PreTokenize(
 }
 
 // static
-std::string PretokenizerForTrainingInterface::Preprocess(absl::string_view text) {
+std::string PretokenizerForTrainingInterface::Preprocess(
+    absl::string_view text) {
   // Escapes kWSStr (_) as this character may not be processed by pre-tokenizer.
   return absl::StrReplaceAll(text, {{kWSStr, " "}});
 }
 
 // static
 std::vector<std::string> PretokenizerForTrainingInterface::Postprocess(
-    const SentencePieceText& spt) {
+    const SentencePieceText &spt) {
   // Inserts kUPPBoundaryStr before/after of token boundaries.
   std::vector<std::string> result;
   std::string output;
 
   int prev = 0;
-  for (const auto& piece : spt.pieces()) {
+  for (const auto &piece : spt.pieces()) {
     if (prev == piece.begin() && piece.begin() != 0) {
       result.push_back(output);
       output.clear();
@@ -59,7 +60,7 @@ std::vector<std::string> PretokenizerForTrainingInterface::Postprocess(
 
   if (!output.empty()) result.push_back(output);
 
-  for (auto& w : result) w = absl::StrReplaceAll(w, {{" ", kWSStr}});
+  for (auto &w : result) w = absl::StrReplaceAll(w, {{" ", kWSStr}});
 
   return result;
 }

@@ -29,14 +29,15 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <google/protobuf/arenastring.h>
+
+#include <google/protobuf/stubs/logging.h>
+#include <google/protobuf/stubs/common.h>
+#include <google/protobuf/parse_context.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/message_lite.h>
-#include <google/protobuf/parse_context.h>
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/logging.h>
 #include <google/protobuf/stubs/mutex.h>
-#include <google/protobuf/stubs/stl_util.h>
 #include <google/protobuf/stubs/strutil.h>
+#include <google/protobuf/stubs/stl_util.h>
 
 // clang-format off
 #include <google/protobuf/port_def.inc>
@@ -52,15 +53,17 @@ const std::string& LazyString::Init() const {
   const std::string* res = inited_.load(std::memory_order_acquire);
   if (res == nullptr) {
     auto init_value = init_value_;
-    res = ::new (static_cast<void*>(string_buf_)) std::string(init_value.ptr, init_value.size);
+    res = ::new (static_cast<void*>(string_buf_))
+        std::string(init_value.ptr, init_value.size);
     inited_.store(res, std::memory_order_release);
   }
   mu.Unlock();
   return *res;
 }
 
-void ArenaStringPtr::Set(const std::string* default_value, ConstStringParam value,
-                         ::google::protobuf::Arena* arena) {
+
+void ArenaStringPtr::Set(const std::string* default_value,
+                         ConstStringParam value, ::google::protobuf::Arena* arena) {
   if (IsDefault(default_value)) {
     tagged_ptr_.Set(Arena::Create<std::string>(arena, value));
   } else {
@@ -86,11 +89,13 @@ void ArenaStringPtr::Set(const std::string* default_value, std::string&& value,
   }
 }
 
-void ArenaStringPtr::Set(EmptyDefault, ConstStringParam value, ::google::protobuf::Arena* arena) {
+void ArenaStringPtr::Set(EmptyDefault, ConstStringParam value,
+                         ::google::protobuf::Arena* arena) {
   Set(&GetEmptyStringAlreadyInited(), value, arena);
 }
 
-void ArenaStringPtr::Set(EmptyDefault, std::string&& value, ::google::protobuf::Arena* arena) {
+void ArenaStringPtr::Set(EmptyDefault, std::string&& value,
+                         ::google::protobuf::Arena* arena) {
   Set(&GetEmptyStringAlreadyInited(), std::move(value), arena);
 }
 
@@ -99,7 +104,8 @@ void ArenaStringPtr::Set(NonEmptyDefault, ConstStringParam value,
   Set(nullptr, value, arena);
 }
 
-void ArenaStringPtr::Set(NonEmptyDefault, std::string&& value, ::google::protobuf::Arena* arena) {
+void ArenaStringPtr::Set(NonEmptyDefault, std::string&& value,
+                         ::google::protobuf::Arena* arena) {
   Set(nullptr, std::move(value), arena);
 }
 
@@ -139,7 +145,8 @@ std::string* ArenaStringPtr::MutableSlow(::google::protobuf::Arena* arena,
   const std::string* const default_value =
       sizeof...(Lazy) == 0 ? &GetEmptyStringAlreadyInited() : nullptr;
   GOOGLE_DCHECK(IsDefault(default_value));
-  std::string* new_string = Arena::Create<std::string>(arena, lazy_default.get()...);
+  std::string* new_string =
+      Arena::Create<std::string>(arena, lazy_default.get()...);
   tagged_ptr_.Set(new_string);
   return new_string;
 }
@@ -175,8 +182,8 @@ std::string* ArenaStringPtr::ReleaseNonDefault(const std::string* default_value,
   }
 }
 
-void ArenaStringPtr::SetAllocated(const std::string* default_value, std::string* value,
-                                  ::google::protobuf::Arena* arena) {
+void ArenaStringPtr::SetAllocated(const std::string* default_value,
+                                  std::string* value, ::google::protobuf::Arena* arena) {
   // Release what we have first.
   if (arena == nullptr && !IsDefault(default_value)) {
     delete UnsafeMutablePointer();
@@ -200,7 +207,8 @@ void ArenaStringPtr::SetAllocated(const std::string* default_value, std::string*
   }
 }
 
-void ArenaStringPtr::Destroy(const std::string* default_value, ::google::protobuf::Arena* arena) {
+void ArenaStringPtr::Destroy(const std::string* default_value,
+                             ::google::protobuf::Arena* arena) {
   if (arena == nullptr) {
     GOOGLE_DCHECK(!IsDonatedString());
     if (!IsDefault(default_value)) {
@@ -239,6 +247,7 @@ void ArenaStringPtr::ClearToDefault(const LazyString& default_value,
     UnsafeMutablePointer()->assign(default_value.get());
   }
 }
+
 
 }  // namespace internal
 }  // namespace protobuf

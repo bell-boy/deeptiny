@@ -9,8 +9,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_HARDWARE_SIMD_ARM_H
 #define MSGPACK_PREDEF_HARDWARE_SIMD_ARM_H
 
-#include <msgpack/predef/hardware/simd/arm/versions.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/hardware/simd/arm/versions.h>
 
 /*`
  [heading `MSGPACK_HW_SIMD_ARM`]
@@ -41,15 +41,14 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_HW_SIMD_ARM MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #undef MSGPACK_HW_SIMD_ARM
-#if !defined(MSGPACK_HW_SIMD_ARM) && \
-    (defined(__ARM_NEON__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64))
-#define MSGPACK_HW_SIMD_ARM MSGPACK_HW_SIMD_ARM_NEON_VERSION
+#if !defined(MSGPACK_HW_SIMD_ARM) && (defined(__ARM_NEON__) || defined(__aarch64__) || defined (_M_ARM) || defined (_M_ARM64))
+#   define MSGPACK_HW_SIMD_ARM MSGPACK_HW_SIMD_ARM_NEON_VERSION
 #endif
 
 #if !defined(MSGPACK_HW_SIMD_ARM)
-#define MSGPACK_HW_SIMD_ARM MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
+#   define MSGPACK_HW_SIMD_ARM MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 #else
-#define MSGPACK_HW_SIMD_ARM_AVAILABLE
+#   define MSGPACK_HW_SIMD_ARM_AVAILABLE
 #endif
 
 #define MSGPACK_HW_SIMD_ARM_NAME "ARM SIMD"

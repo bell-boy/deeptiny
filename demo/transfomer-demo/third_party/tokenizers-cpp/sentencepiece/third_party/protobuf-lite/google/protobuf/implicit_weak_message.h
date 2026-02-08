@@ -31,12 +31,12 @@
 #ifndef GOOGLE_PROTOBUF_IMPLICIT_WEAK_MESSAGE_H__
 #define GOOGLE_PROTOBUF_IMPLICIT_WEAK_MESSAGE_H__
 
-#include <google/protobuf/arena.h>
+#include <string>
+
 #include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/arena.h>
 #include <google/protobuf/message_lite.h>
 #include <google/protobuf/repeated_field.h>
-
-#include <string>
 
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
@@ -80,8 +80,10 @@ class PROTOBUF_EXPORT ImplicitWeakMessage : public MessageLite {
 
   size_t ByteSizeLong() const override { return data_.size(); }
 
-  uint8* _InternalSerialize(uint8* target, io::EpsCopyOutputStream* stream) const final {
-    return stream->WriteRaw(data_.data(), static_cast<int>(data_.size()), target);
+  uint8* _InternalSerialize(uint8* target,
+                            io::EpsCopyOutputStream* stream) const final {
+    return stream->WriteRaw(data_.data(), static_cast<int>(data_.size()),
+                            target);
   }
 
   int GetCachedSize() const override { return static_cast<int>(data_.size()); }
@@ -100,7 +102,8 @@ class ImplicitWeakTypeHandler {
   typedef MessageLite Type;
   static constexpr bool Moveable = false;
 
-  static inline MessageLite* NewFromPrototype(const MessageLite* prototype, Arena* arena = NULL) {
+  static inline MessageLite* NewFromPrototype(const MessageLite* prototype,
+                                              Arena* arena = NULL) {
     return prototype->New(arena);
   }
 
@@ -109,10 +112,16 @@ class ImplicitWeakTypeHandler {
       delete value;
     }
   }
-  static inline Arena* GetArena(MessageLite* value) { return value->GetArena(); }
-  static inline void* GetMaybeArenaPointer(MessageLite* value) { return value->GetArena(); }
+  static inline Arena* GetArena(MessageLite* value) {
+    return value->GetArena();
+  }
+  static inline void* GetMaybeArenaPointer(MessageLite* value) {
+    return value->GetArena();
+  }
   static inline void Clear(MessageLite* value) { value->Clear(); }
-  static void Merge(const MessageLite& from, MessageLite* to) { to->CheckTypeAndMergeFrom(from); }
+  static void Merge(const MessageLite& from, MessageLite* to) {
+    to->CheckTypeAndMergeFrom(from);
+  }
 };
 
 }  // namespace internal
@@ -126,8 +135,10 @@ struct WeakRepeatedPtrField {
 
   typedef internal::RepeatedPtrIterator<MessageLite> iterator;
   typedef internal::RepeatedPtrIterator<const MessageLite> const_iterator;
-  typedef internal::RepeatedPtrOverPtrsIterator<MessageLite*, void*> pointer_iterator;
-  typedef internal::RepeatedPtrOverPtrsIterator<const MessageLite* const, const void* const>
+  typedef internal::RepeatedPtrOverPtrsIterator<MessageLite*, void*>
+      pointer_iterator;
+  typedef internal::RepeatedPtrOverPtrsIterator<const MessageLite* const,
+                                                const void* const>
       const_pointer_iterator;
 
   iterator begin() { return iterator(base().raw_data()); }
@@ -136,7 +147,9 @@ struct WeakRepeatedPtrField {
   iterator end() { return begin() + base().size(); }
   const_iterator end() const { return begin() + base().size(); }
   const_iterator cend() const { return end(); }
-  pointer_iterator pointer_begin() { return pointer_iterator(base().raw_mutable_data()); }
+  pointer_iterator pointer_begin() {
+    return pointer_iterator(base().raw_mutable_data());
+  }
   const_pointer_iterator pointer_begin() const {
     return const_pointer_iterator(base().raw_mutable_data());
   }
@@ -147,13 +160,17 @@ struct WeakRepeatedPtrField {
     return const_pointer_iterator(base().raw_mutable_data() + base().size());
   }
 
-  MessageLite* AddWeak(const MessageLite* prototype) { return base().AddWeak(prototype); }
+  MessageLite* AddWeak(const MessageLite* prototype) {
+    return base().AddWeak(prototype);
+  }
   T* Add() { return weak.Add(); }
   void Clear() { base().template Clear<TypeHandler>(); }
   void MergeFrom(const WeakRepeatedPtrField& other) {
     base().template MergeFrom<TypeHandler>(other.base());
   }
-  void InternalSwap(WeakRepeatedPtrField* other) { base().InternalSwap(&other->base()); }
+  void InternalSwap(WeakRepeatedPtrField* other) {
+    base().InternalSwap(&other->base());
+  }
 
   const internal::RepeatedPtrFieldBase& base() const { return weak; }
   internal::RepeatedPtrFieldBase& base() { return weak; }

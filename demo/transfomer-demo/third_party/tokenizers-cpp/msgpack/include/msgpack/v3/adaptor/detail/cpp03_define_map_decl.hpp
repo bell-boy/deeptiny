@@ -15,17 +15,17 @@
 namespace msgpack {
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
-  namespace type {
+/// @endcond
+namespace type {
 
-  using v2::type::define_map;
+using v2::type::define_map;
 
-  using v2::type::make_define_map;
+using v2::type::make_define_map;
 
-  }  // namespace type
-  /// @cond
+}  // namespace type
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 }  // namespace msgpack
 
-#endif  // MSGPACK_V3_CPP03_DEFINE_MAP_DECL_HPP
+#endif // MSGPACK_V3_CPP03_DEFINE_MAP_DECL_HPP

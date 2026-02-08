@@ -9,8 +9,9 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_PREDEF_LIBRARY_STD_MODENA_H
 
 #include <msgpack/predef/library/std/_prefix.h>
-#include <msgpack/predef/make.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LIB_STD_MSIPL`]
@@ -28,12 +29,12 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_LIB_STD_MSIPL MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(MSIPL_COMPILE_H) || defined(__MSIPL_COMPILE_H)
-#undef MSGPACK_LIB_STD_MSIPL
-#define MSGPACK_LIB_STD_MSIPL MSGPACK_VERSION_NUMBER_AVAILABLE
+#   undef MSGPACK_LIB_STD_MSIPL
+#   define MSGPACK_LIB_STD_MSIPL MSGPACK_VERSION_NUMBER_AVAILABLE
 #endif
 
 #if MSGPACK_LIB_STD_MSIPL
-#define MSGPACK_LIB_STD_MSIPL_AVAILABLE
+#   define MSGPACK_LIB_STD_MSIPL_AVAILABLE
 #endif
 
 #define MSGPACK_LIB_STD_MSIPL_NAME "Modena Software Lib++"
@@ -41,4 +42,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_MSIPL, MSGPACK_LIB_STD_MSIPL_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_MSIPL,MSGPACK_LIB_STD_MSIPL_NAME)

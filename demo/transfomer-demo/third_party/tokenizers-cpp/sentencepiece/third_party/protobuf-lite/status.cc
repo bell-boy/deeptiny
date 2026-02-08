@@ -28,9 +28,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <google/protobuf/stubs/status.h>
-#include <stdio.h>
 
 #include <ostream>
+#include <stdio.h>
 #include <string>
 #include <utility>
 
@@ -86,16 +86,19 @@ const Status Status::OK = Status();
 const Status Status::CANCELLED = Status(error::CANCELLED, "");
 const Status Status::UNKNOWN = Status(error::UNKNOWN, "");
 
-Status::Status() : error_code_(error::OK) {}
+Status::Status() : error_code_(error::OK) {
+}
 
-Status::Status(error::Code error_code, StringPiece error_message) : error_code_(error_code) {
+Status::Status(error::Code error_code, StringPiece error_message)
+    : error_code_(error_code) {
   if (error_code != error::OK) {
     error_message_ = error_message.ToString();
   }
 }
 
 Status::Status(const Status& other)
-    : error_code_(other.error_code_), error_message_(other.error_message_) {}
+    : error_code_(other.error_code_), error_message_(other.error_message_) {
+}
 
 Status& Status::operator=(const Status& other) {
   error_code_ = other.error_code_;
@@ -104,7 +107,8 @@ Status& Status::operator=(const Status& other) {
 }
 
 bool Status::operator==(const Status& x) const {
-  return error_code_ == x.error_code_ && error_message_ == x.error_message_;
+  return error_code_ == x.error_code_ &&
+      error_message_ == x.error_message_;
 }
 
 std::string Status::ToString() const {
@@ -114,7 +118,8 @@ std::string Status::ToString() const {
     if (error_message_.empty()) {
       return error::CodeEnumToString(error_code_);
     } else {
-      return error::CodeEnumToString(error_code_) + ":" + error_message_;
+      return error::CodeEnumToString(error_code_) + ":" +
+          error_message_;
     }
   }
 }

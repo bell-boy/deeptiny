@@ -10,9 +10,9 @@
 #ifndef MSGPACK_V1_VREFBUFFER_DECL_HPP
 #define MSGPACK_V1_VREFBUFFER_DECL_HPP
 
-#include <cstdlib>
-
 #include "msgpack/versioning.hpp"
+
+#include <cstdlib>
 
 #ifndef MSGPACK_VREFBUFFER_REF_SIZE
 #define MSGPACK_VREFBUFFER_REF_SIZE 32
@@ -26,14 +26,14 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  class vrefbuffer;
+class vrefbuffer;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_VREFBUFFER_DECL_HPP
+#endif // MSGPACK_V1_VREFBUFFER_DECL_HPP

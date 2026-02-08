@@ -10,31 +10,31 @@
 #ifndef MSGPACK_V1_CPP11_DEFINE_ARRAY_DECL_HPP
 #define MSGPACK_V1_CPP11_DEFINE_ARRAY_DECL_HPP
 
+#include "msgpack/versioning.hpp"
 #include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/object.hpp"
-#include "msgpack/versioning.hpp"
 
 namespace msgpack {
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
-  namespace type {
+/// @endcond
+namespace type {
 
-  template <typename Tuple, std::size_t N>
-  struct define_array_imp;
+template <typename Tuple, std::size_t N>
+struct define_array_imp;
 
-  template <typename... Args>
-  struct define_array;
+template <typename... Args>
+struct define_array;
 
-  define_array<> make_define_array();
+define_array<> make_define_array();
 
-  template <typename... Args>
-  inline define_array<Args...> make_define_array(Args&... args);
+template <typename... Args>
+inline define_array<Args...> make_define_array(Args&... args);
 
-  }  // namespace type
-  /// @cond
+}  // namespace type
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_CPP11_DEFINE_ARRAY_DECL_HPP
+#endif // MSGPACK_V1_CPP11_DEFINE_ARRAY_DECL_HPP

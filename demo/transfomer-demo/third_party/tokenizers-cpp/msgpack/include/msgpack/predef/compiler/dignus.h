@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_COMPILER_DIGNUS_H
 #define MSGPACK_PREDEF_COMPILER_DIGNUS_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_COMP_SYSC`]
@@ -29,18 +29,18 @@ Version number available as major, minor, and patch.
 #define MSGPACK_COMP_SYSC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__SYSC__)
-#define MSGPACK_COMP_SYSC_DETECTION MSGPACK_PREDEF_MAKE_10_VRRPP(__SYSC_VER__)
+#   define MSGPACK_COMP_SYSC_DETECTION MSGPACK_PREDEF_MAKE_10_VRRPP(__SYSC_VER__)
 #endif
 
 #ifdef MSGPACK_COMP_SYSC_DETECTION
-#if defined(MSGPACK_PREDEF_DETAIL_COMP_DETECTED)
-#define MSGPACK_COMP_SYSC_EMULATED MSGPACK_COMP_SYSC_DETECTION
-#else
-#undef MSGPACK_COMP_SYSC
-#define MSGPACK_COMP_SYSC MSGPACK_COMP_SYSC_DETECTION
-#endif
-#define MSGPACK_COMP_SYSC_AVAILABLE
-#include <msgpack/predef/detail/comp_detected.h>
+#   if defined(MSGPACK_PREDEF_DETAIL_COMP_DETECTED)
+#       define MSGPACK_COMP_SYSC_EMULATED MSGPACK_COMP_SYSC_DETECTION
+#   else
+#       undef MSGPACK_COMP_SYSC
+#       define MSGPACK_COMP_SYSC MSGPACK_COMP_SYSC_DETECTION
+#   endif
+#   define MSGPACK_COMP_SYSC_AVAILABLE
+#   include <msgpack/predef/detail/comp_detected.h>
 #endif
 
 #define MSGPACK_COMP_SYSC_NAME "Dignus Systems/C++"
@@ -48,9 +48,9 @@ Version number available as major, minor, and patch.
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_COMP_SYSC, MSGPACK_COMP_SYSC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_COMP_SYSC,MSGPACK_COMP_SYSC_NAME)
 
 #ifdef MSGPACK_COMP_SYSC_EMULATED
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_COMP_SYSC_EMULATED, MSGPACK_COMP_SYSC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_COMP_SYSC_EMULATED,MSGPACK_COMP_SYSC_NAME)
 #endif

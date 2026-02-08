@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp11/array.hpp"
 
-#endif  // MSGPACK_TYPE_CPP11_ARRAY_HPP
+#endif // MSGPACK_TYPE_CPP11_ARRAY_HPP

@@ -10,44 +10,44 @@
 #ifndef MSGPACK_V1_TYPE_SIZE_EQUAL_ONLY_DECL_HPP
 #define MSGPACK_V1_TYPE_SIZE_EQUAL_ONLY_DECL_HPP
 
-#include "msgpack/adaptor/adaptor_base.hpp"
-#include "msgpack/adaptor/msgpack_tuple.hpp"
-#include "msgpack/object.hpp"
 #include "msgpack/versioning.hpp"
+#include "msgpack/adaptor/adaptor_base.hpp"
+#include "msgpack/object.hpp"
+#include "msgpack/adaptor/msgpack_tuple.hpp"
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  namespace type {
+namespace type {
 
-  template <typename T>
-  struct size_equal_only;
+template <typename T>
+struct size_equal_only;
 
-  template <typename T>
-  size_equal_only<T> make_size_equal_only(T& t);
+template <typename T>
+size_equal_only<T> make_size_equal_only(T& t);
 
-  template <typename T>
-  std::size_t size(T const& t);
+template <typename T>
+std::size_t size(T const& t);
 
-  template <typename T, std::size_t N>
-  std::size_t size(const T (&)[N]);
+template <typename T, std::size_t N>
+std::size_t size(const T(&)[N]);
 
 #if !defined(MSGPACK_USE_CPP03)
 
-  template <typename... T>
-  std::size_t size(std::tuple<T...> const&);
+template <typename... T>
+std::size_t size(std::tuple<T...> const&);
 
-#endif  // !defined(MSGPACK_USE_CPP03)
+#endif // !defined(MSGPACK_USE_CPP03)
 
-  }  // namespace type
+} // namespace type
 
-  /// @cond
-}  // MSGPACK_API_VERSION_NAMESPACE(v1)
+/// @cond
+} // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
-}  // namespace msgpack
+} // namespace msgpack
 
-#endif  // MSGPACK_V1_TYPE_SIZE_EQUAL_ONLY_DECL_HPP
+#endif // MSGPACK_V1_TYPE_SIZE_EQUAL_ONLY_DECL_HPP

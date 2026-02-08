@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/float.hpp"
 
-#endif  // MSGPACK_TYPE_FLOAT_HPP
+#endif // MSGPACK_TYPE_FLOAT_HPP

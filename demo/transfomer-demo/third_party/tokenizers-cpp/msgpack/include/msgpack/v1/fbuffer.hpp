@@ -10,51 +10,55 @@
 #ifndef MSGPACK_V1_FBUFFER_HPP
 #define MSGPACK_V1_FBUFFER_HPP
 
+#include "msgpack/v1/fbuffer_decl.hpp"
+#include "msgpack/assert.hpp"
+
 #include <cstdio>
 #include <stdexcept>
-
-#include "msgpack/assert.hpp"
-#include "msgpack/v1/fbuffer_decl.hpp"
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  class fbuffer {
-   public:
-    explicit fbuffer(FILE* file) : m_file(file) {}
+class fbuffer {
+public:
+    explicit fbuffer(FILE* file) : m_file(file) { }
 
-   public:
-    void write(const char* buf, unsigned int len) {
-      MSGPACK_ASSERT(buf || len == 0);
-      if (!buf) return;
-      if (len == 0) return;
-      if (1 != fwrite(buf, len, 1, m_file)) {
-        throw std::runtime_error("fwrite() failed");
-      }
+public:
+    void write(const char* buf, unsigned int len)
+    {
+        MSGPACK_ASSERT(buf || len == 0);
+        if (!buf) return;
+        if (len == 0) return;
+        if (1 != fwrite(buf, len, 1, m_file)) {
+            throw std::runtime_error("fwrite() failed");
+        }
     }
 
-    FILE* file() const { return m_file; }
+    FILE* file() const
+    {
+        return m_file;
+    }
 
 #if defined(MSGPACK_USE_CPP03)
-   private:
+private:
     fbuffer(const fbuffer&);
     fbuffer& operator=(const fbuffer&);
-#else   // defined(MSGPACK_USE_CPP03)
+#else  // defined(MSGPACK_USE_CPP03)
     fbuffer(const fbuffer&) = delete;
     fbuffer& operator=(const fbuffer&) = delete;
-#endif  // defined(MSGPACK_USE_CPP03)
+#endif // defined(MSGPACK_USE_CPP03)
 
-   private:
+private:
     FILE* m_file;
-  };
+};
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_FBUFFER_HPP
+#endif // MSGPACK_V1_FBUFFER_HPP

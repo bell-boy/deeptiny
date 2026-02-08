@@ -19,8 +19,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #include <msgpack/predef/compiler/dignus.h>
 #include <msgpack/predef/compiler/edg.h>
 #include <msgpack/predef/compiler/ekopath.h>
-#include <msgpack/predef/compiler/gcc.h>
 #include <msgpack/predef/compiler/gcc_xml.h>
+#include <msgpack/predef/compiler/gcc.h>
 #include <msgpack/predef/compiler/greenhills.h>
 #include <msgpack/predef/compiler/hp_acc.h>
 #include <msgpack/predef/compiler/iar.h>

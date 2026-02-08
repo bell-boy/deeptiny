@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_ARCHITECTURE_SPARC_H
 #define MSGPACK_PREDEF_ARCHITECTURE_SPARC_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_ARCH_SPARC`]
@@ -30,20 +30,20 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_ARCH_SPARC MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__sparc__) || defined(__sparc)
-#undef MSGPACK_ARCH_SPARC
-#if !defined(MSGPACK_ARCH_SPARC) && defined(__sparcv9)
-#define MSGPACK_ARCH_SPARC MSGPACK_VERSION_NUMBER(9, 0, 0)
-#endif
-#if !defined(MSGPACK_ARCH_SPARC) && defined(__sparcv8)
-#define MSGPACK_ARCH_SPARC MSGPACK_VERSION_NUMBER(8, 0, 0)
-#endif
-#if !defined(MSGPACK_ARCH_SPARC)
-#define MSGPACK_ARCH_SPARC MSGPACK_VERSION_NUMBER_AVAILABLE
-#endif
+#   undef MSGPACK_ARCH_SPARC
+#   if !defined(MSGPACK_ARCH_SPARC) && defined(__sparcv9)
+#       define MSGPACK_ARCH_SPARC MSGPACK_VERSION_NUMBER(9,0,0)
+#   endif
+#   if !defined(MSGPACK_ARCH_SPARC) && defined(__sparcv8)
+#       define MSGPACK_ARCH_SPARC MSGPACK_VERSION_NUMBER(8,0,0)
+#   endif
+#   if !defined(MSGPACK_ARCH_SPARC)
+#       define MSGPACK_ARCH_SPARC MSGPACK_VERSION_NUMBER_AVAILABLE
+#   endif
 #endif
 
 #if MSGPACK_ARCH_SPARC
-#define MSGPACK_ARCH_SPARC_AVAILABLE
+#   define MSGPACK_ARCH_SPARC_AVAILABLE
 #endif
 
 #define MSGPACK_ARCH_SPARC_NAME "SPARC"
@@ -51,4 +51,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_SPARC, MSGPACK_ARCH_SPARC_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_SPARC,MSGPACK_ARCH_SPARC_NAME)

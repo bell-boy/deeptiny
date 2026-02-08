@@ -22,7 +22,8 @@
 namespace sentencepiece {
 
 // Instantiate Model instance from |model_proto|
-std::unique_ptr<ModelInterface> ModelFactory::Create(const ModelProto& model_proto) {
+std::unique_ptr<ModelInterface> ModelFactory::Create(
+    const ModelProto& model_proto) {
   const auto& trainer_spec = model_proto.trainer_spec();
 
   switch (trainer_spec.model_type()) {

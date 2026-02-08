@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/wstring.hpp"
 
-#endif  // MSGPACK_TYPE_WSTRING_HPP
+#endif // MSGPACK_TYPE_WSTRING_HPP

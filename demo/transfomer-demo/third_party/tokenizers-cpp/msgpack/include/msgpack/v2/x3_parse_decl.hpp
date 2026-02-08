@@ -18,17 +18,19 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  template <typename Iterator, typename Visitor>
-  bool parse(Iterator && begin, Iterator && end, Visitor && vis);
 
-  /// @cond
+template <typename Iterator, typename Visitor>
+bool parse(Iterator&& begin, Iterator&& end, Visitor&& vis);
+
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // defined(MSGPACK_USE_X3_PARSE)
 
-#endif  // MSGPACK_V2_X3_PARSE_DECL_HPP
+#endif // defined(MSGPACK_USE_X3_PARSE)
+
+#endif // MSGPACK_V2_X3_PARSE_DECL_HPP

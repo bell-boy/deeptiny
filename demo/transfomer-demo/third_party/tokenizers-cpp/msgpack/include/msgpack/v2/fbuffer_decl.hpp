@@ -10,23 +10,23 @@
 #ifndef MSGPACK_V2_FBUFFER_DECL_HPP
 #define MSGPACK_V2_FBUFFER_DECL_HPP
 
+#include "msgpack/v1/fbuffer_decl.hpp"
+
 #include <cstdio>
 #include <stdexcept>
-
-#include "msgpack/v1/fbuffer_decl.hpp"
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v2) {
-  /// @endcond
+/// @endcond
 
-  using v1::fbuffer;
+using v1::fbuffer;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v2)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V2_FBUFFER_DECL_HPP
+#endif // MSGPACK_V2_FBUFFER_DECL_HPP

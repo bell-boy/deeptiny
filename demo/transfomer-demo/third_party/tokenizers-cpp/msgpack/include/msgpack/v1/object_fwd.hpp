@@ -17,75 +17,78 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  struct object_array {
+struct object_array {
     uint32_t size;
     msgpack::object* ptr;
-  };
+};
 
-  struct object_map {
+struct object_map {
     uint32_t size;
     msgpack::object_kv* ptr;
-  };
+};
 
-  struct object_str {
+struct object_str {
     uint32_t size;
     const char* ptr;
-  };
+};
 
-  struct object_bin {
+struct object_bin {
     uint32_t size;
     const char* ptr;
-  };
+};
 
-  struct object_ext {
+struct object_ext {
     int8_t type() const { return static_cast<int8_t>(ptr[0]); }
     const char* data() const { return &ptr[1]; }
     uint32_t size;
     const char* ptr;
-  };
+};
+
 
 #if !defined(MSGPACK_USE_CPP03)
 
-  template <typename T>
-  struct has_as {
-   private:
+template <typename T>
+struct has_as {
+private:
     template <typename U>
     static auto check_(U*) ->
         // Check v1 specialization
-        typename std::is_same<decltype(adaptor::as<U>()(std::declval<msgpack::object>())), T>::type;
+        typename std::is_same<
+            decltype(adaptor::as<U>()(std::declval<msgpack::object>())),
+            T
+        >::type;
     template <typename...>
     static std::false_type check_(...);
-
-   public:
+public:
     using type = decltype(check_<T>(MSGPACK_NULLPTR));
     static constexpr bool value = type::value;
-  };
+};
 
-#endif  // !defined(MSGPACK_USE_CPP03)
+#endif // !defined(MSGPACK_USE_CPP03)
 
-  struct object_with_zone_type;
+struct object_with_zone_type;
 
-  /// Object class that corresponding to MessagePack format object
-  /**
-   * See https://github.com/msgpack/msgpack-c/wiki/v1_1_cpp_object
-   */
-  struct object {
+/// Object class that corresponding to MessagePack format object
+/**
+ * See https://github.com/msgpack/msgpack-c/wiki/v1_1_cpp_object
+ */
+struct object {
     union union_type {
-      bool boolean;
-      uint64_t u64;
-      int64_t i64;
+        bool boolean;
+        uint64_t u64;
+        int64_t  i64;
 #if defined(MSGPACK_USE_LEGACY_NAME_AS_FLOAT)
-      MSGPACK_DEPRECATED("please use f64 instead")
-      double dec;  // obsolete
-#endif             // MSGPACK_USE_LEGACY_NAME_AS_FLOAT
-      double f64;
-      msgpack::object_array array;
-      msgpack::object_map map;
-      msgpack::object_str str;
-      msgpack::object_bin bin;
-      msgpack::object_ext ext;
+        MSGPACK_DEPRECATED("please use f64 instead")
+        double   dec; // obsolete
+#endif // MSGPACK_USE_LEGACY_NAME_AS_FLOAT
+        double   f64;
+        msgpack::object_array array;
+        msgpack::object_map map;
+        msgpack::object_str str;
+        msgpack::object_bin bin;
+        msgpack::object_ext ext;
     };
 
     msgpack::type::object_type type;
@@ -128,45 +131,48 @@ MSGPACK_API_VERSION_NAMESPACE(v1) {
     template <typename T>
     typename std::enable_if<!msgpack::has_as<T>::value, T>::type as() const;
 
-#endif  // defined(MSGPACK_USE_CPP03)
+#endif // defined(MSGPACK_USE_CPP03)
 
     /// Convert the object
     /**
      * If the object can't be converted to T, msgpack::type_error would be thrown.
      * @tparam T The type of v.
-     * @param v The value you want to get. `v` is output parameter. `v` is overwritten by converted
-     * value from the object.
+     * @param v The value you want to get. `v` is output parameter. `v` is overwritten by converted value from the object.
      * @return The reference of `v`.
      */
     template <typename T>
-    typename msgpack::enable_if<!msgpack::is_array<T>::value && !msgpack::is_pointer<T>::value,
-                                T&>::type
+    typename msgpack::enable_if<
+        !msgpack::is_array<T>::value && !msgpack::is_pointer<T>::value,
+        T&
+    >::type
     convert(T& v) const;
 
     template <typename T, std::size_t N>
-    T (&convert(T (&v)[N]) const)
-    [N];
+    T (&convert(T(&v)[N]) const)[N];
+
 
 #if !defined(MSGPACK_DISABLE_LEGACY_CONVERT)
     /// Convert the object (obsolete)
     /**
      * If the object can't be converted to T, msgpack::type_error would be thrown.
      * @tparam T The type of v.
-     * @param v The pointer of the value you want to get. `v` is output parameter. `*v` is
-     * overwritten by converted value from the object.
+     * @param v The pointer of the value you want to get. `v` is output parameter. `*v` is overwritten by converted value from the object.
      * @return The pointer of `v`.
      */
     template <typename T>
     MSGPACK_DEPRECATED("please use reference version instead")
-    typename msgpack::enable_if<msgpack::is_pointer<T>::value, T>::type convert(T v) const;
-#endif  // !defined(MSGPACK_DISABLE_LEGACY_CONVERT)
+    typename msgpack::enable_if<
+        msgpack::is_pointer<T>::value,
+        T
+    >::type
+    convert(T v) const;
+#endif // !defined(MSGPACK_DISABLE_LEGACY_CONVERT)
 
     /// Convert the object if not nil
     /**
      * If the object is not nil and can't be converted to T, msgpack::type_error would be thrown.
      * @tparam T The type of v.
-     * @param v The value you want to get. `v` is output parameter. `v` is overwritten by converted
-     * value from the object if the object is not nil.
+     * @param v The value you want to get. `v` is output parameter. `v` is overwritten by converted value from the object if the object is not nil.
      * @return If the object is nil, then return false, else return true.
      */
     template <typename T>
@@ -218,30 +224,30 @@ MSGPACK_API_VERSION_NAMESPACE(v1) {
     // Not a nested struct (i.e. 'struct with_zone;') to work around MSVC C++20 modules error C2504
     typedef object_with_zone_type with_zone;
 
-   protected:
+protected:
     struct implicit_type;
 
-   public:
+public:
     implicit_type convert() const;
-  };
+};
 
-  class type_error : public std::bad_cast {};
+class type_error : public std::bad_cast { };
 
-  struct object::implicit_type {
-    implicit_type(object const& o) : obj(o) {}
-    ~implicit_type() {}
+struct object::implicit_type {
+    implicit_type(object const& o) : obj(o) { }
+    ~implicit_type() { }
 
     template <typename T>
     operator T();
 
-   private:
+private:
     object const& obj;
-  };
+};
 
-  /// @cond
-}  // MSGPACK_API_VERSION_NAMESPACE(v1)
+/// @cond
+} // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
-}  // namespace msgpack
+} // namespace msgpack
 
-#endif  // MSGPACK_V1_OBJECT_FWD_HPP
+#endif // MSGPACK_V1_OBJECT_FWD_HPP

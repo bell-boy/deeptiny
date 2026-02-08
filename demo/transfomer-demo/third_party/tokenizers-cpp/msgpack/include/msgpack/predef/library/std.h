@@ -10,6 +10,7 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/library/std/_prefix.h>
+
 #include <msgpack/predef/library/std/cxx.h>
 #include <msgpack/predef/library/std/dinkumware.h>
 #include <msgpack/predef/library/std/libcomo.h>

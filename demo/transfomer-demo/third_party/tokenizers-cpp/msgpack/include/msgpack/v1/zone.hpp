@@ -16,6 +16,6 @@
 #include "msgpack/v1/detail/cpp03_zone.hpp"
 #else  // MSGPACK_USE_CPP03
 #include "msgpack/v1/detail/cpp11_zone.hpp"
-#endif  // MSGPACK_USE_CPP03
+#endif // MSGPACK_USE_CPP03
 
-#endif  // MSGPACK_V1_ZONE_HPP
+#endif // MSGPACK_V1_ZONE_HPP

@@ -11,6 +11,7 @@
 #define MSGPACK_TYPE_NIL_HPP
 
 #include "msgpack/adaptor/nil_decl.hpp"
+
 #include "msgpack/v1/adaptor/nil.hpp"
 
-#endif  // MSGPACK_TYPE_NIL_HPP
+#endif // MSGPACK_TYPE_NIL_HPP

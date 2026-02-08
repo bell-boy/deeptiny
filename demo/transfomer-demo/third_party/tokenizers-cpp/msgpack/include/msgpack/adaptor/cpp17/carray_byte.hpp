@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp17/carray_byte.hpp"
 
-#endif  // MSGPACK_TYPE_CPP17_CARRAY_BYTE_HPP
+#endif // MSGPACK_TYPE_CPP17_CARRAY_BYTE_HPP

@@ -13,13 +13,12 @@
 // limitations under the License.!
 
 #include "char_model.h"
-
 #include "util.h"
 
 namespace sentencepiece {
 namespace character {
 
-Model::Model(const ModelProto& model_proto) {
+Model::Model(const ModelProto &model_proto) {
   model_proto_ = &model_proto;
   InitializePieces();
 }

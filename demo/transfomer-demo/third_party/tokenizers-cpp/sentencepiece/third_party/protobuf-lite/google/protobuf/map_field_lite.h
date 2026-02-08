@@ -31,15 +31,15 @@
 #ifndef GOOGLE_PROTOBUF_MAP_FIELD_LITE_H__
 #define GOOGLE_PROTOBUF_MAP_FIELD_LITE_H__
 
+#include <type_traits>
+#include <google/protobuf/parse_context.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/map.h>
 #include <google/protobuf/map_entry_lite.h>
-#include <google/protobuf/parse_context.h>
 #include <google/protobuf/port.h>
 #include <google/protobuf/wire_format_lite.h>
 
 #include <google/protobuf/port_def.inc>
-#include <type_traits>
 
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
@@ -52,7 +52,8 @@ namespace internal {
 // This class provides access to map field using generated api. It is used for
 // internal generated message implementation only. Users should never use this
 // directly.
-template <typename Derived, typename Key, typename T, WireFormatLite::FieldType key_wire_type,
+template <typename Derived, typename Key, typename T,
+          WireFormatLite::FieldType key_wire_type,
           WireFormatLite::FieldType value_wire_type>
 class MapFieldLite {
   // Define message type for internal repeated field.
@@ -74,8 +75,8 @@ class MapFieldLite {
   int size() const { return static_cast<int>(map_.size()); }
   void Clear() { return map_.clear(); }
   void MergeFrom(const MapFieldLite& other) {
-    for (typename Map<Key, T>::const_iterator it = other.map_.begin(); it != other.map_.end();
-         ++it) {
+    for (typename Map<Key, T>::const_iterator it = other.map_.begin();
+         it != other.map_.end(); ++it) {
       map_[it->first] = it->second;
     }
   }
@@ -83,7 +84,9 @@ class MapFieldLite {
 
   // Used in the implementation of parsing. Caller should take the ownership iff
   // arena_ is NULL.
-  EntryType* NewEntry() const { return Arena::CreateMessage<EntryType>(map_.arena()); }
+  EntryType* NewEntry() const {
+    return Arena::CreateMessage<EntryType>(map_.arena());
+  }
   // Used in the implementation of serializing enum value type. Caller should
   // take the ownership iff arena_ is NULL.
   EntryType* NewEnumEntryWrapper(const Key& key, const T t) const {
@@ -101,11 +104,12 @@ class MapFieldLite {
   }
 
   template <typename UnknownType>
-  const char* ParseWithEnumValidation(const char* ptr, ParseContext* ctx, bool (*is_valid)(int),
-                                      uint32 field_num, InternalMetadata* metadata) {
+  const char* ParseWithEnumValidation(const char* ptr, ParseContext* ctx,
+                                      bool (*is_valid)(int), uint32 field_num,
+                                      InternalMetadata* metadata) {
     typename Derived::template Parser<MapFieldLite, Map<Key, T>> parser(this);
-    return parser.template ParseWithEnumValidation<UnknownType>(ptr, ctx, is_valid, field_num,
-                                                                metadata);
+    return parser.template ParseWithEnumValidation<UnknownType>(
+        ptr, ctx, is_valid, field_num, metadata);
   }
 
  private:
@@ -119,8 +123,8 @@ class MapFieldLite {
 template <typename UnknownType, typename T>
 struct EnumParseWrapper {
   const char* _InternalParse(const char* ptr, ParseContext* ctx) {
-    return map_field->template ParseWithEnumValidation<UnknownType>(ptr, ctx, is_valid, field_num,
-                                                                    metadata);
+    return map_field->template ParseWithEnumValidation<UnknownType>(
+        ptr, ctx, is_valid, field_num, metadata);
   }
   T* map_field;
   bool (*is_valid)(int);
@@ -132,21 +136,25 @@ struct EnumParseWrapper {
 // leverages compiler type deduction, to keep all type data out of the
 // generated code
 template <typename UnknownType, typename T>
-EnumParseWrapper<UnknownType, T> InitEnumParseWrapper(T* map_field, bool (*is_valid)(int),
-                                                      uint32 field_num,
-                                                      InternalMetadata* metadata) {
-  return EnumParseWrapper<UnknownType, T>{map_field, is_valid, field_num, metadata};
+EnumParseWrapper<UnknownType, T> InitEnumParseWrapper(
+    T* map_field, bool (*is_valid)(int), uint32 field_num,
+    InternalMetadata* metadata) {
+  return EnumParseWrapper<UnknownType, T>{map_field, is_valid, field_num,
+                                          metadata};
 }
 
 // True if IsInitialized() is true for value field in all elements of t. T is
 // expected to be message.  It's useful to have this helper here to keep the
 // protobuf compiler from ever having to emit loops in IsInitialized() methods.
 // We want the C++ compiler to inline this or not as it sees fit.
-template <typename Derived, typename Key, typename T, WireFormatLite::FieldType key_wire_type,
+template <typename Derived, typename Key, typename T,
+          WireFormatLite::FieldType key_wire_type,
           WireFormatLite::FieldType value_wire_type>
-bool AllAreInitialized(const MapFieldLite<Derived, Key, T, key_wire_type, value_wire_type>& field) {
+bool AllAreInitialized(const MapFieldLite<Derived, Key, T, key_wire_type,
+                                          value_wire_type>& field) {
   const auto& t = field.GetMap();
-  for (typename Map<Key, T>::const_iterator it = t.begin(); it != t.end(); ++it) {
+  for (typename Map<Key, T>::const_iterator it = t.begin(); it != t.end();
+       ++it) {
     if (!it->second.IsInitialized()) return false;
   }
   return true;
@@ -155,11 +163,14 @@ bool AllAreInitialized(const MapFieldLite<Derived, Key, T, key_wire_type, value_
 template <typename MEntry>
 struct MapEntryToMapField : MapEntryToMapField<typename MEntry::SuperType> {};
 
-template <typename T, typename Key, typename Value, WireFormatLite::FieldType kKeyFieldType,
+template <typename T, typename Key, typename Value,
+          WireFormatLite::FieldType kKeyFieldType,
           WireFormatLite::FieldType kValueFieldType>
-struct MapEntryToMapField<MapEntryLite<T, Key, Value, kKeyFieldType, kValueFieldType>> {
-  typedef MapFieldLite<MapEntryLite<T, Key, Value, kKeyFieldType, kValueFieldType>, Key, Value,
-                       kKeyFieldType, kValueFieldType>
+struct MapEntryToMapField<
+    MapEntryLite<T, Key, Value, kKeyFieldType, kValueFieldType>> {
+  typedef MapFieldLite<
+      MapEntryLite<T, Key, Value, kKeyFieldType, kValueFieldType>, Key, Value,
+      kKeyFieldType, kValueFieldType>
       MapFieldType;
 };
 

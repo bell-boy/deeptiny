@@ -10,63 +10,58 @@
 #ifndef MSGPACK_V1_TYPE_BOOL_HPP
 #define MSGPACK_V1_TYPE_BOOL_HPP
 
+#include "msgpack/versioning.hpp"
 #include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/object.hpp"
-#include "msgpack/versioning.hpp"
 
 namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+/// @endcond
 
-  namespace adaptor {
+namespace adaptor {
 
-  template <>
-  struct convert<bool> {
+template <>
+struct convert<bool> {
     msgpack::object const& operator()(msgpack::object const& o, bool& v) const {
-      if (o.type != msgpack::type::BOOLEAN) {
-        throw msgpack::type_error();
-      }
-      v = o.via.boolean;
-      return o;
+        if(o.type != msgpack::type::BOOLEAN) { throw msgpack::type_error(); }
+        v = o.via.boolean;
+        return o;
     }
-  };
+};
 
-  template <>
-  struct pack<bool> {
+template <>
+struct pack<bool> {
     template <typename Stream>
     msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& o, const bool& v) const {
-      if (v) {
-        o.pack_true();
-      } else {
-        o.pack_false();
-      }
-      return o;
+        if(v) { o.pack_true(); }
+        else { o.pack_false(); }
+        return o;
     }
-  };
+};
 
-  template <>
-  struct object<bool> {
+template <>
+struct object<bool> {
     void operator()(msgpack::object& o, bool v) const {
-      o.type = msgpack::type::BOOLEAN;
-      o.via.boolean = v;
+        o.type = msgpack::type::BOOLEAN;
+        o.via.boolean = v;
     }
-  };
+};
 
-  template <>
-  struct object_with_zone<bool> {
+template <>
+struct object_with_zone<bool> {
     void operator()(msgpack::object::with_zone& o, bool v) const {
-      static_cast<msgpack::object&>(o) << v;
+        static_cast<msgpack::object&>(o) << v;
     }
-  };
+};
 
-  }  // namespace adaptor
+} // namespace adaptor
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_TYPE_BOOL_HPP
+#endif // MSGPACK_V1_TYPE_BOOL_HPP

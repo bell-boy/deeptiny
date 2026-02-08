@@ -13,4 +13,4 @@
 
 #include "msgpack/v1/adaptor/cpp11/forward_list.hpp"
 
-#endif  // MSGPACK_TYPE_CPP11_FORWARD_LIST_HPP
+#endif // MSGPACK_TYPE_CPP11_FORWARD_LIST_HPP

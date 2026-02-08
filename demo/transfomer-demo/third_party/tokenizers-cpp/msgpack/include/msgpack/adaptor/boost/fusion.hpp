@@ -12,4 +12,4 @@
 
 #include "msgpack/v1/adaptor/boost/fusion.hpp"
 
-#endif  // MSGPACK_TYPE_BOOST_FUSION_HPP
+#endif // MSGPACK_TYPE_BOOST_FUSION_HPP

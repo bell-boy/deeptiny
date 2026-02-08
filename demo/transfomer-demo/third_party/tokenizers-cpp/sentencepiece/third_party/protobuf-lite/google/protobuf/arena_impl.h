@@ -33,17 +33,18 @@
 #ifndef GOOGLE_PROTOBUF_ARENA_IMPL_H__
 #define GOOGLE_PROTOBUF_ARENA_IMPL_H__
 
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/logging.h>
-
 #include <atomic>
 #include <limits>
+
+#include <google/protobuf/stubs/common.h>
+#include <google/protobuf/stubs/logging.h>
 
 #ifdef ADDRESS_SANITIZER
 #include <sanitizer/asan_interface.h>
 #endif  // ADDRESS_SANITIZER
 
 #include <google/protobuf/port_def.inc>
+
 
 namespace google {
 namespace protobuf {
@@ -85,7 +86,8 @@ class PROTOBUF_EXPORT ArenaMetricsCollector {
   // Note: typeid(void) will be passed as allocated_type every time we
   // intentionally want to avoid monitoring an allocation. (i.e. internal
   // allocations for managing the arena)
-  virtual void OnAlloc(const std::type_info* allocated_type, uint64 alloc_size) = 0;
+  virtual void OnAlloc(const std::type_info* allocated_type,
+                       uint64 alloc_size) = 0;
 };
 
 class ArenaImpl;
@@ -242,7 +244,8 @@ class PROTOBUF_EXPORT SerialArena {
   void CleanupListFallback();
 
  public:
-  static constexpr size_t kBlockHeaderSize = (sizeof(Block) + 7) & static_cast<size_t>(-8);
+  static constexpr size_t kBlockHeaderSize =
+      (sizeof(Block) + 7) & static_cast<size_t>(-8);
 };
 
 // This class provides the core Arena memory allocation library. Different
@@ -308,7 +311,8 @@ class PROTOBUF_EXPORT ArenaImpl {
   // Add object pointer and cleanup function pointer to the list.
   void AddCleanup(void* elem, void (*cleanup)(void*));
 
-  inline void RecordAlloc(const std::type_info* allocated_type, size_t n) const {
+  inline void RecordAlloc(const std::type_info* allocated_type,
+                          size_t n) const {
     if (PROTOBUF_PREDICT_FALSE(record_allocs())) {
       options_->metrics_collector->OnAlloc(allocated_type, n);
     }
@@ -341,7 +345,8 @@ class PROTOBUF_EXPORT ArenaImpl {
   void AddCleanupFallback(void* elem, void (*cleanup)(void*));
 
   void Init(bool record_allocs);
-  void SetInitialBlock(SerialArena::Block* block);  // Can be called right after Init()
+  void SetInitialBlock(
+      SerialArena::Block* block);  // Can be called right after Init()
 
   // Return true iff allocations should be recorded in a metrics collector.
   inline bool record_allocs() const { return lifecycle_id_ & 1; }
@@ -391,7 +396,8 @@ class PROTOBUF_EXPORT ArenaImpl {
     return false;
   }
 
-  PROTOBUF_ALWAYS_INLINE bool GetSerialArenaFromThreadCache(SerialArena** arena) {
+  PROTOBUF_ALWAYS_INLINE bool GetSerialArenaFromThreadCache(
+      SerialArena** arena) {
     // If this thread already owns a block in this arena then try to use that.
     // This fast path optimizes the case where multiple threads allocate from
     // the same arena.
@@ -412,7 +418,10 @@ class PROTOBUF_EXPORT ArenaImpl {
     // If we are using the ThreadLocalStorage class to store the ThreadCache,
     // then the ThreadCache's default constructor has to be responsible for
     // initializing it.
-    ThreadCache() : next_lifecycle_id(0), last_lifecycle_id_seen(-1), last_serial_arena(NULL) {}
+    ThreadCache()
+        : next_lifecycle_id(0),
+          last_lifecycle_id_seen(-1),
+          last_serial_arena(NULL) {}
 #endif
 
     // Number of per-thread lifecycle IDs to reserve. Must be power of two.
@@ -463,10 +472,14 @@ class PROTOBUF_EXPORT ArenaImpl {
   // kBlockHeaderSize is sizeof(Block), aligned up to the nearest multiple of 8
   // to protect the invariant that pos is always at a multiple of 8.
   static constexpr size_t kBlockHeaderSize = SerialArena::kBlockHeaderSize;
-  static constexpr size_t kSerialArenaSize = (sizeof(SerialArena) + 7) & static_cast<size_t>(-8);
-  static constexpr size_t kOptionsSize = (sizeof(Options) + 7) & static_cast<size_t>(-8);
-  static_assert(kBlockHeaderSize % 8 == 0, "kBlockHeaderSize must be a multiple of 8.");
-  static_assert(kSerialArenaSize % 8 == 0, "kSerialArenaSize must be a multiple of 8.");
+  static constexpr size_t kSerialArenaSize =
+      (sizeof(SerialArena) + 7) & static_cast<size_t>(-8);
+  static constexpr size_t kOptionsSize =
+      (sizeof(Options) + 7) & static_cast<size_t>(-8);
+  static_assert(kBlockHeaderSize % 8 == 0,
+                "kBlockHeaderSize must be a multiple of 8.");
+  static_assert(kSerialArenaSize % 8 == 0,
+                "kSerialArenaSize must be a multiple of 8.");
 };
 
 }  // namespace internal

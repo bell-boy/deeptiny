@@ -21,8 +21,12 @@ namespace {
 static std::atomic<int> g_minloglevel = 0;
 }  // namespace
 
-LogSeverityAtLeast MinLogLevel() { return static_cast<LogSeverityAtLeast>(g_minloglevel.load()); }
+LogSeverityAtLeast MinLogLevel() {
+  return static_cast<LogSeverityAtLeast>(g_minloglevel.load());
+}
 
-void SetMinLogLevel(LogSeverityAtLeast v) { g_minloglevel.store(static_cast<int>(v)); }
+void SetMinLogLevel(LogSeverityAtLeast v) {
+  g_minloglevel.store(static_cast<int>(v));
+}
 
 }  // namespace absl

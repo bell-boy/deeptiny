@@ -35,7 +35,7 @@
 
 namespace sentencepiece {
 template <typename T>
-std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
+std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
   for (const auto n : v) {
     out << " " << n;
   }
@@ -54,17 +54,18 @@ std::string GetDataDir();
 namespace string_util {
 
 template <typename Target>
-inline bool lexical_cast(absl::string_view arg, Target* result) {
+inline bool lexical_cast(absl::string_view arg, Target *result) {
   std::stringstream ss;
   return (ss << arg.data() && ss >> *result);
 }
 
 template <>
-inline bool lexical_cast(absl::string_view arg, bool* result) {
-  const char* kTrue[] = {"1", "t", "true", "y", "yes"};
-  const char* kFalse[] = {"0", "f", "false", "n", "no"};
+inline bool lexical_cast(absl::string_view arg, bool *result) {
+  const char *kTrue[] = {"1", "t", "true", "y", "yes"};
+  const char *kFalse[] = {"0", "f", "false", "n", "no"};
   std::string lower_value = std::string(arg);
-  std::transform(lower_value.begin(), lower_value.end(), lower_value.begin(), ::tolower);
+  std::transform(lower_value.begin(), lower_value.end(), lower_value.begin(),
+                 ::tolower);
   for (size_t i = 0; i < 5; ++i) {
     if (lower_value == kTrue[i]) {
       *result = true;
@@ -79,13 +80,13 @@ inline bool lexical_cast(absl::string_view arg, bool* result) {
 }
 
 template <>
-inline bool lexical_cast(absl::string_view arg, std::string* result) {
+inline bool lexical_cast(absl::string_view arg, std::string *result) {
   *result = std::string(arg);
   return true;
 }
 
 template <typename T>
-inline bool DecodePOD(absl::string_view str, T* result) {
+inline bool DecodePOD(absl::string_view str, T *result) {
   if (sizeof(*result) != str.size()) {
     return false;
   }
@@ -94,10 +95,10 @@ inline bool DecodePOD(absl::string_view str, T* result) {
 }
 
 template <typename T>
-inline std::string EncodePOD(const T& value) {
+inline std::string EncodePOD(const T &value) {
   std::string s;
   s.resize(sizeof(T));
-  memcpy(const_cast<char*>(s.data()), &value, sizeof(T));
+  memcpy(const_cast<char *>(s.data()), &value, sizeof(T));
   return s;
 }
 
@@ -117,14 +118,14 @@ inline T HexToInt(absl::string_view value) {
 }
 
 template <typename T>
-inline size_t Itoa(T val, char* s) {
-  char* org = s;
+inline size_t Itoa(T val, char *s) {
+  char *org = s;
 
   if (val < 0) {
     *s++ = '-';
     val = -val;
   }
-  char* t = s;
+  char *t = s;
 
   T mod = 0;
   while (val) {
@@ -150,7 +151,7 @@ std::string SimpleItoa(T val) {
 }
 
 // Return length of a single UTF-8 source character
-inline size_t OneCharLen(const char* src) {
+inline size_t OneCharLen(const char *src) {
   return "\1\1\1\1\1\1\1\1\1\1\1\1\2\2\3\4"[(*src & 0xFF) >> 4];
 }
 
@@ -166,18 +167,18 @@ bool IsStructurallyValid(absl::string_view str);
 
 using UnicodeText = std::vector<char32>;
 
-char32 DecodeUTF8(const char* begin, const char* end, size_t* mblen);
+char32 DecodeUTF8(const char *begin, const char *end, size_t *mblen);
 
-inline char32 DecodeUTF8(absl::string_view input, size_t* mblen) {
+inline char32 DecodeUTF8(absl::string_view input, size_t *mblen) {
   return DecodeUTF8(input.data(), input.data() + input.size(), mblen);
 }
 
-inline bool IsValidDecodeUTF8(absl::string_view input, size_t* mblen) {
+inline bool IsValidDecodeUTF8(absl::string_view input, size_t *mblen) {
   const char32 c = DecodeUTF8(input, mblen);
   return c != kUnicodeError || *mblen == 3;
 }
 
-size_t EncodeUTF8(char32 c, char* output);
+size_t EncodeUTF8(char32 c, char *output);
 
 // Return the length of the UTF-8 character in bytes.
 inline size_t UTF8Length(char32 c) {
@@ -198,7 +199,7 @@ std::string UnicodeCharToUTF8(const char32 c);
 
 UnicodeText UTF8ToUnicodeText(absl::string_view utf8);
 
-std::string UnicodeTextToUTF8(const UnicodeText& utext);
+std::string UnicodeTextToUTF8(const UnicodeText &utext);
 
 }  // namespace string_util
 
@@ -206,13 +207,14 @@ std::string UnicodeTextToUTF8(const UnicodeText& utext);
 namespace port {
 
 template <class Collection, class Key>
-bool ContainsKey(const Collection& collection, const Key& key) {
+bool ContainsKey(const Collection &collection, const Key &key) {
   return collection.find(key) != collection.end();
 }
 
 template <class Collection>
-const typename Collection::value_type::second_type& FindOrDie(
-    const Collection& collection, const typename Collection::value_type::first_type& key) {
+const typename Collection::value_type::second_type &FindOrDie(
+    const Collection &collection,
+    const typename Collection::value_type::first_type &key) {
   const auto it = collection.find(key);
   //  if (it == collection.end()) {
   //    LOG(FATAL) << "Map key not found: " << key;
@@ -221,9 +223,10 @@ const typename Collection::value_type::second_type& FindOrDie(
 }
 
 template <class Collection>
-const typename Collection::value_type::second_type& FindWithDefault(
-    const Collection& collection, const typename Collection::value_type::first_type& key,
-    const typename Collection::value_type::second_type& value) {
+const typename Collection::value_type::second_type &FindWithDefault(
+    const Collection &collection,
+    const typename Collection::value_type::first_type &key,
+    const typename Collection::value_type::second_type &value) {
   if (const auto it = collection.find(key); it != collection.end()) {
     return it->second;
   }
@@ -231,26 +234,29 @@ const typename Collection::value_type::second_type& FindWithDefault(
 }
 
 template <class Collection>
-bool InsertIfNotPresent(Collection* const collection, const typename Collection::value_type& vt) {
+bool InsertIfNotPresent(Collection *const collection,
+                        const typename Collection::value_type &vt) {
   return collection->insert(vt).second;
 }
 
 template <class Collection>
-bool InsertIfNotPresent(Collection* const collection,
-                        const typename Collection::value_type::first_type& key,
-                        const typename Collection::value_type::second_type& value) {
-  return InsertIfNotPresent(collection, typename Collection::value_type(key, value));
+bool InsertIfNotPresent(
+    Collection *const collection,
+    const typename Collection::value_type::first_type &key,
+    const typename Collection::value_type::second_type &value) {
+  return InsertIfNotPresent(collection,
+                            typename Collection::value_type(key, value));
 }
 
 template <class Collection>
-void InsertOrDie(Collection* const collection,
-                 const typename Collection::value_type::first_type& key,
-                 const typename Collection::value_type::second_type& data) {
+void InsertOrDie(Collection *const collection,
+                 const typename Collection::value_type::first_type &key,
+                 const typename Collection::value_type::second_type &data) {
   CHECK(InsertIfNotPresent(collection, key, data)) << "duplicate key";
 }
 
 // hash
-inline void mix(uint64_t& a, uint64_t& b, uint64_t& c) {  // 64bit version
+inline void mix(uint64_t &a, uint64_t &b, uint64_t &c) {  // 64bit version
   a -= b;
   a -= c;
   a ^= (c >> 43);
@@ -299,18 +305,19 @@ inline uint64_t FingerprintCat(uint64_t x, uint64_t y) {
 
 namespace random {
 
-std::mt19937* GetRandomGenerator();
+std::mt19937 *GetRandomGenerator();
 
 template <typename T>
 class ReservoirSampler {
  public:
-  explicit ReservoirSampler(std::vector<T>* sampled, uint64_t size)
+  explicit ReservoirSampler(std::vector<T> *sampled, uint64_t size)
       : sampled_(sampled), size_(size), engine_(GetRandomGeneratorSeed()) {}
-  explicit ReservoirSampler(std::vector<T>* sampled, uint64_t size, uint64_t seed)
+  explicit ReservoirSampler(std::vector<T> *sampled, uint64_t size,
+                            uint64_t seed)
       : sampled_(sampled), size_(size), engine_(seed) {}
   virtual ~ReservoirSampler() {}
 
-  void Add(const T& item) {
+  void Add(const T &item) {
     if (size_ == 0) return;
 
     ++total_;
@@ -326,7 +333,7 @@ class ReservoirSampler {
   uint64_t total_size() const { return total_; }
 
  private:
-  std::vector<T>* sampled_ = nullptr;
+  std::vector<T> *sampled_ = nullptr;
   uint64_t size_ = 0;
   uint64_t total_ = 0;
   std::mt19937 engine_;
@@ -339,7 +346,8 @@ namespace util {
 #if defined(_FREEBSD)
 #include <sys/endian.h>
 #endif
-#if !defined(__APPLE__) && !defined(_WIN32) && !defined(_FREEBSD) && !defined(_AIX)
+#if !defined(__APPLE__) && !defined(_WIN32) && !defined(_FREEBSD) && \
+    !defined(_AIX)
 #include <endian.h>
 #if BYTE_ORDER == __BIG_ENDIAN
 #define IS_BIG_ENDIAN
@@ -371,7 +379,7 @@ inline std::string JoinPath(absl::string_view path) {
 }
 
 template <typename... T>
-inline std::string JoinPath(absl::string_view first, const T&... rest) {
+inline std::string JoinPath(absl::string_view first, const T &...rest) {
 #ifdef OS_WIN
   return JoinPath(first) + "\\" + JoinPath(rest...);
 #else
@@ -393,7 +401,9 @@ inline Status OkStatus() { return Status(); }
   inline util::Status FUNC##Error(absl::string_view str) { \
     return util::Status(StatusCode::k##FUNC, str.data());  \
   }                                                        \
-  inline bool Is##FUNC(const util::Status& status) { return status.code() == StatusCode::k##FUNC; }
+  inline bool Is##FUNC(const util::Status &status) {       \
+    return status.code() == StatusCode::k##FUNC;           \
+  }
 
 DECLARE_ERROR(Cancelled)
 DECLARE_ERROR(InvalidArgument)
@@ -420,7 +430,7 @@ class StatusBuilder {
   explicit StatusBuilder(StatusCode code, int loc) : code_(code) {}
 
   template <typename T>
-  StatusBuilder& operator<<(const T& value) {
+  StatusBuilder &operator<<(const T &value) {
     os_ << value;
     return *this;
   }
@@ -432,10 +442,11 @@ class StatusBuilder {
   std::ostringstream os_;
 };
 
-#define CHECK_OR_RETURN(condition)                                                            \
-  if (condition) {                                                                            \
-  } else /* NOLINT */                                                                         \
-    return ::sentencepiece::util::StatusBuilder(::sentencepiece::util::StatusCode::kInternal) \
+#define CHECK_OR_RETURN(condition)                           \
+  if (condition) {                                           \
+  } else /* NOLINT */                                        \
+    return ::sentencepiece::util::StatusBuilder(             \
+               ::sentencepiece::util::StatusCode::kInternal) \
            << __FILE__ << "(" << __LINE__ << ") [" << #condition << "] "
 
 #define CHECK_EQ_OR_RETURN(a, b) CHECK_OR_RETURN((a) == (b))
@@ -449,7 +460,7 @@ class StatusBuilder {
 
 namespace port {
 template <typename T>
-void STLDeleteElements(std::vector<T*>* vec) {
+void STLDeleteElements(std::vector<T *> *vec) {
   for (auto item : *vec) {
     delete item;
   }
@@ -461,7 +472,7 @@ class ThreadPool {
  public:
   ThreadPool(int32_t n) {}
   virtual ~ThreadPool() {
-    for (auto& task : tasks_) {
+    for (auto &task : tasks_) {
       task.join();
     }
   }
@@ -475,7 +486,7 @@ class ThreadPool {
 
 namespace log_domain {
 
-double LogSum(const std::vector<double>& xs);
+double LogSum(const std::vector<double> &xs);
 
 }  // namespace log_domain
 }  // namespace sentencepiece

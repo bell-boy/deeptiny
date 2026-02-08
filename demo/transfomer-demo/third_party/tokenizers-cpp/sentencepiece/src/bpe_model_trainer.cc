@@ -28,16 +28,18 @@
 namespace sentencepiece {
 namespace bpe {
 
-std::string Trainer::Symbol::ToString() const { return string_util::UnicodeTextToUTF8(chars); }
+std::string Trainer::Symbol::ToString() const {
+  return string_util::UnicodeTextToUTF8(chars);
+}
 
-Trainer::Symbol* Trainer::GetCharSymbol(char32 c) {
+Trainer::Symbol *Trainer::GetCharSymbol(char32 c) {
   const uint64_t freq = port::FindWithDefault(required_chars_, c, 1);
   CHECK_GT(freq, 0);
   const auto it = symbols_cache_.find(c);
   if (it != symbols_cache_.end()) {
     return it->second;
   }
-  Symbol* s = new Symbol;
+  Symbol *s = new Symbol;
   allocated_.push_back(s);
   s->is_unk = (kUNKChar == c);
   s->fp = c;
@@ -47,7 +49,8 @@ Trainer::Symbol* Trainer::GetCharSymbol(char32 c) {
   return s;
 }
 
-Trainer::Symbol* Trainer::GetPairSymbol(const Symbol* left, const Symbol* right) {
+Trainer::Symbol *Trainer::GetPairSymbol(const Symbol *left,
+                                        const Symbol *right) {
   if (left == nullptr || right == nullptr || left->is_unk || right->is_unk) {
     return nullptr;
   }
@@ -69,7 +72,7 @@ Trainer::Symbol* Trainer::GetPairSymbol(const Symbol* left, const Symbol* right)
     return nullptr;
   }
 
-  Symbol* s = new Symbol;
+  Symbol *s = new Symbol;
   allocated_.push_back(s);
   s->fp = fp;
   s->left = left;
@@ -79,7 +82,7 @@ Trainer::Symbol* Trainer::GetPairSymbol(const Symbol* left, const Symbol* right)
   return s;
 }
 
-void Trainer::ComputeFreq(Symbol* symbol) const {
+void Trainer::ComputeFreq(Symbol *symbol) const {
   if (symbol->freq > 0) {  // if freq == 0, re-computation is required.
     return;
   }
@@ -116,25 +119,25 @@ int Trainer::GetPrevIndex(int sid, int index) const {
 
 void Trainer::AddNewPair(int sid, int left, int right) {
   if (left == -1 || right == -1) return;
-  auto* symbol = GetPairSymbol(symbols_[sid][left], symbols_[sid][right]);
+  auto *symbol = GetPairSymbol(symbols_[sid][left], symbols_[sid][right]);
   if (symbol != nullptr) {
     active_symbols_.insert(symbol);
     symbol->positions.insert(EncodePos(sid, left, right));
   }
 }
 
-void Trainer::ResetFreq(int sid, int left, int right, const Symbol* best) {
+void Trainer::ResetFreq(int sid, int left, int right, const Symbol *best) {
   if (left == -1 || right == -1) return;
-  auto* symbol = GetPairSymbol(symbols_[sid][left], symbols_[sid][right]);
+  auto *symbol = GetPairSymbol(symbols_[sid][left], symbols_[sid][right]);
   if (symbol != nullptr && symbol != best) {
     symbol->freq = 0;
   }
 }
 
 void Trainer::UpdateActiveSymbols() {
-  std::vector<Symbol*> symbols;
-  for (auto& it : symbols_cache_) {
-    Symbol* symbol = it.second;
+  std::vector<Symbol *> symbols;
+  for (auto &it : symbols_cache_) {
+    Symbol *symbol = it.second;
     if (symbol->IsBigram()) {
       ComputeFreq(symbol);
       symbols.push_back(symbol);
@@ -147,11 +150,12 @@ void Trainer::UpdateActiveSymbols() {
   // Keeps top 5% frequent symbols.
   constexpr float kTopFrequentRatio = 0.05;
   const int size =
-      std::min<int>(std::max<int>(kMinActiveSymbolsSize, symbols_cache_.size() * kTopFrequentRatio),
+      std::min<int>(std::max<int>(kMinActiveSymbolsSize,
+                                  symbols_cache_.size() * kTopFrequentRatio),
                     symbols.size());
 
   std::partial_sort(symbols.begin(), symbols.begin() + size, symbols.end(),
-                    [](Symbol* s1, Symbol* s2) { return s1->freq > s2->freq; });
+                    [](Symbol *s1, Symbol *s2) { return s1->freq > s2->freq; });
   LOG(INFO) << "Updating active symbols. max_freq=" << symbols[0]->freq
             << " min_freq=" << symbols[size - 1]->freq;
 
@@ -179,17 +183,18 @@ util::Status Trainer::Train() {
 
   // Pretokenizer applied only in training time.
   // Pretokenizer is used as a constraint of piece extractions.
-  const auto* pretokenizer = SentencePieceTrainer::GetPretokenizerForTraining();
+  const auto *pretokenizer = SentencePieceTrainer::GetPretokenizerForTraining();
 
   if (pretokenizer || !trainer_spec_.pretokenization_delimiter().empty()) {
     absl::string_view delimiter = trainer_spec_.pretokenization_delimiter();
     LOG(INFO) << "Preprocessing with pretokenizer...";
-    for (auto& w : sentences_) {
+    for (auto &w : sentences_) {
       if (pretokenizer) {
-        w.first =
-            absl::StrJoin(pretokenizer->PreTokenize(w.first), TrainerInterface::kUPPBoundaryStr);
+        w.first = absl::StrJoin(pretokenizer->PreTokenize(w.first),
+                                TrainerInterface::kUPPBoundaryStr);
       } else if (!delimiter.empty()) {
-        w.first = absl::StrReplaceAll(w.first, {{delimiter, TrainerInterface::kUPPBoundaryStr}});
+        w.first = absl::StrReplaceAll(
+            w.first, {{delimiter, TrainerInterface::kUPPBoundaryStr}});
       }
     }
   }
@@ -209,7 +214,8 @@ util::Status Trainer::Train() {
     }
   }
 
-  const int vocab_size = trainer_spec_.vocab_size() - meta_pieces_.size() - required_chars_.size();
+  const int vocab_size =
+      trainer_spec_.vocab_size() - meta_pieces_.size() - required_chars_.size();
   CHECK_GE_OR_RETURN(vocab_size, 0);
 
   // We may see duplicated pieces that are extracted with different path.
@@ -226,17 +232,18 @@ util::Status Trainer::Train() {
     }
 
     // Scanning active symbols, finds the best_symbol with highest freq.
-    Symbol* best_symbol = nullptr;
-    for (auto& it : active_symbols_) {
-      Symbol* symbol = it;
+    Symbol *best_symbol = nullptr;
+    for (auto &it : active_symbols_) {
+      Symbol *symbol = it;
       ComputeFreq(symbol);
       // If the frequency is the same, take shorter symbol.
       // if the length is the same, use lexicographical comparison
-      if (best_symbol == nullptr || (symbol->freq > best_symbol->freq ||
-                                     (symbol->freq == best_symbol->freq &&
-                                      (symbol->chars.size() < best_symbol->chars.size() ||
-                                       (symbol->chars.size() == best_symbol->chars.size() &&
-                                        symbol->ToString() < best_symbol->ToString()))))) {
+      if (best_symbol == nullptr ||
+          (symbol->freq > best_symbol->freq ||
+           (symbol->freq == best_symbol->freq &&
+            (symbol->chars.size() < best_symbol->chars.size() ||
+             (symbol->chars.size() == best_symbol->chars.size() &&
+              symbol->ToString() < best_symbol->ToString()))))) {
         best_symbol = symbol;
       }
     }
@@ -254,18 +261,21 @@ util::Status Trainer::Train() {
     }
 
     // Stores the best_symbol in the final output.
-    final_pieces_.emplace_back(best_symbol->ToString(), -static_cast<float>(final_pieces_.size()));
+    final_pieces_.emplace_back(best_symbol->ToString(),
+                               -static_cast<float>(final_pieces_.size()));
 
     if (final_pieces_.size() % 20 == 0) {
-      LOG(INFO) << "Added: freq=" << best_symbol->freq << " size=" << final_pieces_.size()
-                << " all=" << symbols_cache_.size() << " active=" << active_symbols_.size()
+      LOG(INFO) << "Added: freq=" << best_symbol->freq
+                << " size=" << final_pieces_.size()
+                << " all=" << symbols_cache_.size()
+                << " active=" << active_symbols_.size()
                 << " piece=" << best_symbol->ToString();
     }
 
     // Add new bigrams which are created after symbol replacement.
     // We do not need to scan all characters, but scan the neighbors in
     // best_symbol.
-    for (const uint64_t& encoded_pos : best_symbol->positions) {
+    for (const uint64_t &encoded_pos : best_symbol->positions) {
       const Position pos = DecodePos(encoded_pos);
 
       if (symbols_[pos.sid][pos.left] == nullptr) {
@@ -299,9 +309,10 @@ util::Status Trainer::Train() {
   }  // end of main loop
 
   // Adds required_chars_
-  for (const auto& w : Sorted(required_chars_)) {
-    const Symbol* symbol = GetCharSymbol(w.first);
-    final_pieces_.emplace_back(symbol->ToString(), -static_cast<float>(final_pieces_.size()));
+  for (const auto &w : Sorted(required_chars_)) {
+    const Symbol *symbol = GetCharSymbol(w.first);
+    final_pieces_.emplace_back(symbol->ToString(),
+                               -static_cast<float>(final_pieces_.size()));
   }
 
   port::STLDeleteElements(&allocated_);

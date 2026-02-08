@@ -9,8 +9,9 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_PREDEF_LIBRARY_STD_SGI_H
 
 #include <msgpack/predef/library/std/_prefix.h>
-#include <msgpack/predef/make.h>
+
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_LIB_STD_SGI`]
@@ -30,16 +31,16 @@ If available version number as major, minor, and patch.
 #define MSGPACK_LIB_STD_SGI MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
 #if defined(__STL_CONFIG_H)
-#undef MSGPACK_LIB_STD_SGI
-#if defined(__SGI_STL)
-#define MSGPACK_LIB_STD_SGI MSGPACK_PREDEF_MAKE_0X_VRP(__SGI_STL)
-#else
-#define MSGPACK_LIB_STD_SGI MSGPACK_VERSION_NUMBER_AVAILABLE
-#endif
+#   undef MSGPACK_LIB_STD_SGI
+#   if defined(__SGI_STL)
+#       define MSGPACK_LIB_STD_SGI MSGPACK_PREDEF_MAKE_0X_VRP(__SGI_STL)
+#   else
+#       define MSGPACK_LIB_STD_SGI MSGPACK_VERSION_NUMBER_AVAILABLE
+#   endif
 #endif
 
 #if MSGPACK_LIB_STD_SGI
-#define MSGPACK_LIB_STD_SGI_AVAILABLE
+#   define MSGPACK_LIB_STD_SGI_AVAILABLE
 #endif
 
 #define MSGPACK_LIB_STD_SGI_NAME "SGI"
@@ -47,4 +48,4 @@ If available version number as major, minor, and patch.
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_SGI, MSGPACK_LIB_STD_SGI_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_LIB_STD_SGI,MSGPACK_LIB_STD_SGI_NAME)

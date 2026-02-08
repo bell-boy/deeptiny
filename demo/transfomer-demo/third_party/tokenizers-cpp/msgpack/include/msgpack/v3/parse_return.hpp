@@ -16,20 +16,20 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
+/// @endcond
 
-  using v2::parse_return;
+using v2::parse_return;
 
-  using v2::PARSE_CONTINUE;
-  using v2::PARSE_EXTRA_BYTES;
-  using v2::PARSE_PARSE_ERROR;
-  using v2::PARSE_STOP_VISITOR;
-  using v2::PARSE_SUCCESS;
+using v2::PARSE_SUCCESS;
+using v2::PARSE_EXTRA_BYTES;
+using v2::PARSE_CONTINUE;
+using v2::PARSE_PARSE_ERROR;
+using v2::PARSE_STOP_VISITOR;
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V3_PARSE_RETURN_HPP
+#endif // MSGPACK_V3_PARSE_RETURN_HPP

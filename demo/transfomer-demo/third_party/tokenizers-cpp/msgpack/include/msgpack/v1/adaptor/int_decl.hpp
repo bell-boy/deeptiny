@@ -10,43 +10,42 @@
 #ifndef MSGPACK_V1_TYPE_INT_DECL_HPP
 #define MSGPACK_V1_TYPE_INT_DECL_HPP
 
-#include <limits>
-
+#include "msgpack/versioning.hpp"
 #include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/object.hpp"
-#include "msgpack/versioning.hpp"
+#include <limits>
 
 namespace msgpack {
 
 /// @cond
-MSGPACK_API_VERSION_NAMESPACE(v1) {
-  /// @endcond
+MSGPACK_API_VERSION_NAMESPACE(v1){
+/// @endcond
 
-  namespace type {
-  namespace detail {
+namespace type {
+namespace detail {
 
-  template <typename T, bool Signed>
-  struct convert_integer_sign;
+template <typename T, bool Signed>
+struct convert_integer_sign;
 
-  template <typename T>
-  struct is_signed;
+template <typename T>
+struct is_signed;
 
-  template <typename T>
-  T convert_integer(msgpack::object const& o);
+template <typename T>
+T convert_integer(msgpack::object const& o);
 
-  template <bool Signed>
-  struct object_sign;
+template <bool Signed>
+struct object_sign;
 
-  template <typename T>
-  void object_char(msgpack::object& o, T v);
+template <typename T>
+void object_char(msgpack::object& o, T v);
 
-  }  // namespace detail
-  }  // namespace type
+}  // namespace detail
+}  // namespace type
 
-  /// @cond
+/// @cond
 }  // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
 }  // namespace msgpack
 
-#endif  // MSGPACK_V1_TYPE_INT_DECL_HPP
+#endif // MSGPACK_V1_TYPE_INT_DECL_HPP

@@ -37,28 +37,28 @@ class Lattice {
 
   struct Node {
     absl::string_view piece;  // Sentence piece representation.
-    uint32_t pos;             // Unicode position in the sentence.
-    uint32_t length;          // Unicode length, not UT8 byte.
-    uint32_t node_id;         // unique id in the current lattice.
+    uint32_t pos;               // Unicode position in the sentence.
+    uint32_t length;            // Unicode length, not UT8 byte.
+    uint32_t node_id;           // unique id in the current lattice.
     int id;                   // vocab id. (maybe -1 for UNK)
     float score;              // logprob of this sentencepiece.
     float backtrace_score;    // backtrace info used in Viterbi.
-    Node* prev;               // best previous node on Viterbi path.
+    Node *prev;               // best previous node on Viterbi path.
 
     std::string DebugString() const;
   };
 
   // Returns bos node.
-  Node* bos_node() const;
+  Node *bos_node() const;
 
   // Returns eos node.
-  Node* eos_node() const;
+  Node *eos_node() const;
 
   // Returns nodes starting at |pos|.
-  const std::vector<Node*>& begin_nodes(int pos) const;
+  const std::vector<Node *> &begin_nodes(int pos) const;
 
   // Returns nodes ending at |pos|.
-  const std::vector<Node*>& end_nodes(int pos) const;
+  const std::vector<Node *> &end_nodes(int pos) const;
 
   // Returns Unicode character length.
   int size() const;
@@ -67,10 +67,10 @@ class Lattice {
   int utf8_size() const;
 
   // Returns the substring of sentence. sentence[pos:]
-  const char* surface(int pos) const;
+  const char *surface(int pos) const;
 
   // Returns immutable sentence. The same as surface(0)
-  const char* sentence() const;
+  const char *sentence() const;
 
   // Clears the lattice.
   void Clear();
@@ -80,9 +80,9 @@ class Lattice {
 
   // Inserts a new node at [pos, pos + length - 1].
   // After calling this method, The caller must set Node::score and Node::id.
-  Node* Insert(int pos, int length);
+  Node *Insert(int pos, int length);
 
-  using LatticePathWithScore = std::pair<std::vector<Node*>, float>;
+  using LatticePathWithScore = std::pair<std::vector<Node *>, float>;
 
   // Returns Viterbi path. All nodes must be populated in advance.
   LatticePathWithScore Viterbi();
@@ -93,12 +93,13 @@ class Lattice {
   std::vector<float> BackwardAlgorithm(float theta) const;
 
   // Returns n-best results.
-  std::vector<LatticePathWithScore> NBest(size_t nbest_size, bool sample, float theta);
+  std::vector<LatticePathWithScore> NBest(size_t nbest_size, bool sample,
+                                          float theta);
 
   // Samples one path from the lattice according to the
   // generation probability (Product of piece probabilities).
   // `theta` is a smoothing parameter.
-  std::vector<Node*> Sample(float theta);
+  std::vector<Node *> Sample(float theta);
 
   // Calculates the entropy of the lattice.
   float CalculateEntropy(float theta) const;
@@ -109,36 +110,40 @@ class Lattice {
   //    (*expected)[node->id] += marginal_prob_of_node * freq;
   //  }
   // Returns the log-likelihood of this sentence.
-  float PopulateMarginal(float freq, std::vector<float>* expected) const;
+  float PopulateMarginal(float freq, std::vector<float> *expected) const;
 
  private:
   // Returns new node.
   // Lattice class has the ownership of the returned value.
-  Node* NewNode();
+  Node *NewNode();
 
   absl::string_view sentence_;
-  std::vector<const char*> surface_;
-  std::vector<std::vector<Node*>> begin_nodes_;
-  std::vector<std::vector<Node*>> end_nodes_;
+  std::vector<const char *> surface_;
+  std::vector<std::vector<Node *>> begin_nodes_;
+  std::vector<std::vector<Node *>> end_nodes_;
   model::FreeList<Node> node_allocator_;
 };
 
 class Model : public ModelInterface {
  public:
-  explicit Model(const ModelProto& model_proto);
+  explicit Model(const ModelProto &model_proto);
   Model() {}
   ~Model() override;
 
   EncodeResult Encode(absl::string_view normalized) const override;
 
-  NBestEncodeResult NBestEncode(absl::string_view normalized, int nbest_size) const override;
+  NBestEncodeResult NBestEncode(absl::string_view normalized,
+                                int nbest_size) const override;
 
-  EncodeResult SampleEncode(absl::string_view normalized, float theta) const override;
+  EncodeResult SampleEncode(absl::string_view normalized,
+                            float theta) const override;
 
-  NBestEncodeResult SampleEncodeAndScore(absl::string_view normalized, float theta, int samples,
-                                         bool wor, bool include_best) const override;
+  NBestEncodeResult SampleEncodeAndScore(absl::string_view normalized,
+                                         float theta, int samples, bool wor,
+                                         bool include_best) const override;
 
-  float CalculateEntropy(absl::string_view normalized, float theta) const override;
+  float CalculateEntropy(absl::string_view normalized,
+                         float theta) const override;
 
   bool IsSampleEncodeAvailable() const override { return true; }
 
@@ -159,27 +164,30 @@ class Model : public ModelInterface {
   // Populates all sentence pieces to the |lattice|.
   // After calling this function, lattice.Viterbi() returns the
   // best segmentation.
-  void PopulateNodes(Lattice* lattice) const;
+  void PopulateNodes(Lattice *lattice) const;
 
   // Returns a vocab id of |piece|.
   int PieceToId(absl::string_view piece) const override;
 
   // Verifies if two outputs are equivalent by comparing their scores.
-  bool VerifyOutputsEquivalent(absl::string_view expected, absl::string_view actual) const override;
+  bool VerifyOutputsEquivalent(absl::string_view expected,
+                               absl::string_view actual) const override;
 
   enum EncoderVersion {
     kOptimized,  // The optimized encoder.
     kOriginal    // The original encoder.
   };
 
-  void SetEncoderVersion(EncoderVersion encoder_version) { encoder_version_ = encoder_version; }
+  void SetEncoderVersion(EncoderVersion encoder_version) {
+    encoder_version_ = encoder_version;
+  }
 
   // Returns the current encoder version in use.
   EncoderVersion GetEncoderVersion() const { return encoder_version_; }
 
  protected:
   // Builds a Trie index.
-  void BuildTrie(std::vector<std::pair<absl::string_view, int>>* pieces);
+  void BuildTrie(std::vector<std::pair<absl::string_view, int>> *pieces);
 
   // The optimized Viterbi encode.
   // Main differences from the original function:

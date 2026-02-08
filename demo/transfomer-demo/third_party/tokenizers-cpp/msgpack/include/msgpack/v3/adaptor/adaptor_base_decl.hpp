@@ -16,37 +16,37 @@ namespace msgpack {
 
 /// @cond
 MSGPACK_API_VERSION_NAMESPACE(v3) {
-  /// @endcond
-
-  using v2::packer;
-
-  namespace adaptor {
-
-  // Adaptor functors
-
-  template <typename T, typename Enabler = void>
-  struct convert;
-
-  template <typename T, typename Enabler = void>
-  struct pack;
-
-  template <typename T, typename Enabler = void>
-  struct object;
-
-  template <typename T, typename Enabler = void>
-  struct object_with_zone;
-
-  }  // namespace adaptor
-
-  // operators
-
-  using v2::operator>>;
-  using v2::operator<<;
-
-  /// @cond
-}  // MSGPACK_API_VERSION_NAMESPACE(v3)
 /// @endcond
 
-}  // namespace msgpack
+using v2::packer;
 
-#endif  // MSGPACK_V3_ADAPTOR_BASE_DECL_HPP
+namespace adaptor {
+
+// Adaptor functors
+
+template <typename T, typename Enabler = void>
+struct convert;
+
+template <typename T, typename Enabler = void>
+struct pack;
+
+template <typename T, typename Enabler = void>
+struct object;
+
+template <typename T, typename Enabler = void>
+struct object_with_zone;
+
+} // namespace adaptor
+
+// operators
+
+using v2::operator>>;
+using v2::operator<<;
+
+/// @cond
+} // MSGPACK_API_VERSION_NAMESPACE(v3)
+/// @endcond
+
+} // namespace msgpack
+
+#endif // MSGPACK_V3_ADAPTOR_BASE_DECL_HPP

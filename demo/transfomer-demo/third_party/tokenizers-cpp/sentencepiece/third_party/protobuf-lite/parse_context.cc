@@ -28,15 +28,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <google/protobuf/arenastring.h>
+#include <google/protobuf/parse_context.h>
+
+#include <google/protobuf/stubs/stringprintf.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/arenastring.h>
 #include <google/protobuf/message_lite.h>
-#include <google/protobuf/parse_context.h>
 #include <google/protobuf/repeated_field.h>
-#include <google/protobuf/stubs/stringprintf.h>
-#include <google/protobuf/stubs/strutil.h>
 #include <google/protobuf/wire_format_lite.h>
+#include <google/protobuf/stubs/strutil.h>
 
 #include <google/protobuf/port_def.inc>
 
@@ -81,7 +82,7 @@ bool ParseEndsInSlopRegion(const char* begin, int overrun, int depth) {
         depth++;
         break;
       }
-      case 4: {                        // end group
+      case 4: {                    // end group
         if (--depth < 0) return true;  // We exit early
         break;
       }
@@ -113,7 +114,8 @@ const char* EpsCopyInputStream::NextBuffer(int overrun, int depth) {
   // Note we must use memmove because the previous buffer could be part of
   // buffer_.
   std::memmove(buffer_, buffer_end_, kSlopBytes);
-  if (overall_limit_ > 0 && (depth < 0 || !ParseEndsInSlopRegion(buffer_, overrun, depth))) {
+  if (overall_limit_ > 0 &&
+      (depth < 0 || !ParseEndsInSlopRegion(buffer_, overrun, depth))) {
     const void* data;
     // ZeroCopyInputStream indicates Next may return 0 size buffers. Hence
     // we loop.
@@ -143,8 +145,8 @@ const char* EpsCopyInputStream::NextBuffer(int overrun, int depth) {
     // obtained from protos to outlive the proto, when the parse was from an
     // array. This guarantees string_view's are always aliased if parsed from
     // an array.
-    aliasing_ =
-        reinterpret_cast<std::uintptr_t>(buffer_end_) - reinterpret_cast<std::uintptr_t>(buffer_);
+    aliasing_ = reinterpret_cast<std::uintptr_t>(buffer_end_) -
+                reinterpret_cast<std::uintptr_t>(buffer_);
   }
   next_chunk_ = nullptr;
   buffer_end_ = buffer_ + kSlopBytes;
@@ -166,7 +168,8 @@ const char* EpsCopyInputStream::Next() {
   return p;
 }
 
-std::pair<const char*, bool> EpsCopyInputStream::DoneFallback(int overrun, int depth) {
+std::pair<const char*, bool> EpsCopyInputStream::DoneFallback(int overrun,
+                                                              int depth) {
   // Did we exceeded the limit (parse error).
   if (PROTOBUF_PREDICT_FALSE(overrun > limit_)) return {nullptr, true};
   GOOGLE_DCHECK(overrun != limit_);  // Guaranteed by caller.
@@ -205,7 +208,8 @@ const char* EpsCopyInputStream::SkipFallback(const char* ptr, int size) {
   return AppendSize(ptr, size, [](const char* p, int s) {});
 }
 
-const char* EpsCopyInputStream::ReadStringFallback(const char* ptr, int size, std::string* str) {
+const char* EpsCopyInputStream::ReadStringFallback(const char* ptr, int size,
+                                                   std::string* str) {
   str->clear();
   if (PROTOBUF_PREDICT_TRUE(size <= buffer_end_ - ptr + limit_)) {
     // Reserve the string up to a static safe size. If strings are bigger than
@@ -213,21 +217,26 @@ const char* EpsCopyInputStream::ReadStringFallback(const char* ptr, int size, st
     // malicious payloads making protobuf hold on to a lot of memory.
     str->reserve(str->size() + std::min<int>(size, kSafeStringSize));
   }
-  return AppendSize(ptr, size, [str](const char* p, int s) { str->append(p, s); });
+  return AppendSize(ptr, size,
+                    [str](const char* p, int s) { str->append(p, s); });
 }
 
-const char* EpsCopyInputStream::AppendStringFallback(const char* ptr, int size, std::string* str) {
+const char* EpsCopyInputStream::AppendStringFallback(const char* ptr, int size,
+                                                     std::string* str) {
   if (PROTOBUF_PREDICT_TRUE(size <= buffer_end_ - ptr + limit_)) {
     // Reserve the string up to a static safe size. If strings are bigger than
     // this we proceed by growing the string as needed. This protects against
     // malicious payloads making protobuf hold on to a lot of memory.
     str->reserve(str->size() + std::min<int>(size, kSafeStringSize));
   }
-  return AppendSize(ptr, size, [str](const char* p, int s) { str->append(p, s); });
+  return AppendSize(ptr, size,
+                    [str](const char* p, int s) { str->append(p, s); });
 }
 
+
 template <typename Tag, typename T>
-const char* EpsCopyInputStream::ReadRepeatedFixed(const char* ptr, Tag expected_tag,
+const char* EpsCopyInputStream::ReadRepeatedFixed(const char* ptr,
+                                                  Tag expected_tag,
                                                   RepeatedField<T>* out) {
   do {
     out->Add(UnalignedLoad<T>(ptr));
@@ -251,7 +260,8 @@ void byteswap<8>(void* p) {
 }
 
 template <typename T>
-const char* EpsCopyInputStream::ReadPackedFixed(const char* ptr, int size, RepeatedField<T>* out) {
+const char* EpsCopyInputStream::ReadPackedFixed(const char* ptr, int size,
+                                                RepeatedField<T>* out) {
   int nbytes = buffer_end_ + kSlopBytes - ptr;
   while (size > nbytes) {
     int num = nbytes / sizeof(T);
@@ -262,7 +272,8 @@ const char* EpsCopyInputStream::ReadPackedFixed(const char* ptr, int size, Repea
 #ifdef PROTOBUF_LITTLE_ENDIAN
     std::memcpy(dst, ptr, block_size);
 #else
-    for (int i = 0; i < num; i++) dst[i] = UnalignedLoad<T>(ptr + i * sizeof(T));
+    for (int i = 0; i < num; i++)
+      dst[i] = UnalignedLoad<T>(ptr + i * sizeof(T));
 #endif
     size -= block_size;
     if (limit_ <= kSlopBytes) return nullptr;
@@ -404,14 +415,16 @@ std::pair<const char*, int32> ReadSizeFallback(const char* p, uint32 res) {
   return {p + 5, res};
 }
 
-const char* StringParser(const char* begin, const char* end, void* object, ParseContext*) {
+const char* StringParser(const char* begin, const char* end, void* object,
+                         ParseContext*) {
   auto str = static_cast<std::string*>(object);
   str->append(begin, end - begin);
   return end;
 }
 
 // Defined in wire_format_lite.cc
-void PrintUTF8ErrorLog(const char* field_name, const char* operation_str, bool emit_stacktrace);
+void PrintUTF8ErrorLog(const char* field_name, const char* operation_str,
+                       bool emit_stacktrace);
 
 bool VerifyUTF8(StringPiece str, const char* field_name) {
   if (!IsStructurallyValidUTF8(str)) {
@@ -421,11 +434,13 @@ bool VerifyUTF8(StringPiece str, const char* field_name) {
   return true;
 }
 
-const char* InlineGreedyStringParser(std::string* s, const char* ptr, ParseContext* ctx) {
+const char* InlineGreedyStringParser(std::string* s, const char* ptr,
+                                     ParseContext* ctx) {
   int size = ReadSize(&ptr);
   if (!ptr) return nullptr;
   return ctx->ReadString(ptr, size, s);
 }
+
 
 template <typename T, bool sign>
 const char* VarintParser(void* object, const char* ptr, ParseContext* ctx) {
@@ -444,22 +459,28 @@ const char* VarintParser(void* object, const char* ptr, ParseContext* ctx) {
   });
 }
 
-const char* PackedInt32Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedInt32Parser(void* object, const char* ptr,
+                              ParseContext* ctx) {
   return VarintParser<int32, false>(object, ptr, ctx);
 }
-const char* PackedUInt32Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedUInt32Parser(void* object, const char* ptr,
+                               ParseContext* ctx) {
   return VarintParser<uint32, false>(object, ptr, ctx);
 }
-const char* PackedInt64Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedInt64Parser(void* object, const char* ptr,
+                              ParseContext* ctx) {
   return VarintParser<int64, false>(object, ptr, ctx);
 }
-const char* PackedUInt64Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedUInt64Parser(void* object, const char* ptr,
+                               ParseContext* ctx) {
   return VarintParser<uint64, false>(object, ptr, ctx);
 }
-const char* PackedSInt32Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedSInt32Parser(void* object, const char* ptr,
+                               ParseContext* ctx) {
   return VarintParser<int32, true>(object, ptr, ctx);
 }
-const char* PackedSInt64Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedSInt64Parser(void* object, const char* ptr,
+                               ParseContext* ctx) {
   return VarintParser<int64, true>(object, ptr, ctx);
 }
 
@@ -475,31 +496,39 @@ template <typename T>
 const char* FixedParser(void* object, const char* ptr, ParseContext* ctx) {
   int size = ReadSize(&ptr);
   GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-  return ctx->ReadPackedFixed(ptr, size, static_cast<RepeatedField<T>*>(object));
+  return ctx->ReadPackedFixed(ptr, size,
+                              static_cast<RepeatedField<T>*>(object));
 }
 
-const char* PackedFixed32Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedFixed32Parser(void* object, const char* ptr,
+                                ParseContext* ctx) {
   return FixedParser<uint32>(object, ptr, ctx);
 }
-const char* PackedSFixed32Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedSFixed32Parser(void* object, const char* ptr,
+                                 ParseContext* ctx) {
   return FixedParser<int32>(object, ptr, ctx);
 }
-const char* PackedFixed64Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedFixed64Parser(void* object, const char* ptr,
+                                ParseContext* ctx) {
   return FixedParser<uint64>(object, ptr, ctx);
 }
-const char* PackedSFixed64Parser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedSFixed64Parser(void* object, const char* ptr,
+                                 ParseContext* ctx) {
   return FixedParser<int64>(object, ptr, ctx);
 }
-const char* PackedFloatParser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedFloatParser(void* object, const char* ptr,
+                              ParseContext* ctx) {
   return FixedParser<float>(object, ptr, ctx);
 }
-const char* PackedDoubleParser(void* object, const char* ptr, ParseContext* ctx) {
+const char* PackedDoubleParser(void* object, const char* ptr,
+                               ParseContext* ctx) {
   return FixedParser<double>(object, ptr, ctx);
 }
 
 class UnknownFieldLiteParserHelper {
  public:
-  explicit UnknownFieldLiteParserHelper(std::string* unknown) : unknown_(unknown) {}
+  explicit UnknownFieldLiteParserHelper(std::string* unknown)
+      : unknown_(unknown) {}
 
   void AddVarint(uint32 num, uint64 value) {
     if (unknown_ == nullptr) return;
@@ -510,10 +539,12 @@ class UnknownFieldLiteParserHelper {
     if (unknown_ == nullptr) return;
     WriteVarint(num * 8 + 1, unknown_);
     char buffer[8];
-    io::CodedOutputStream::WriteLittleEndian64ToArray(value, reinterpret_cast<uint8*>(buffer));
+    io::CodedOutputStream::WriteLittleEndian64ToArray(
+        value, reinterpret_cast<uint8*>(buffer));
     unknown_->append(buffer, 8);
   }
-  const char* ParseLengthDelimited(uint32 num, const char* ptr, ParseContext* ctx) {
+  const char* ParseLengthDelimited(uint32 num, const char* ptr,
+                                   ParseContext* ctx) {
     int size = ReadSize(&ptr);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     if (unknown_ == nullptr) return ctx->Skip(ptr, size);
@@ -532,7 +563,8 @@ class UnknownFieldLiteParserHelper {
     if (unknown_ == nullptr) return;
     WriteVarint(num * 8 + 5, unknown_);
     char buffer[4];
-    io::CodedOutputStream::WriteLittleEndian32ToArray(value, reinterpret_cast<uint8*>(buffer));
+    io::CodedOutputStream::WriteLittleEndian32ToArray(
+        value, reinterpret_cast<uint8*>(buffer));
     unknown_->append(buffer, 4);
   }
 
@@ -544,7 +576,8 @@ class UnknownFieldLiteParserHelper {
   std::string* unknown_;
 };
 
-const char* UnknownGroupLiteParse(std::string* unknown, const char* ptr, ParseContext* ctx) {
+const char* UnknownGroupLiteParse(std::string* unknown, const char* ptr,
+                                  ParseContext* ctx) {
   UnknownFieldLiteParserHelper field_parser(unknown);
   return WireFormatParser(field_parser, ptr, ctx);
 }

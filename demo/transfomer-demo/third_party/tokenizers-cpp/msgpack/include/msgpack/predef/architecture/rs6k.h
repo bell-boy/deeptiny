@@ -8,8 +8,8 @@ http://www.boost.org/LICENSE_1_0.txt)
 #ifndef MSGPACK_PREDEF_ARCHITECTURE_RS6K_H
 #define MSGPACK_PREDEF_ARCHITECTURE_RS6K_H
 
-#include <msgpack/predef/make.h>
 #include <msgpack/predef/version_number.h>
+#include <msgpack/predef/make.h>
 
 /*`
 [heading `MSGPACK_ARCH_RS6000`]
@@ -29,14 +29,15 @@ http://www.boost.org/LICENSE_1_0.txt)
 
 #define MSGPACK_ARCH_RS6000 MSGPACK_VERSION_NUMBER_NOT_AVAILABLE
 
-#if defined(__THW_RS6000) || defined(_IBMR2) || defined(_POWER) || defined(_ARCH_PWR) || \
+#if defined(__THW_RS6000) || defined(_IBMR2) || \
+    defined(_POWER) || defined(_ARCH_PWR) || \
     defined(_ARCH_PWR2)
-#undef MSGPACK_ARCH_RS6000
-#define MSGPACK_ARCH_RS6000 MSGPACK_VERSION_NUMBER_AVAILABLE
+#   undef MSGPACK_ARCH_RS6000
+#   define MSGPACK_ARCH_RS6000 MSGPACK_VERSION_NUMBER_AVAILABLE
 #endif
 
 #if MSGPACK_ARCH_RS6000
-#define MSGPACK_ARCH_RS6000_AVAILABLE
+#   define MSGPACK_ARCH_RS6000_AVAILABLE
 #endif
 
 #define MSGPACK_ARCH_RS6000_NAME "RS/6000"
@@ -44,7 +45,7 @@ http://www.boost.org/LICENSE_1_0.txt)
 #define MSGPACK_ARCH_PWR MSGPACK_ARCH_RS6000
 
 #if MSGPACK_ARCH_PWR
-#define MSGPACK_ARCH_PWR_AVAILABLE
+#   define MSGPACK_ARCH_PWR_AVAILABLE
 #endif
 
 #define MSGPACK_ARCH_PWR_NAME MSGPACK_ARCH_RS6000_NAME
@@ -52,4 +53,4 @@ http://www.boost.org/LICENSE_1_0.txt)
 #endif
 
 #include <msgpack/predef/detail/test.h>
-MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_RS6000, MSGPACK_ARCH_RS6000_NAME)
+MSGPACK_PREDEF_DECLARE_TEST(MSGPACK_ARCH_RS6000,MSGPACK_ARCH_RS6000_NAME)

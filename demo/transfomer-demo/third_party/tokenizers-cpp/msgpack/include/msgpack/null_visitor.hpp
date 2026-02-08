@@ -11,6 +11,7 @@
 #define MSGPACK_NULL_VISITOR_HPP
 
 #include "msgpack/null_visitor_decl.hpp"
+
 #include "msgpack/v2/null_visitor.hpp"
 
-#endif  // MSGPACK_NULL_VISITOR_HPP
+#endif // MSGPACK_NULL_VISITOR_HPP

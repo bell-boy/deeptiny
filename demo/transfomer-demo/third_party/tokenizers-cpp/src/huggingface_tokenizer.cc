@@ -16,9 +16,9 @@ namespace tokenizers {
 class HFTokenizer : public Tokenizer {
  public:
   explicit HFTokenizer(TokenizerHandle handle) : handle_(handle) {
-#ifdef COMPILE_WASM_RUNTIME
+    #ifdef COMPILE_WASM_RUNTIME
     setenv("TOKENIZERS_PARALLELISM", "false", true);
-#endif
+    #endif
   }
 
   HFTokenizer(const HFTokenizer&) = delete;

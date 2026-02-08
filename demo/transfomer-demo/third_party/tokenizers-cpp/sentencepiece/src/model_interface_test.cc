@@ -24,14 +24,16 @@ namespace {
 
 #define WS "\xe2\x96\x81"
 
-const std::vector<TrainerSpec::ModelType> kModelTypes = {TrainerSpec::UNIGRAM, TrainerSpec::BPE,
-                                                         TrainerSpec::WORD, TrainerSpec::CHAR};
+const std::vector<TrainerSpec::ModelType> kModelTypes = {
+    TrainerSpec::UNIGRAM, TrainerSpec::BPE, TrainerSpec::WORD,
+    TrainerSpec::CHAR};
 
-ModelProto MakeBaseModelProto(TrainerSpec::ModelType type, bool byte_fallback = false) {
+ModelProto MakeBaseModelProto(TrainerSpec::ModelType type,
+                              bool byte_fallback = false) {
   ModelProto model_proto;
-  auto* sp1 = model_proto.add_pieces();
-  auto* sp2 = model_proto.add_pieces();
-  auto* sp3 = model_proto.add_pieces();
+  auto *sp1 = model_proto.add_pieces();
+  auto *sp2 = model_proto.add_pieces();
+  auto *sp3 = model_proto.add_pieces();
   model_proto.mutable_trainer_spec()->set_model_type(type);
   model_proto.mutable_trainer_spec()->set_byte_fallback(byte_fallback);
 
@@ -45,14 +47,15 @@ ModelProto MakeBaseModelProto(TrainerSpec::ModelType type, bool byte_fallback = 
   return model_proto;
 }
 
-void AddPiece(ModelProto* model_proto, const std::string& piece, float score = 0.0) {
-  auto* sp = model_proto->add_pieces();
+void AddPiece(ModelProto *model_proto, const std::string &piece,
+              float score = 0.0) {
+  auto *sp = model_proto->add_pieces();
   sp->set_piece(piece);
   sp->set_score(score);
 }
 
-void AddBytePiece(ModelProto* model_proto, unsigned char byte) {
-  auto* sp = model_proto->add_pieces();
+void AddBytePiece(ModelProto *model_proto, unsigned char byte) {
+  auto *sp = model_proto->add_pieces();
   sp->set_piece(ByteToPiece(byte));
   sp->set_type(ModelProto::SentencePiece::BYTE);
 }
@@ -114,7 +117,8 @@ TEST(ModelInterfaceTest, SetModelInterfaceTest) {
     AddPiece(&model_proto, "d");
 
     auto model = ModelFactory::Create(model_proto);
-    EXPECT_EQ(model_proto.SerializeAsString(), model->model_proto().SerializeAsString());
+    EXPECT_EQ(model_proto.SerializeAsString(),
+              model->model_proto().SerializeAsString());
   }
 }
 
@@ -128,11 +132,13 @@ TEST(ModelInterfaceTest, PieceToIdTest) {
     AddPiece(&model_proto, "d", 0.4);  // 6
     AddPiece(&model_proto, "e", 0.5);  // 7
     model_proto.mutable_pieces(6)->set_type(ModelProto::SentencePiece::UNUSED);
-    model_proto.mutable_pieces(7)->set_type(ModelProto::SentencePiece::USER_DEFINED);
+    model_proto.mutable_pieces(7)->set_type(
+        ModelProto::SentencePiece::USER_DEFINED);
 
     auto model = ModelFactory::Create(model_proto);
 
-    EXPECT_EQ(model_proto.SerializeAsString(), model->model_proto().SerializeAsString());
+    EXPECT_EQ(model_proto.SerializeAsString(),
+              model->model_proto().SerializeAsString());
 
     EXPECT_EQ(0, model->PieceToId("<unk>"));
     EXPECT_EQ(1, model->PieceToId("<s>"));
@@ -302,10 +308,10 @@ TEST(ModelInterfaceTest, PieceToIdStressTest) {
       }
 
       auto model = ModelFactory::Create(model_proto);
-      for (const auto& it : expected_p2i) {
+      for (const auto &it : expected_p2i) {
         EXPECT_EQ(it.second, model->PieceToId(it.first));
       }
-      for (const auto& it : expected_i2p) {
+      for (const auto &it : expected_i2p) {
         EXPECT_EQ(it.second, model->IdToPiece(it.first));
       }
     }
@@ -409,7 +415,8 @@ TEST(ModelInterfaceTest, SplitIntoWordsSuffixTest) {
 
 TEST(ModelInterfaceTest, SplitIntoWordsWhiteSpaceOnly) {
   {
-    const auto v = SplitIntoWords("this" WS "is" WS "a" WS "pen" WS, true, true);
+    const auto v =
+        SplitIntoWords("this" WS "is" WS "a" WS "pen" WS, true, true);
     EXPECT_EQ(4, v.size());
     EXPECT_EQ("this" WS, v[0]);
     EXPECT_EQ("is" WS, v[1]);

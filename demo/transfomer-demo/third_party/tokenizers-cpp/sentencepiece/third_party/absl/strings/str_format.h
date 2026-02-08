@@ -25,7 +25,7 @@
 namespace absl {
 
 template <typename... Args>
-std::string StrFormat(const char* format, Args const&... args) {
+std::string StrFormat(const char *format, Args const &... args) {
   const int len = ::snprintf(nullptr, 0, format, args...);
   std::string s;
   s.resize(len);

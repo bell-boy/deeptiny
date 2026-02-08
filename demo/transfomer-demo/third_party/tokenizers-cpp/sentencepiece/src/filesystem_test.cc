@@ -13,7 +13,6 @@
 // limitations under the License.!
 
 #include "filesystem.h"
-
 #include "testharness.h"
 #include "third_party/absl/strings/str_cat.h"
 #include "util.h"
@@ -28,14 +27,16 @@ TEST(UtilTest, FilesystemTest) {
       "test"};
 
   {
-    auto output = filesystem::NewWritableFile(util::JoinPath(::testing::TempDir(), "test_file"));
+    auto output = filesystem::NewWritableFile(
+        util::JoinPath(::testing::TempDir(), "test_file"));
     for (size_t i = 0; i < kData.size(); ++i) {
       output->WriteLine(kData[i]);
     }
   }
 
   {
-    auto input = filesystem::NewReadableFile(util::JoinPath(::testing::TempDir(), "test_file"));
+    auto input = filesystem::NewReadableFile(
+        util::JoinPath(::testing::TempDir(), "test_file"));
     std::string line;
     for (size_t i = 0; i < kData.size(); ++i) {
       EXPECT_TRUE(input->ReadLine(&line));
