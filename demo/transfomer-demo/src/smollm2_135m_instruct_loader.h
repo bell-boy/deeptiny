@@ -59,6 +59,10 @@ std::filesystem::path ModelFilesDir(
 std::filesystem::path DownloadSmolLM2_135M_InstructSafetensors(
     const std::filesystem::path& cwd = std::filesystem::current_path());
 
+// Downloads tokenizer.json into cwd/model_files/tokenizer.json.
+std::filesystem::path DownloadSmolLM2_135M_InstructTokenizerJson(
+    const std::filesystem::path& cwd = std::filesystem::current_path());
+
 std::vector<WeightSpec> BuildWeightSpecs(const Config& config);
 
 std::unique_ptr<transfomer_demo::Transformer>

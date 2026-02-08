@@ -317,6 +317,34 @@ void Tensor::CopyFromBuffer(std::span<const std::byte> bytes,
   tensor_impl_->storage()->CopyFromHost(0, numel(), bytes.data());
 }
 
+void Tensor::CopyToBuffer(std::span<std::byte> bytes, const Shape& shape,
+                          DType dtype) const {
+  if (shape != this->shape()) {
+    std::stringstream err;
+    err << "CopyToBuffer shape mismatch: expected "
+        << FormatShape(this->shape()) << " but got " << FormatShape(shape);
+    throw std::runtime_error(err.str());
+  }
+
+  if (dtype != this->dtype()) {
+    std::stringstream err;
+    err << "CopyToBuffer dtype mismatch: expected " << this->dtype().ToString()
+        << " but got " << dtype.ToString();
+    throw std::runtime_error(err.str());
+  }
+
+  const uint64_t expected_bytes = numel() * dtype.size();
+  if (bytes.size() != expected_bytes) {
+    std::stringstream err;
+    err << "CopyToBuffer byte-size mismatch: expected " << expected_bytes
+        << " bytes but got " << bytes.size() << " bytes";
+    throw std::runtime_error(err.str());
+  }
+
+  auto contiguous_storage = tensor_impl_->getContiguousStorage();
+  contiguous_storage->CopyToHost(0, numel(), bytes.data());
+}
+
 TensorSliceProxy Tensor::operator()(std::vector<Slice> slices) {
   return TensorSliceProxy(this, std::move(slices));
 }

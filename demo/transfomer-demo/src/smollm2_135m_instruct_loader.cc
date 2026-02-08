@@ -30,6 +30,9 @@ namespace {
 constexpr char kModelSafetensorsUrl[] =
     "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/main/"
     "model.safetensors?download=true";
+constexpr char kTokenizerJsonUrl[] =
+    "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/main/"
+    "tokenizer.json?download=true";
 
 struct SafetensorsEntry {
   std::string dtype;
@@ -590,6 +593,14 @@ std::filesystem::path DownloadSmolLM2_135M_InstructSafetensors(
   const auto safetensors_path = model_dir / "model.safetensors";
   DownloadUrlToPath(kModelSafetensorsUrl, safetensors_path);
   return safetensors_path;
+}
+
+std::filesystem::path DownloadSmolLM2_135M_InstructTokenizerJson(
+    const std::filesystem::path& cwd) {
+  const auto model_dir = ModelFilesDir(cwd);
+  const auto tokenizer_path = model_dir / "tokenizer.json";
+  DownloadUrlToPath(kTokenizerJsonUrl, tokenizer_path);
+  return tokenizer_path;
 }
 
 std::vector<WeightSpec> BuildWeightSpecs(const Config& config) {

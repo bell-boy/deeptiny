@@ -58,14 +58,25 @@ cmake --build --preset dev-local-openblas
 ## Run
 
 ```bash
-./build/transfomer_demo
-```
-
-Validate a local SmolLM2 checkpoint directory:
-
-```bash
 ./build/transfomer_demo /path/to/SmolLM2-135M-Instruct
 ```
+
+Optional generation args:
+
+```bash
+./build/transfomer_demo /path/to/SmolLM2-135M-Instruct 64 0.8
+```
+
+The demo runs a simple CLI chat loop:
+
+- input line is tokenized
+- tokens are fed through the model
+- next-token IDs are sampled from logits
+- generated token IDs are decoded and printed
+
+If `tokenizer.json` is missing in your provided model directory, the demo
+downloads `tokenizer.json` into `model_files/` under the current working
+directory and uses it.
 
 Override the pinned Deep Tiny commit:
 

@@ -67,6 +67,9 @@ class Tensor {
   // Copies raw bytes into this tensor's storage after shape/dtype validation.
   void CopyFromBuffer(std::span<const std::byte> bytes, const Shape& shape,
                       DType dtype);
+  // Copies this tensor's data into bytes after shape/dtype validation.
+  void CopyToBuffer(std::span<std::byte> bytes, const Shape& shape,
+                    DType dtype) const;
 
   template <typename T>
   static Tensor FromVector(const std::vector<T>& values, Shape shape,
