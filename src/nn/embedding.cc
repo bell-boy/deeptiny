@@ -23,7 +23,7 @@ int64_t ToSliceIndex(uint64_t value, const char* label) {
 Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim, DType dtype,
                   Device device, bool requires_grad) {
   if (num_embeddings == 0 || embedding_dim == 0) {
-    throw std::runtime_error("Embedding dimensions must be positive.");
+    throw std::runtime_error("Embedding dimensions must be non-zero.");
   }
   if (dtype != DType::Float32) {
     throw std::runtime_error(

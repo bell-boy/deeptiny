@@ -11,9 +11,10 @@
 namespace deeptiny::nn {
 namespace {
 
-uint64_t ValidatePositiveDimension(uint64_t dim, const char* name) {
+uint64_t ValidateNonZeroDimension(uint64_t dim, const char* name) {
   if (dim == 0) {
-    throw std::runtime_error(std::string("Linear ") + name + " must be > 0");
+    throw std::runtime_error(std::string("Linear ") + name +
+                             " must be non-zero");
   }
   return dim;
 }
@@ -38,8 +39,8 @@ void CopyTensorData(const Tensor& src, const Tensor& dst, const char* label) {
 }  // namespace
 
 Linear::Linear(uint64_t in_dim, uint64_t out_dim, bool bias, Device device)
-    : in_dim_(ValidatePositiveDimension(in_dim, "in_dim")),
-      out_dim_(ValidatePositiveDimension(out_dim, "out_dim")),
+    : in_dim_(ValidateNonZeroDimension(in_dim, "in_dim")),
+      out_dim_(ValidateNonZeroDimension(out_dim, "out_dim")),
       weight_(Tensor::CreateUniform({1, in_dim_, out_dim_}, device,
                                     DType::Float32, true)) {
   RegisterParameter(weight_);
