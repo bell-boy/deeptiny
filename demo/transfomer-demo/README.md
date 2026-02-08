@@ -95,3 +95,29 @@ Disable tokenizer integration if needed:
 ```bash
 cmake --preset dev -DTRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP=OFF
 ```
+
+## Benchmark (gprof)
+
+Build the benchmark executable:
+
+```bash
+cmake --build --preset benchmark
+```
+
+Run a forward-only benchmark on fixed input text `"hello world"`:
+
+```bash
+./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
+```
+
+Optional second argument repeats the same forward pass multiple times:
+
+```bash
+./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct 100
+```
+
+Generate a gprof report:
+
+```bash
+gprof ./build/transfomer_demo_benchmark gmon.out > gprof.txt
+```

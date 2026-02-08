@@ -87,11 +87,25 @@ add_executable(
   src/smollm2_135m_instruct_loader.cc
 )
 
-target_compile_features(transfomer_demo PRIVATE cxx_std_23)
-target_link_libraries(transfomer_demo PRIVATE deeptiny nlohmann_json::nlohmann_json)
+add_executable(
+  transfomer_demo_benchmark
+  src/benchmark.cc
+  src/transformer.cc
+  src/smollm2_135m_instruct_loader.cc
+)
 
-if(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP)
-  target_compile_definitions(transfomer_demo
-                             PRIVATE TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP=1)
-  target_link_libraries(transfomer_demo PRIVATE tokenizers_cpp)
-endif()
+function(configure_transfomer_demo_target target_name)
+  target_compile_features(${target_name} PRIVATE cxx_std_23)
+  target_link_libraries(${target_name} PRIVATE deeptiny nlohmann_json::nlohmann_json)
+  if(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP)
+    target_compile_definitions(${target_name}
+                               PRIVATE TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP=1)
+    target_link_libraries(${target_name} PRIVATE tokenizers_cpp)
+  endif()
+endfunction()
+
+configure_transfomer_demo_target(transfomer_demo)
+configure_transfomer_demo_target(transfomer_demo_benchmark)
+
+target_compile_options(transfomer_demo_benchmark PRIVATE -pg)
+target_link_options(transfomer_demo_benchmark PRIVATE -pg)
