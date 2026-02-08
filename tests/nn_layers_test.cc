@@ -1,5 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
+#include <cmath>
 #include <stdexcept>
 #include <vector>
 
@@ -7,6 +8,7 @@
 #include "deeptiny/nn/embedding.h"
 #include "deeptiny/nn/linear.h"
 #include "deeptiny/nn/gated_relu.h"
+#include "deeptiny/nn/rms_norm.h"
 #include "doctest/doctest.h"
 #include "test_utils.h"
 
@@ -100,4 +102,30 @@ TEST_CASE("nn::GatedReLU forward/backward smoke") {
   auto loss = deeptiny::functional::Reduce(y, {0, 1, 2});
   loss.Backward();
   CHECK(x.grad().has_value());
+}
+
+
+TEST_CASE("nn::RMSNorm forward normalizes last dimension") {
+  deeptiny::nn::RMSNorm rms_norm(/*hidden_dim=*/4, /*epsilon=*/1e-5f);
+  rms_norm.weight() = deeptiny::Tensor::FromVector(
+      std::vector<float>{1.0f, 1.0f, 1.0f, 1.0f}, deeptiny::Shape{4},
+      deeptiny::Device::CPU, true);
+
+  auto x = MakeTensor({1, 4}, {1.0f, 2.0f, 3.0f, 4.0f}, true);
+  auto y = rms_norm(x);
+  CHECK(y.shape() == deeptiny::Shape({1, 4}));
+
+  const float denom = std::sqrt((1.0f + 4.0f + 9.0f + 16.0f) / 4.0f + 1e-5f);
+  CheckTensorData(y, {1.0f / denom, 2.0f / denom, 3.0f / denom, 4.0f / denom});
+}
+
+TEST_CASE("nn::RMSNorm backward smoke") {
+  deeptiny::nn::RMSNorm rms_norm(/*hidden_dim=*/4);
+  auto x = MakeTensor({2, 3, 4}, std::vector<float>(24, 0.5f), true);
+  auto y = rms_norm(x);
+  auto loss = deeptiny::functional::Reduce(y, {0, 1, 2});
+  loss.Backward();
+
+  CHECK(x.grad().has_value());
+  CHECK(rms_norm.weight().grad().has_value());
 }
