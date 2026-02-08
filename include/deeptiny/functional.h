@@ -20,6 +20,10 @@ Tensor ReLU(const Tensor& x);
  * Softmax along a single dimension.
  */
 Tensor Softmax(const Tensor& x, uint64_t dim);
+/**
+ * Element-wise square root.
+ */
+Tensor Sqrt(const Tensor& x);
 }  // namespace functional
 
 };  // namespace deeptiny

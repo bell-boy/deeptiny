@@ -37,6 +37,10 @@ void Softmax(std::shared_ptr<TensorImpl> x, std::shared_ptr<TensorImpl> out,
 void SoftmaxBackward(std::shared_ptr<TensorImpl> y,
                      std::shared_ptr<TensorImpl> grad_out,
                      std::shared_ptr<TensorImpl> grad_x, uint64_t dim);
+void Sqrt(std::shared_ptr<TensorImpl> x, std::shared_ptr<TensorImpl> out);
+void SqrtBackward(std::shared_ptr<TensorImpl> x,
+                  std::shared_ptr<TensorImpl> grad_out,
+                  std::shared_ptr<TensorImpl> grad_x);
 
 /**
  * Batched matrix multiply.

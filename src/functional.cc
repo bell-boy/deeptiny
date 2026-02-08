@@ -61,7 +61,8 @@ class SoftmaxBackward : public Function {
     Tensor saved_y =
         context().Get(static_cast<uint64_t>(ContextObjects::SAVED_Y));
     const auto& parents = getParents();
-    assert(parents.size() == 1 && "SoftmaxBackward must have exactly 1 parent");
+    assert(parents.size() == 1 &&
+           "SoftmaxBackward must have exactly 1 parent");
     assert(parents[0] && "SoftmaxBackward parent must not be null");
 
     if (grad.shape() != saved_y.shape()) {
@@ -74,6 +75,33 @@ class SoftmaxBackward : public Function {
 
  private:
   uint64_t dim_;
+};
+
+class SqrtBackward : public Function {
+ public:
+  enum struct ContextObjects : uint64_t {
+    SAVED_X = 0,
+  };
+
+  explicit SqrtBackward(const Tensor& parent_x, const Tensor& saved_x)
+      : Function({utils::TensorAccessor::GetAutogradMeta(parent_x)}) {
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_X), saved_x);
+  }
+
+  void operator()(const Tensor& grad) override {
+    Tensor saved_x =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_X));
+    const auto& parents = getParents();
+    assert(parents.size() == 1 && "SqrtBackward must have exactly 1 parent");
+    assert(parents[0] && "SqrtBackward parent must not be null");
+
+    if (grad.shape() != saved_x.shape()) {
+      throw std::runtime_error("SqrtBackward received invalid grad shape");
+    }
+
+    auto grad_x_impl = dispatch::sqrt::Backward(saved_x, grad);
+    parents[0]->updateGrad(grad_x_impl);
+  }
 };
 
 template <typename DimContainer>
@@ -163,6 +191,14 @@ Tensor Softmax(const Tensor& x, uint64_t dim) {
   auto out_impl = dispatch::softmax::OutOfPlace(x, dim);
   Tensor out_saved = utils::TensorAccessor::MakeTensor(out_impl, nullptr);
   auto backward = std::make_shared<SoftmaxBackward>(x, out_saved, dim);
+  auto out_meta = std::make_shared<AutogradMeta>(backward);
+  return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
+}
+
+Tensor Sqrt(const Tensor& x) {
+  auto out_impl = dispatch::sqrt::OutOfPlace(x);
+
+  auto backward = std::make_shared<SqrtBackward>(x, x);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
 }

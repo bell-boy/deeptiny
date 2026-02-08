@@ -30,6 +30,7 @@
 - Keep `Tensor::Reshape` differentiable but view-only: require contiguous input and matching element count.
 - Keep `Tensor::Squeeze` API minimal: expose only the `std::vector<uint64_t>` overload and rely on implicit brace-init conversion at call sites.
 - Keep `functional::Reduce` API minimal: expose only the `std::vector<uint64_t>` overload and rely on implicit brace-init conversion at call sites.
+- Keep `nn::RMSNorm` semantics standard: normalize over the last dimension with `sqrt(mean(x^2) + eps)` and apply the learnable scale parameter element-wise.
 - Keep tensor creation APIs on `Tensor` (`CreateUniform`, `Zeros`, `FromVector`) and keep `functional` focused on transform/reduction ops.
 - Keep `Tensor::CreateUniform` and `Tensor::Zeros` trainability explicit via a `requires_grad` parameter (default `false`).
 - Keep autograd pending-count bookkeeping owned by `Engine`; avoid exposing mutators on `AutogradMeta` for `pending_`.
