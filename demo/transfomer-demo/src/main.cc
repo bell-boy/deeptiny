@@ -2,9 +2,12 @@
 #include <vector>
 
 #include "deeptiny/functional.h"
+#include "deeptiny/nn/gated_relu.h"
 #include "deeptiny/tensor.h"
 #include "deeptiny/types.h"
-#include "deeptiny/nn/gated_relu.h"
+#ifdef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
+#include "tokenizers_cpp.h"
+#endif
 
 int main() {
   using deeptiny::FormatShape;
@@ -24,10 +27,21 @@ int main() {
   auto loss = deeptiny::functional::Reduce(y, {0, 1, 2});
   loss.Backward();
 
+#ifdef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
+  // Compile and link smoke test for the vendored tokenizers-cpp API.
+  const auto from_blob_json = &tokenizers::Tokenizer::FromBlobJSON;
+  (void)from_blob_json;
+#endif
+
   std::cout << "transfomer-demo GatedReLU demo\n";
   std::cout << "input shape: " << FormatShape(x.shape()) << "\n";
   std::cout << "output shape: " << FormatShape(y.shape()) << "\n";
   std::cout << "loss shape: " << FormatShape(loss.shape()) << "\n";
+#ifdef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
+  std::cout << "tokenizers-cpp linked: true\n";
+#else
+  std::cout << "tokenizers-cpp linked: false\n";
+#endif
   std::cout << "x.grad available: " << std::boolalpha << x.grad().has_value()
             << "\n";
   std::cout << "gate_proj.weight.grad available: "

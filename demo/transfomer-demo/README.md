@@ -1,6 +1,7 @@
 # transfomer-demo
 
 Standalone CMake demo that consumes Deep Tiny via `FetchContent`.
+The demo also vendors `tokenizers-cpp` under `third_party/tokenizers-cpp`.
 
 This demo uses `deeptiny::nn` modules from the main library:
 
@@ -16,6 +17,9 @@ This demo uses `deeptiny::nn` modules from the main library:
 ```bash
 cmake --preset dev
 ```
+
+`tokenizers-cpp` builds through Cargo, so Rust is required when
+`TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP=ON` (default).
 
 When this demo lives inside a Deep Tiny checkout, it auto-uses the local
 source tree via `FETCHCONTENT_SOURCE_DIR_DEEPTINY`.
@@ -56,4 +60,10 @@ Point `FetchContent` at a local Deep Tiny checkout:
 
 ```bash
 cmake --preset dev -DFETCHCONTENT_SOURCE_DIR_DEEPTINY=/path/to/deeptiny
+```
+
+Disable tokenizer integration if needed:
+
+```bash
+cmake --preset dev -DTRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP=OFF
 ```
