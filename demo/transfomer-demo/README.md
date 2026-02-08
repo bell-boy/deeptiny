@@ -12,6 +12,11 @@ This demo uses `deeptiny::nn` modules from the main library:
   `indices.size() == product(shape)`
 - Embedding output shape is `shape + {embedding_dim}`
 - Invalid embedding indices (`< 0` or `>= num_embeddings`) throw
+- `src/smollm2_135m_instruct_loader.{h,cc}` provides a phase-1 SmolLM2 loader
+  scaffold (default config + HF-to-DeepTiny tensor mapping + local artifact
+  validation for `model.safetensors` / `model.safetensors.index.json`)
+- download helpers save files to `model_files/` under the current working
+  directory and run small-file smoke checks before model.safetensors download
 
 ## Configure
 
@@ -46,6 +51,25 @@ cmake --build --preset dev-local-openblas
 
 ```bash
 ./build/transfomer_demo
+```
+
+Validate a local SmolLM2 checkpoint directory:
+
+```bash
+./build/transfomer_demo /path/to/SmolLM2-135M-Instruct
+```
+
+Run download smoke tests only (small files):
+
+```bash
+./build/transfomer_demo --download-smoke-tests
+```
+
+Run smoke tests, download `model.safetensors`, read safetensors JSON header,
+and build a tensor placement plan:
+
+```bash
+./build/transfomer_demo --download-and-plan
 ```
 
 Override the pinned Deep Tiny commit:
