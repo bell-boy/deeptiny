@@ -107,14 +107,18 @@ cmake --build --preset benchmark
 Run a forward-only benchmark on the fixed eval text:
 
 ```bash
-./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
+./build/transfomer_demo_benchmark /path/to/tokenizer_dir
 ```
 
-If `model.safetensors` is missing in the provided `model_dir` (or if no
-`model_dir` is provided), the benchmark downloads weights into
-`./model_files/model.safetensors` and uses that directory automatically.
+This benchmark intentionally does not load model weights; it instantiates a
+`Transformer` with default/random-initialized parameters for profiling call
+paths.
 
-Run with default local model cache location (`./model_files`):
+If `tokenizer.json` is missing in the provided `tokenizer_dir` (or if no
+`tokenizer_dir` is provided), the benchmark downloads tokenizer JSON into
+`./model_files/tokenizer.json` and uses that file automatically.
+
+Run with default local tokenizer cache location (`./model_files`):
 
 ```bash
 ./build/transfomer_demo_benchmark

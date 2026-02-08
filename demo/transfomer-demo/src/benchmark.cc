@@ -17,12 +17,21 @@ namespace {
 const std::string kEvalText =
     "It's a hot summer Tuesday, and he's standing in the plaza in front of "
     "the Centraal Station with hiseyeballs powered up and the sunlight "
-    "jangling off the canal, motor scooters and kamikaze cyclistswhizzing "
-    "past and tourists chattering on every side.";
+    "jangling off the canal, motor scooters and kamikaze cyclistswhizzing past "
+    "and tourists chattering on every side. The square smells of water and "
+    "dirt and hot metaland the fart-laden exhaust fumes of cold catalytic "
+    "converters; the bells of trams ding in the background,and birds flock "
+    "overhead. He glances up and grabs a pigeon, crops the shot, and squirts "
+    "it at his weblogto show he's arrived. The bandwidth is good here, he "
+    "realizes; and it's not just the bandwidth, it's thewhole scene. Amsterdam "
+    "is making him feel wanted already, even though he's fresh off the train "
+    "fromSchiphol: He's infected with the dynamic optimism of another time "
+    "zone, another city. If the mood holds,someone out there is going to "
+    "become very rich indeed.";
 
 void PrintUsage() {
   std::cout << "usage:\n";
-  std::cout << "  ./build/transfomer_demo_benchmark [model_dir]\n";
+  std::cout << "  ./build/transfomer_demo_benchmark [tokenizer_dir]\n";
 }
 
 std::string ReadAllBytes(const std::filesystem::path& path) {
@@ -41,24 +50,21 @@ std::string ReadAllBytes(const std::filesystem::path& path) {
   return bytes;
 }
 
-std::filesystem::path ResolveModelDirWithWeights(int argc, char** argv) {
-  std::filesystem::path model_dir =
+std::filesystem::path ResolveTokenizerPath(int argc, char** argv) {
+  std::filesystem::path tokenizer_dir =
       demo::smollm2::ModelFilesDir(std::filesystem::current_path());
   if (argc == 2) {
-    model_dir = argv[1];
+    tokenizer_dir = argv[1];
   }
 
-  const std::filesystem::path safetensors_path =
-      model_dir / "model.safetensors";
-  if (!std::filesystem::exists(safetensors_path) ||
-      !std::filesystem::is_regular_file(safetensors_path)) {
-    const std::filesystem::path downloaded_safetensors =
-        demo::smollm2::DownloadSmolLM2_135M_InstructSafetensors(
-            std::filesystem::current_path());
-    model_dir = downloaded_safetensors.parent_path();
+  std::filesystem::path tokenizer_path = tokenizer_dir / "tokenizer.json";
+  if (!std::filesystem::exists(tokenizer_path) ||
+      !std::filesystem::is_regular_file(tokenizer_path)) {
+    tokenizer_path = demo::smollm2::DownloadSmolLM2_135M_InstructTokenizerJson(
+        std::filesystem::current_path());
   }
 
-  return model_dir;
+  return tokenizer_path;
 }
 
 }  // namespace
@@ -76,21 +82,14 @@ int main(int argc, char** argv) {
     }
 
     const auto config = demo::smollm2::DefaultSmolLM2_135M_InstructConfig();
-    const std::filesystem::path model_dir =
-        ResolveModelDirWithWeights(argc, argv);
-    auto model = demo::smollm2::CreateSmolLM2_135M_InstructTransformer(
-        model_dir, config);
-
-    std::filesystem::path tokenizer_path = model_dir / "tokenizer.json";
-    if (!std::filesystem::exists(tokenizer_path) ||
-        !std::filesystem::is_regular_file(tokenizer_path)) {
-      tokenizer_path =
-          demo::smollm2::DownloadSmolLM2_135M_InstructTokenizerJson(
-              std::filesystem::current_path());
-    }
+    transfomer_demo::Transformer model(
+        config.vocab_size, config.hidden_size, config.intermediate_size,
+        config.num_hidden_layers, config.num_attention_heads,
+        config.num_key_value_heads, deeptiny::Device::CPU);
+    const std::filesystem::path tokenizer_path =
+        ResolveTokenizerPath(argc, argv);
 
 #ifndef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
-    (void)model;
     (void)tokenizer_path;
     throw std::runtime_error(
         "This benchmark requires tokenizers-cpp. Configure with "
@@ -109,9 +108,9 @@ int main(int argc, char** argv) {
     }
     std::vector<int64_t> tokens(token_ids.begin(), token_ids.end());
 
-    const deeptiny::Tensor output = (*model)({tokens});
+    const deeptiny::Tensor output = model({tokens});
 
-    std::cout << "model_dir: " << model_dir << "\n";
+    std::cout << "model_init: random (safetensors not loaded)\n";
     std::cout << "tokenizer: " << tokenizer_path << "\n";
     std::cout << "input_text: " << kEvalText << "\n";
     std::cout << "input_token_count: " << token_ids.size() << "\n";
