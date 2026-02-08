@@ -50,3 +50,4 @@
 - Keep `transfomer-demo` embedding contract strict: `Embedding::operator()(indices, shape)` requires `indices.size() == product(shape)`, throws on out-of-range indices, and returns `shape + {embedding_dim}`.
 - Keep `transfomer-demo::Transformer` pipeline fixed as `embed -> nn::TransformerBlock * N -> norm`, with `std::vector<std::vector<int64_t>>` token-batch input.
 - Keep `transfomer-demo` tokenizer integration as a git submodule at `demo/transfomer-demo/third_party/tokenizers-cpp`, wired through `add_subdirectory`, with an opt-out CMake toggle (`TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP`) for environments without Rust/Cargo; require `git submodule update --init --recursive` so nested tokenizer deps are present.
+- Keep the SmolLM2 demo loader split as phase-1 manifest/validation (`demo/transfomer-demo/src/smollm2_135m_instruct_loader.{h,cc}`) so download + safetensors parsing can be added separately in later phases.
