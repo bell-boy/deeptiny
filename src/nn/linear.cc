@@ -49,12 +49,12 @@ Tensor Linear::operator()(const Tensor& x) const {
   return out.Reshape(output_shape);
 }
 
-Tensor Linear::weight() const { return weight_; }
+Tensor& Linear::weight() { return weight_; }
 
-std::optional<Tensor> Linear::bias() const { return bias_; }
+const Tensor& Linear::weight() const { return weight_; }
 
-Tensor Linear::weight() { return weight_; }
+std::optional<Tensor>& Linear::bias() { return bias_; }
 
-std::optional<Tensor> Linear::bias() { return bias_; }
+const std::optional<Tensor>& Linear::bias() const { return bias_; }
 
 }  // namespace deeptiny::nn

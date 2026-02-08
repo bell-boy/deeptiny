@@ -16,10 +16,10 @@ class Linear : public Module {
 
   Tensor operator()(const Tensor& x) const;
 
-  Tensor weight();
-  Tensor weight() const;
-  std::optional<Tensor> bias();
-  std::optional<Tensor> bias() const;
+  Tensor& weight();
+  const Tensor& weight() const;
+  std::optional<Tensor>& bias();
+  const std::optional<Tensor>& bias() const;
 
  private:
   uint64_t in_dim_;

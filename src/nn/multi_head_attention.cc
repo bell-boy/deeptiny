@@ -255,36 +255,44 @@ Tensor MultiHeadAttention::operator()(const Tensor& hidden_states,
   return out;
 }
 
-Tensor MultiHeadAttention::q_weight() const { return q_weight_; }
+Tensor& MultiHeadAttention::q_weight() { return q_weight_; }
 
-Tensor MultiHeadAttention::q_weight() { return q_weight_; }
+const Tensor& MultiHeadAttention::q_weight() const { return q_weight_; }
 
-Tensor MultiHeadAttention::k_weight() const { return k_weight_; }
+Tensor& MultiHeadAttention::k_weight() { return k_weight_; }
 
-Tensor MultiHeadAttention::k_weight() { return k_weight_; }
+const Tensor& MultiHeadAttention::k_weight() const { return k_weight_; }
 
-Tensor MultiHeadAttention::v_weight() const { return v_weight_; }
+Tensor& MultiHeadAttention::v_weight() { return v_weight_; }
 
-Tensor MultiHeadAttention::v_weight() { return v_weight_; }
+const Tensor& MultiHeadAttention::v_weight() const { return v_weight_; }
 
-Tensor MultiHeadAttention::o_weight() const { return o_weight_; }
+Tensor& MultiHeadAttention::o_weight() { return o_weight_; }
 
-Tensor MultiHeadAttention::o_weight() { return o_weight_; }
+const Tensor& MultiHeadAttention::o_weight() const { return o_weight_; }
 
-std::optional<Tensor> MultiHeadAttention::q_bias() const { return q_bias_; }
+std::optional<Tensor>& MultiHeadAttention::q_bias() { return q_bias_; }
 
-std::optional<Tensor> MultiHeadAttention::q_bias() { return q_bias_; }
+const std::optional<Tensor>& MultiHeadAttention::q_bias() const {
+  return q_bias_;
+}
 
-std::optional<Tensor> MultiHeadAttention::k_bias() const { return k_bias_; }
+std::optional<Tensor>& MultiHeadAttention::k_bias() { return k_bias_; }
 
-std::optional<Tensor> MultiHeadAttention::k_bias() { return k_bias_; }
+const std::optional<Tensor>& MultiHeadAttention::k_bias() const {
+  return k_bias_;
+}
 
-std::optional<Tensor> MultiHeadAttention::v_bias() const { return v_bias_; }
+std::optional<Tensor>& MultiHeadAttention::v_bias() { return v_bias_; }
 
-std::optional<Tensor> MultiHeadAttention::v_bias() { return v_bias_; }
+const std::optional<Tensor>& MultiHeadAttention::v_bias() const {
+  return v_bias_;
+}
 
-std::optional<Tensor> MultiHeadAttention::o_bias() const { return o_bias_; }
+std::optional<Tensor>& MultiHeadAttention::o_bias() { return o_bias_; }
 
-std::optional<Tensor> MultiHeadAttention::o_bias() { return o_bias_; }
+const std::optional<Tensor>& MultiHeadAttention::o_bias() const {
+  return o_bias_;
+}
 
 }  // namespace deeptiny::nn

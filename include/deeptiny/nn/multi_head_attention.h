@@ -20,22 +20,22 @@ class MultiHeadAttention : public Module {
                     std::optional<Tensor> attention_mask = std::nullopt,
                     uint64_t position_offset = 0) const;
 
-  Tensor q_weight();
-  Tensor q_weight() const;
-  Tensor k_weight();
-  Tensor k_weight() const;
-  Tensor v_weight();
-  Tensor v_weight() const;
-  Tensor o_weight();
-  Tensor o_weight() const;
-  std::optional<Tensor> q_bias();
-  std::optional<Tensor> q_bias() const;
-  std::optional<Tensor> k_bias();
-  std::optional<Tensor> k_bias() const;
-  std::optional<Tensor> v_bias();
-  std::optional<Tensor> v_bias() const;
-  std::optional<Tensor> o_bias();
-  std::optional<Tensor> o_bias() const;
+  Tensor& q_weight();
+  const Tensor& q_weight() const;
+  Tensor& k_weight();
+  const Tensor& k_weight() const;
+  Tensor& v_weight();
+  const Tensor& v_weight() const;
+  Tensor& o_weight();
+  const Tensor& o_weight() const;
+  std::optional<Tensor>& q_bias();
+  const std::optional<Tensor>& q_bias() const;
+  std::optional<Tensor>& k_bias();
+  const std::optional<Tensor>& k_bias() const;
+  std::optional<Tensor>& v_bias();
+  const std::optional<Tensor>& v_bias() const;
+  std::optional<Tensor>& o_bias();
+  const std::optional<Tensor>& o_bias() const;
 
  private:
   uint64_t hidden_size_;

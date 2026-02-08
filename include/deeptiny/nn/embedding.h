@@ -18,8 +18,8 @@ class Embedding : public Module {
   Tensor operator()(const std::vector<int64_t>& indices,
                     const Shape& shape) const;
 
-  Tensor weight();
-  Tensor weight() const;
+  Tensor& weight();
+  const Tensor& weight() const;
 
  private:
   uint64_t num_embeddings_;

@@ -82,8 +82,8 @@ Tensor Embedding::operator()(const std::vector<int64_t>& indices,
   return flat_output.Reshape(output_shape);
 }
 
-Tensor Embedding::weight() const { return weight_; }
+Tensor& Embedding::weight() { return weight_; }
 
-Tensor Embedding::weight() { return weight_; }
+const Tensor& Embedding::weight() const { return weight_; }
 
 }  // namespace deeptiny::nn
