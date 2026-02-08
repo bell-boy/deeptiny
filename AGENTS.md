@@ -48,3 +48,4 @@
 - Embedded use should default `DEEPTINY_BUILD_TESTS=OFF` and `DEEPTINY_ENABLE_WERROR=OFF` unless the parent explicitly enables them.
 - Keep standalone demos under `demo/<name>` as independent CMake projects that consume Deep Tiny via `FetchContent` with a pinned commit (`DEEPTINY_GIT_TAG`), and allow local override through `FETCHCONTENT_SOURCE_DIR_DEEPTINY` when needed.
 - Keep `transfomer-demo` embedding contract strict: `Embedding::operator()(indices, shape)` requires `indices.size() == product(shape)`, throws on out-of-range indices, and returns `shape + {embedding_dim}`.
+- Keep the SmolLM2 demo loader split as phase-1 manifest/validation (`demo/transfomer-demo/src/smollm2_135m_instruct_loader.{h,cc}`) so download + safetensors parsing can be added separately in later phases.

@@ -1,0 +1,63 @@
+#pragma once
+
+#include <cstdint>
+#include <filesystem>
+#include <string>
+#include <vector>
+
+#include "deeptiny/types.h"
+
+namespace demo::smollm2 {
+
+struct Config {
+  bool attention_bias = false;
+  float attention_dropout = 0.0f;
+  uint64_t bos_token_id = 1;
+  uint64_t eos_token_id = 2;
+  std::string hidden_act = "silu";
+  uint64_t hidden_size = 576;
+  double initializer_range = 0.041666666666666664;
+  uint64_t intermediate_size = 1536;
+  bool is_llama_config = true;
+  uint64_t max_position_embeddings = 8192;
+  bool mlp_bias = false;
+  std::string model_type = "llama";
+  uint64_t num_attention_heads = 9;
+  uint64_t num_hidden_layers = 30;
+  uint64_t num_key_value_heads = 3;
+  uint64_t pad_token_id = 2;
+  uint64_t pretraining_tp = 1;
+  float rms_norm_eps = 1e-5f;
+  bool rope_interleaved = false;
+  float rope_theta = 100000.0f;
+  bool tie_word_embeddings = true;
+  deeptiny::DType torch_dtype = deeptiny::DType::BFloat16;
+  bool use_cache = true;
+  uint64_t vocab_size = 49152;
+};
+
+struct WeightSpec {
+  std::string hf_name;
+  deeptiny::Shape hf_shape;
+  deeptiny::Shape deeptiny_shape;
+  bool transpose_last_two = false;
+  bool required = true;
+};
+
+struct WeightLoadPlan {
+  std::filesystem::path model_dir;
+  std::filesystem::path weights_path;
+  bool is_sharded_checkpoint = false;
+  std::vector<WeightSpec> weights;
+};
+
+Config DefaultSmolLM2_135M_InstructConfig();
+
+std::vector<WeightSpec> BuildWeightSpecs(const Config& config);
+
+// Phase-1 loader: validates model directory artifacts and returns a tensor map.
+WeightLoadPlan LoadSmolLM2_135M_InstructWeights(
+    const std::filesystem::path& model_dir,
+    const Config& config = DefaultSmolLM2_135M_InstructConfig());
+
+}  // namespace demo::smollm2
