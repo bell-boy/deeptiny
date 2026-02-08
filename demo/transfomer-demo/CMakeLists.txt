@@ -9,11 +9,6 @@ include(CTest)
 option(TRANSFOMER_DEMO_BUILD_TESTS "Build transfomer-demo tests" ON)
 option(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP
        "Build transfomer-demo with tokenizers-cpp submodule" ON)
-option(TRANSFOMER_DEMO_ENABLE_GPERFTOOLS
-       "Enable gperftools profiling in transfomer_demo_benchmark" ON)
-
-set(TRANSFOMER_DEMO_GPERFTOOLS_ROOT "" CACHE PATH
-    "Optional gperftools installation prefix")
 
 set(DEEPTINY_GIT_REPOSITORY "https://github.com/bell-boy/deeptiny.git" CACHE STRING
     "Git repository for Deep Tiny")
@@ -112,36 +107,5 @@ endfunction()
 configure_transfomer_demo_target(transfomer_demo)
 configure_transfomer_demo_target(transfomer_demo_benchmark)
 
-if(TRANSFOMER_DEMO_ENABLE_GPERFTOOLS)
-  set(_transfomer_demo_gperftools_hints)
-  if(TRANSFOMER_DEMO_GPERFTOOLS_ROOT)
-    list(APPEND _transfomer_demo_gperftools_hints
-         "${TRANSFOMER_DEMO_GPERFTOOLS_ROOT}")
-  endif()
-  list(APPEND _transfomer_demo_gperftools_hints "/opt/homebrew" "/usr/local")
-
-  find_path(TRANSFOMER_DEMO_GPERFTOOLS_INCLUDE_DIR
-            NAMES gperftools/profiler.h
-            HINTS ${_transfomer_demo_gperftools_hints}
-            PATH_SUFFIXES include)
-  find_library(TRANSFOMER_DEMO_GPERFTOOLS_PROFILER_LIBRARY
-               NAMES profiler
-               HINTS ${_transfomer_demo_gperftools_hints}
-               PATH_SUFFIXES lib)
-
-  if(NOT TRANSFOMER_DEMO_GPERFTOOLS_INCLUDE_DIR
-     OR NOT TRANSFOMER_DEMO_GPERFTOOLS_PROFILER_LIBRARY)
-    message(FATAL_ERROR
-      "gperftools not found for transfomer_demo_benchmark. "
-      "Install gperftools (for example, `brew install gperftools`) or set "
-      "TRANSFOMER_DEMO_GPERFTOOLS_ROOT/CMAKE_PREFIX_PATH. "
-      "Disable with -DTRANSFOMER_DEMO_ENABLE_GPERFTOOLS=OFF.")
-  endif()
-
-  target_include_directories(transfomer_demo_benchmark PRIVATE
-                             "${TRANSFOMER_DEMO_GPERFTOOLS_INCLUDE_DIR}")
-  target_link_libraries(transfomer_demo_benchmark PRIVATE
-                        "${TRANSFOMER_DEMO_GPERFTOOLS_PROFILER_LIBRARY}")
-  target_compile_definitions(transfomer_demo_benchmark
-                             PRIVATE TRANSFOMER_DEMO_HAS_GPERFTOOLS=1)
-endif()
+target_compile_options(transfomer_demo_benchmark PRIVATE -pg)
+target_link_options(transfomer_demo_benchmark PRIVATE -pg)

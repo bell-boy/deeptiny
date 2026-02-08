@@ -96,7 +96,7 @@ Disable tokenizer integration if needed:
 cmake --preset dev -DTRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP=OFF
 ```
 
-## Benchmark (gperftools)
+## Benchmark (gprof)
 
 Build the benchmark executable:
 
@@ -120,22 +120,11 @@ Run with default local model cache location (`./model_files`):
 ./build/transfomer_demo_benchmark
 ```
 
-Generate a CPU profile (defaults to
-`./transfomer_demo_benchmark.prof`):
+Generate a gprof report:
 
 ```bash
 ./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
 ```
 
-Override profile output path:
-
-```bash
-TRANSFOMER_DEMO_PROFILE_PATH=benchmark.prof ./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
-```
-
-Inspect the profile with `pprof` (from Go toolchain or another `pprof`
-installation):
-
-```bash
-go tool pprof -text ./build/transfomer_demo_benchmark benchmark.prof
+gprof ./build/transfomer_demo_benchmark gmon.out > gprof.txt
 ```
