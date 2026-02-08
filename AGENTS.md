@@ -48,3 +48,4 @@
 - Embedded use should default `DEEPTINY_BUILD_TESTS=OFF` and `DEEPTINY_ENABLE_WERROR=OFF` unless the parent explicitly enables them.
 - Keep standalone demos under `demo/<name>` as independent CMake projects that consume Deep Tiny via `FetchContent` with a pinned commit (`DEEPTINY_GIT_TAG`), and allow local override through `FETCHCONTENT_SOURCE_DIR_DEEPTINY` when needed.
 - Keep `transfomer-demo` embedding contract strict: `Embedding::operator()(indices, shape)` requires `indices.size() == product(shape)`, throws on out-of-range indices, and returns `shape + {embedding_dim}`.
+- Keep `transfomer-demo` tokenizer integration as a git submodule at `demo/transfomer-demo/third_party/tokenizers-cpp`, wired through `add_subdirectory`, with an opt-out CMake toggle (`TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP`) for environments without Rust/Cargo; require `git submodule update --init --recursive` so nested tokenizer deps are present.
