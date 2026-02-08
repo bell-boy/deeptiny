@@ -2,11 +2,10 @@
 #include <vector>
 
 #include "deeptiny/functional.h"
-#include "deeptiny/nn/gated_relu.h"
 #include "deeptiny/tensor.h"
 #include "deeptiny/types.h"
-#include "transformer.h"
 #include "smollm2_135m_instruct_loader.h"
+#include "transformer.h"
 
 int main(int argc, char** argv) {
   using deeptiny::FormatShape;
