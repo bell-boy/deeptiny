@@ -7,6 +7,7 @@
 #include "deeptiny/nn/embedding.h"
 #include "deeptiny/nn/gated_relu.h"
 #include "deeptiny/nn/linear.h"
+#include "deeptiny/nn/rms_norm.h"
 #include "doctest/doctest.h"
 #include "test_utils.h"
 
@@ -111,4 +112,33 @@ TEST_CASE("nn::GatedReLU forward/backward smoke") {
   auto loss = deeptiny::functional::Reduce(y, {0, 1, 2});
   loss.Backward();
   CHECK(x.grad().has_value());
+}
+
+TEST_CASE("nn::RMSNorm forward/backward") {
+  deeptiny::nn::RMSNorm norm(/*dim=*/2, /*eps=*/0.0f);
+  auto x = MakeTensor({2, 2}, {3.0f, 4.0f, 6.0f, 8.0f}, true);
+  auto y = norm(x);
+  CHECK(y.shape() == deeptiny::Shape({2, 2}));
+  CheckTensorData(y, {0.84852815f, 1.1313709f, 0.84852815f, 1.1313709f});
+
+  auto loss = deeptiny::functional::Reduce(y, {0, 1});
+  loss.Backward();
+
+  auto x_grad = x.grad();
+  REQUIRE(x_grad.has_value());
+  CheckTensorData(*x_grad,
+                  {0.04525483f, -0.03394112f, 0.02262741f, -0.01697056f});
+
+  auto w_grad = norm.weight().grad();
+  REQUIRE(w_grad.has_value());
+  CheckTensorData(*w_grad, {1.6970563f, 2.2627418f});
+}
+
+TEST_CASE("nn::RMSNorm guards") {
+  CHECK_THROWS(deeptiny::nn::RMSNorm(/*dim=*/0));
+  CHECK_THROWS(deeptiny::nn::RMSNorm(/*dim=*/4, /*eps=*/-1.0f));
+
+  deeptiny::nn::RMSNorm norm(/*dim=*/4);
+  CHECK_THROWS(norm(MakeTensor({2, 3}, std::vector<float>(6, 1.0f), true)));
+  CHECK_THROWS(norm(MakeTensor({}, std::vector<float>{1.0f}, true)));
 }

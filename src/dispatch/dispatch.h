@@ -4,3 +4,4 @@
 #include "dispatch/binary.h"
 #include "dispatch/relu.h"
 #include "dispatch/softmax.h"
+#include "dispatch/sqrt.h"
