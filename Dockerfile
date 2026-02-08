@@ -29,7 +29,8 @@ RUN set -eux; \
     fi
 
 WORKDIR /workspace
-COPY . /workspace
+COPY --chown=${USERNAME} . /workspace
+RUN chown ${USERNAME} /workspace
 USER ${USERNAME}
 
 CMD ["bash"]
