@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -8,6 +9,9 @@
 
 #include "smollm2_135m_instruct_loader.h"
 #include "transformer.h"
+#ifdef TRANSFOMER_DEMO_HAS_GPERFTOOLS
+#include <gperftools/profiler.h>
+#endif
 #ifdef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
 #include <tokenizers_cpp.h>
 #endif
@@ -54,6 +58,31 @@ std::filesystem::path ResolveModelDirWithWeights(int argc, char** argv) {
 
   return model_dir;
 }
+
+#ifdef TRANSFOMER_DEMO_HAS_GPERFTOOLS
+std::string ResolveProfilePath() {
+  const char* profile_path = std::getenv("CPUPROFILE");
+  if (profile_path != nullptr && profile_path[0] != '\0') {
+    return std::string(profile_path);
+  }
+  return "transfomer_demo_benchmark.prof";
+}
+
+class ScopedProfiler final {
+ public:
+  explicit ScopedProfiler(const std::string& profile_path) {
+    if (ProfilerStart(profile_path.c_str()) == 0) {
+      throw std::runtime_error("Failed to start gperftools profiler at " +
+                               profile_path);
+    }
+  }
+
+  ~ScopedProfiler() { ProfilerStop(); }
+
+  ScopedProfiler(const ScopedProfiler&) = delete;
+  ScopedProfiler& operator=(const ScopedProfiler&) = delete;
+};
+#endif
 
 }  // namespace
 
@@ -104,13 +133,25 @@ int main(int argc, char** argv) {
     }
     std::vector<int64_t> tokens(token_ids.begin(), token_ids.end());
 
-    const deeptiny::Tensor output = (*model)({tokens});
+#ifdef TRANSFOMER_DEMO_HAS_GPERFTOOLS
+    const std::string profile_path = ResolveProfilePath();
+    const deeptiny::Tensor output = [&]() {
+      const ScopedProfiler profiler(profile_path);
+      return (*model)({tokens});
+    }();
 
     std::cout << "model_dir: " << model_dir << "\n";
     std::cout << "tokenizer: " << tokenizer_path << "\n";
+    std::cout << "profile_output: " << profile_path << "\n";
     std::cout << "input_text: hello world\n";
     std::cout << "input_token_count: " << token_ids.size() << "\n";
     std::cout << "output_numel: " << output.numel() << "\n";
+#else
+    (void)tokens;
+    throw std::runtime_error(
+        "This benchmark requires gperftools. Configure with "
+        "TRANSFOMER_DEMO_ENABLE_GPERFTOOLS=ON.");
+#endif
 #endif
   } catch (const std::exception& err) {
     std::cerr << "error: " << err.what() << "\n";
