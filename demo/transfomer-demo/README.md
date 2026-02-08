@@ -110,10 +110,14 @@ Run a forward-only benchmark on fixed input text `"hello world"`:
 ./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
 ```
 
-Optional second argument repeats the same forward pass multiple times:
+If `model.safetensors` is missing in the provided `model_dir` (or if no
+`model_dir` is provided), the benchmark downloads weights into
+`./model_files/model.safetensors` and uses that directory automatically.
+
+Run with default local model cache location (`./model_files`):
 
 ```bash
-./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct 100
+./build/transfomer_demo_benchmark
 ```
 
 Generate a gprof report:

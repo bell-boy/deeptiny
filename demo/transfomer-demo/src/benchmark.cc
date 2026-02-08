@@ -15,17 +15,8 @@
 namespace {
 
 void PrintUsage() {
-  std::cout << "usage:\n"
-            << "  ./build/transfomer_demo_benchmark <model_dir> [iterations]\n";
-}
-
-uint64_t ParseUint64Arg(const std::string& value, const char* name) {
-  size_t parsed = 0;
-  const uint64_t result = std::stoull(value, &parsed);
-  if (parsed != value.size()) {
-    throw std::runtime_error(std::string("Invalid ") + name + ": " + value);
-  }
-  return result;
+  std::cout << "usage:\n";
+  std::cout << "  ./build/transfomer_demo_benchmark [model_dir]\n";
 }
 
 std::string ReadAllBytes(const std::filesystem::path& path) {
@@ -44,61 +35,52 @@ std::string ReadAllBytes(const std::filesystem::path& path) {
   return bytes;
 }
 
-void PrintShape(const deeptiny::Tensor& tensor) {
-  std::cout << "output_shape: [";
-  const auto shape = tensor.shape();
-  for (size_t i = 0; i < shape.size(); ++i) {
-    std::cout << shape[i];
-    if (i + 1 < shape.size()) {
-      std::cout << ", ";
-    }
+std::filesystem::path ResolveModelDirWithWeights(int argc, char** argv) {
+  std::filesystem::path model_dir =
+      demo::smollm2::ModelFilesDir(std::filesystem::current_path());
+  if (argc == 2) {
+    model_dir = argv[1];
   }
-  std::cout << "]\n";
-}
 
-void PrintTokenIds(const std::vector<int32_t>& token_ids) {
-  std::cout << "input_token_ids:";
-  for (const int32_t token_id : token_ids) {
-    std::cout << " " << token_id;
+  const std::filesystem::path safetensors_path =
+      model_dir / "model.safetensors";
+  if (!std::filesystem::exists(safetensors_path) ||
+      !std::filesystem::is_regular_file(safetensors_path)) {
+    const std::filesystem::path downloaded_safetensors =
+        demo::smollm2::DownloadSmolLM2_135M_InstructSafetensors(
+            std::filesystem::current_path());
+    model_dir = downloaded_safetensors.parent_path();
   }
-  std::cout << "\n";
+
+  return model_dir;
 }
 
 }  // namespace
 
 int main(int argc, char** argv) {
   try {
-    if (argc < 2 || argc > 3) {
+    if (argc > 2) {
       PrintUsage();
       return 1;
     }
 
-    const std::string arg1 = argv[1];
-    if (arg1 == "--help") {
+    if (argc == 2 && std::string(argv[1]) == "--help") {
       PrintUsage();
       return 0;
     }
 
-    uint64_t iterations = 1;
-    if (argc == 3) {
-      iterations = ParseUint64Arg(argv[2], "iterations");
-      if (iterations == 0) {
-        throw std::runtime_error("iterations must be non-zero");
-      }
-    }
-
     const auto config = demo::smollm2::DefaultSmolLM2_135M_InstructConfig();
-    const std::filesystem::path model_dir = arg1;
+    const std::filesystem::path model_dir =
+        ResolveModelDirWithWeights(argc, argv);
     auto model = demo::smollm2::CreateSmolLM2_135M_InstructTransformer(
         model_dir, config);
 
-    const std::filesystem::path downloaded_tokenizer =
-        demo::smollm2::DownloadSmolLM2_135M_InstructTokenizerJson(
-            std::filesystem::current_path());
     std::filesystem::path tokenizer_path = model_dir / "tokenizer.json";
     if (!std::filesystem::exists(tokenizer_path) ||
         !std::filesystem::is_regular_file(tokenizer_path)) {
-      tokenizer_path = downloaded_tokenizer;
+      tokenizer_path =
+          demo::smollm2::DownloadSmolLM2_135M_InstructTokenizerJson(
+              std::filesystem::current_path());
     }
 
 #ifndef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
@@ -122,17 +104,13 @@ int main(int argc, char** argv) {
     }
     std::vector<int64_t> tokens(token_ids.begin(), token_ids.end());
 
-    deeptiny::Tensor output = (*model)({tokens});
-    for (uint64_t i = 1; i < iterations; ++i) {
-      output = (*model)({tokens});
-    }
+    const deeptiny::Tensor output = (*model)({tokens});
 
     std::cout << "model_dir: " << model_dir << "\n";
     std::cout << "tokenizer: " << tokenizer_path << "\n";
     std::cout << "input_text: hello world\n";
-    PrintTokenIds(token_ids);
-    std::cout << "iterations: " << iterations << "\n";
-    PrintShape(output);
+    std::cout << "input_token_count: " << token_ids.size() << "\n";
+    std::cout << "output_numel: " << output.numel() << "\n";
 #endif
   } catch (const std::exception& err) {
     std::cerr << "error: " << err.what() << "\n";
