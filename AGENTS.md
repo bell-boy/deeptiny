@@ -49,3 +49,4 @@
 - Keep standalone demos under `demo/<name>` as independent CMake projects that consume Deep Tiny via `FetchContent` with a pinned commit (`DEEPTINY_GIT_TAG`), and allow local override through `FETCHCONTENT_SOURCE_DIR_DEEPTINY` when needed.
 - Keep `transfomer-demo` embedding contract strict: `Embedding::operator()(indices, shape)` requires `indices.size() == product(shape)`, throws on out-of-range indices, and returns `shape + {embedding_dim}`.
 - Keep `transfomer-demo::Transformer` pipeline fixed as `embed -> nn::TransformerBlock * N -> norm`, with `std::vector<std::vector<int64_t>>` token-batch input.
+- Keep the SmolLM2 demo loader split as phase-1 manifest/validation (`demo/transfomer-demo/src/smollm2_135m_instruct_loader.{h,cc}`) so download + safetensors parsing can be added separately in later phases.

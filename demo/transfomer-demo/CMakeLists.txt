@@ -41,7 +41,12 @@ FetchContent_MakeAvailable(deeptiny)
 set(BUILD_TESTING "${_demo_build_testing}" CACHE BOOL
     "Build transfomer-demo tests" FORCE)
 
-add_executable(transfomer_demo src/main.cc src/transformer.cc)
+add_executable(
+  transfomer_demo
+  src/main.cc
+  src/transformer.cc
+  src/smollm2_135m_instruct_loader.cc
+)
 
 target_compile_features(transfomer_demo PRIVATE cxx_std_23)
 target_link_libraries(transfomer_demo PRIVATE deeptiny)
