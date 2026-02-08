@@ -14,6 +14,12 @@
 
 namespace {
 
+const std::string kEvalText =
+    "It's a hot summer Tuesday, and he's standing in the plaza in front of "
+    "the Centraal Station with hiseyeballs powered up and the sunlight "
+    "jangling off the canal, motor scooters and kamikaze cyclistswhizzing "
+    "past and tourists chattering on every side.";
+
 void PrintUsage() {
   std::cout << "usage:\n";
   std::cout << "  ./build/transfomer_demo_benchmark [model_dir]\n";
@@ -97,10 +103,9 @@ int main(int argc, char** argv) {
                                tokenizer_path.string());
     }
 
-    const std::vector<int32_t> token_ids = tokenizer->Encode("hello world");
+    const std::vector<int32_t> token_ids = tokenizer->Encode(kEvalText);
     if (token_ids.empty()) {
-      throw std::runtime_error(
-          "Tokenizer returned zero tokens for 'hello world'");
+      throw std::runtime_error("Tokenizer returned zero tokens for eval text");
     }
     std::vector<int64_t> tokens(token_ids.begin(), token_ids.end());
 
@@ -108,7 +113,7 @@ int main(int argc, char** argv) {
 
     std::cout << "model_dir: " << model_dir << "\n";
     std::cout << "tokenizer: " << tokenizer_path << "\n";
-    std::cout << "input_text: hello world\n";
+    std::cout << "input_text: " << kEvalText << "\n";
     std::cout << "input_token_count: " << token_ids.size() << "\n";
     std::cout << "output_numel: " << output.numel() << "\n";
 #endif

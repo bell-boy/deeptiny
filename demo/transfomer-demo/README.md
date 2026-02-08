@@ -104,7 +104,7 @@ Build the benchmark executable:
 cmake --build --preset benchmark
 ```
 
-Run a forward-only benchmark on fixed input text `"hello world"`:
+Run a forward-only benchmark on the fixed eval text:
 
 ```bash
 ./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
