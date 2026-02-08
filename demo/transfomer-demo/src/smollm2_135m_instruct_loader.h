@@ -38,6 +38,7 @@ struct Config {
 
 struct WeightSpec {
   std::string hf_name;
+  std::string deeptiny_target;
   deeptiny::Shape hf_shape;
   deeptiny::Shape deeptiny_shape;
   bool transpose_last_two = false;
@@ -51,9 +52,51 @@ struct WeightLoadPlan {
   std::vector<WeightSpec> weights;
 };
 
+struct TensorPlacement {
+  std::string hf_name;
+  std::string deeptiny_target;
+  std::string dtype;
+  deeptiny::Shape safetensors_shape;
+  deeptiny::Shape expected_hf_shape;
+  deeptiny::Shape deeptiny_shape;
+  uint64_t data_start = 0;
+  uint64_t data_end = 0;
+  bool present_in_safetensors = false;
+  bool shape_matches_expected = false;
+  bool transpose_last_two = false;
+  bool required = true;
+};
+
+struct TensorPlacementPlan {
+  std::filesystem::path safetensors_path;
+  uint64_t header_json_size = 0;
+  std::vector<TensorPlacement> placements;
+  std::vector<std::string> missing_required_tensors;
+  std::vector<std::string> unexpected_tensors;
+};
+
 Config DefaultSmolLM2_135M_InstructConfig();
 
+std::filesystem::path ModelFilesDir(
+    const std::filesystem::path& cwd = std::filesystem::current_path());
+
+// Downloads small files first to verify network/access before large downloads.
+void RunSmolLM2DownloadSmokeTests(
+    const std::filesystem::path& cwd = std::filesystem::current_path());
+
+// Downloads model.safetensors into cwd/model_files/model.safetensors.
+std::filesystem::path DownloadSmolLM2_135M_InstructSafetensors(
+    const std::filesystem::path& cwd = std::filesystem::current_path());
+
 std::vector<WeightSpec> BuildWeightSpecs(const Config& config);
+
+// Reads the safetensors JSON header as a raw string.
+std::string ReadSafetensorsHeaderJson(
+    const std::filesystem::path& safetensors_path);
+
+TensorPlacementPlan BuildTensorPlacementPlanFromSafetensors(
+    const std::filesystem::path& safetensors_path,
+    const Config& config = DefaultSmolLM2_135M_InstructConfig());
 
 // Phase-1 loader: validates model directory artifacts and returns a tensor map.
 WeightLoadPlan LoadSmolLM2_135M_InstructWeights(
