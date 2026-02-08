@@ -13,12 +13,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
-    if ! getent group "${GID}" >/dev/null; then \
-      groupadd -g "${GID}" "${USERNAME}"; \
+    if getent group "${GID}" >/dev/null 2>&1; then \
+      GROUP_NAME="$(getent group "${GID}" | cut -d: -f1)"; \
+    else \
+      if ! getent group "${USERNAME}" >/dev/null 2>&1; then \
+        groupadd -g "${GID}" "${USERNAME}" || groupadd "${USERNAME}"; \
+      fi; \
+      GROUP_NAME="${USERNAME}"; \
     fi; \
-    GROUP_NAME="$(getent group "${GID}" | cut -d: -f1)"; \
-    if ! id -u "${USERNAME}" >/dev/null 2>&1; then \
-      useradd -m -u "${UID}" -g "${GROUP_NAME}" -s /bin/bash "${USERNAME}"; \
+    if id -u "${USERNAME}" >/dev/null 2>&1; then \
+      usermod -g "${GROUP_NAME}" "${USERNAME}" || true; \
+    else \
+      useradd -m -u "${UID}" -g "${GROUP_NAME}" -s /bin/bash "${USERNAME}" || \
+      useradd -m -g "${GROUP_NAME}" -s /bin/bash "${USERNAME}"; \
     fi
 
 WORKDIR /workspace
