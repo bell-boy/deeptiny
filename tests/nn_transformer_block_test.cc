@@ -7,7 +7,122 @@
 #include "doctest/doctest.h"
 #include "test_utils.h"
 
+using deeptiny::test_utils::CopyTensorData;
 using deeptiny::test_utils::MakeTensor;
+using deeptiny::test_utils::ToVector;
+
+namespace {
+
+void InstallAttentionProbeWeights(deeptiny::nn::TransformerBlock& block) {
+  const deeptiny::Shape weight_shape{1, 1, 4, 4};
+
+  // q = [x0, 0, 0, 0]
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{
+                         1.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                     },
+                     weight_shape, deeptiny::Device::CPU, true),
+                 block.self_attention().q_weight());
+
+  // k = [x0, 0, 0, 0]
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{
+                         1.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                     },
+                     weight_shape, deeptiny::Device::CPU, true),
+                 block.self_attention().k_weight());
+
+  // v = [x2, 0, 0, 0]
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         1.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                     },
+                     weight_shape, deeptiny::Device::CPU, true),
+                 block.self_attention().v_weight());
+
+  // output = [context0, 0, 0, 0]
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{
+                         1.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                     },
+                     weight_shape, deeptiny::Device::CPU, true),
+                 block.self_attention().o_weight());
+}
+
+void ZeroTensor(deeptiny::Tensor& tensor) {
+  CopyTensorData(
+      deeptiny::Tensor::Zeros(tensor.shape(), tensor.device(), tensor.dtype()),
+      tensor);
+}
+
+void ZeroFeedForward(deeptiny::nn::TransformerBlock& block) {
+  auto& ffn = block.ffn();
+  ZeroTensor(ffn.gate_proj().weight());
+  ZeroTensor(ffn.up_proj().weight());
+  ZeroTensor(ffn.down_proj().weight());
+}
+
+}  // namespace
 
 TEST_CASE("nn::TransformerBlock constructor and input guards") {
   CHECK_THROWS_WITH(deeptiny::nn::TransformerBlock(0, 8, 2, 1),
@@ -30,20 +145,29 @@ TEST_CASE("nn::TransformerBlock forward shape and optional attention args") {
   deeptiny::nn::TransformerBlock block(
       /*hidden_size=*/4,
       /*mlp_hidden_dim=*/8,
-      /*num_attention_heads=*/2,
+      /*num_attention_heads=*/1,
       /*num_key_value_heads=*/1,
       /*attention_bias=*/false,
       /*mlp_bias=*/false,
       /*is_causal=*/false);
+  InstallAttentionProbeWeights(block);
+  ZeroFeedForward(block);
 
-  auto x = MakeTensor({2, 3, 4}, std::vector<float>(24, 0.5f), true);
-  auto y = block(x);
-  CHECK(y.shape() == deeptiny::Shape({2, 3, 4}));
+  auto x = MakeTensor({1, 2, 4},
+                      {1.0f, 0.0f, 0.0f, 0.0f,  //
+                       1.0f, 0.0f, 1.0f, 0.0f},
+                      true);
+  auto y_unmasked = block(x);
+  CHECK(y_unmasked.shape() == deeptiny::Shape({1, 2, 4}));
 
-  auto mask = MakeTensor({1, 1, 3, 3}, {0.0f, -1.0e9f, 0.0f, 0.0f, 0.0f,
-                                        -1.0e9f, -1.0e9f, 0.0f, 0.0f});
+  auto mask = MakeTensor({1, 1, 2, 2}, {0.0f, -1.0e9f, 0.0f, -1.0e9f});
   auto y_masked = block(x, mask, /*position_offset=*/2);
-  CHECK(y_masked.shape() == deeptiny::Shape({2, 3, 4}));
+  CHECK(y_masked.shape() == deeptiny::Shape({1, 2, 4}));
+
+  const auto unmasked_data = ToVector(y_unmasked);
+  const auto masked_data = ToVector(y_masked);
+  CHECK(unmasked_data[4] > masked_data[4]);
+  CHECK(masked_data[4] == deeptiny::test_utils::Approx(1.0f, 1e-4));
 }
 
 TEST_CASE("nn::TransformerBlock backward smoke") {

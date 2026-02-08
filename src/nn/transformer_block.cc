@@ -3,7 +3,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include "deeptiny/math.h"
 #include "nn/validation.h"
 
 namespace deeptiny::nn {
@@ -43,11 +42,13 @@ Tensor TransformerBlock::operator()(const Tensor& hidden_states,
   Tensor attention_input = attention_norm_(hidden_states);
   Tensor attention_output = self_attention_(
       attention_input, std::move(attention_mask), position_offset);
-  Tensor hidden = hidden_states + attention_output;
+  Tensor hidden = attention_output;
+  hidden += hidden_states;
 
   Tensor ffn_input = ffn_norm_(hidden);
   Tensor ffn_output = ffn_(ffn_input);
-  return hidden + ffn_output;
+  ffn_output += hidden;
+  return ffn_output;
 }
 
 RMSNorm& TransformerBlock::attention_norm() { return attention_norm_; }
