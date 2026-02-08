@@ -18,7 +18,8 @@
       "name": "dev-local-openblas",
       "configurePreset": "dev-local-openblas",
       "targets": [
-        "transfomer_demo"
+        "transfomer_demo",
+        "transfomer_benchmark"
       ]
     }
   ]

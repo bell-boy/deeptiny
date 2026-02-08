@@ -21,7 +21,7 @@
     {
       "name": "dev",
       "configurePreset": "dev",
-      "targets": ["transfomer_demo"]
+      "targets": ["transfomer_demo", "transfomer_benchmark"]
     }
   ]
 }
