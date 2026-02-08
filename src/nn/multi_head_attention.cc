@@ -11,18 +11,11 @@
 
 #include "deeptiny/functional.h"
 #include "deeptiny/math.h"
+#include "nn/validation.h"
 #include "utils.h"
 
 namespace deeptiny::nn {
 namespace {
-
-uint64_t ValidateNonZero(uint64_t value, const char* name) {
-  if (value == 0) {
-    throw std::runtime_error(std::string("MultiHeadAttention ") + name +
-                             " must be non-zero");
-  }
-  return value;
-}
 
 void ValidateConstructorArgs(uint64_t hidden_size, uint64_t num_attention_heads,
                              uint64_t num_key_value_heads, float rope_theta) {
@@ -147,11 +140,12 @@ MultiHeadAttention::MultiHeadAttention(uint64_t hidden_size,
                                        uint64_t num_key_value_heads,
                                        bool attention_bias, bool is_causal,
                                        float rope_theta, Device device)
-    : hidden_size_(ValidateNonZero(hidden_size, "hidden_size")),
-      num_attention_heads_(
-          ValidateNonZero(num_attention_heads, "num_attention_heads")),
-      num_key_value_heads_(
-          ValidateNonZero(num_key_value_heads, "num_key_value_heads")),
+    : hidden_size_(detail::ValidateNonZeroDimension(
+          "MultiHeadAttention", "hidden_size", hidden_size)),
+      num_attention_heads_(detail::ValidateNonZeroDimension(
+          "MultiHeadAttention", "num_attention_heads", num_attention_heads)),
+      num_key_value_heads_(detail::ValidateNonZeroDimension(
+          "MultiHeadAttention", "num_key_value_heads", num_key_value_heads)),
       num_key_value_groups_(num_attention_heads_ / num_key_value_heads_),
       head_dim_(hidden_size_ / num_attention_heads_),
       is_causal_(is_causal),

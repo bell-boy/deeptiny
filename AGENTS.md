@@ -35,6 +35,7 @@
 - Keep autograd pending-count bookkeeping owned by `Engine`; avoid exposing mutators on `AutogradMeta` for `pending_`.
 - Keep autograd interfaces minimal: `updateGrad` only accumulates gradients, and backward `Function` callbacks should not take `Engine` unless it is truly needed.
 - For unsigned dimension/count parameters, validate `== 0` (non-zero requirement) rather than using "positive" helper naming/messages.
+- Reuse `src/nn/validation.h` helpers for module constructor dimension/count guards instead of duplicating local validators per module source file.
 - Avoid mutable reference accessors for trainable tensors; expose value getters and copy-based setters so `Module` parameter registration continues to track the live tensors used in forward/update paths.
 - Keep attention module wiring explicit: `nn::MultiHeadAttention` should take constructor parameters directly (no config object), apply internal RoPE from `position_offset`, use additive masks, and keep dropout/KV-cache out of scope unless explicitly requested.
 - Keep softmax as a public functional op (`functional::Softmax(x, dim)`) with kernel/dispatch implementation and explicit backward.

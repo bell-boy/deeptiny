@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "nn/validation.h"
 #include "utils.h"
 
 namespace deeptiny::nn {
@@ -22,9 +23,9 @@ int64_t ToSliceIndex(uint64_t value, const char* label) {
 
 Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim, DType dtype,
                   Device device, bool requires_grad) {
-  if (num_embeddings == 0 || embedding_dim == 0) {
-    throw std::runtime_error("Embedding dimensions must be non-zero.");
-  }
+  detail::ValidateNonZeroDimension("Embedding", "num_embeddings",
+                                   num_embeddings);
+  detail::ValidateNonZeroDimension("Embedding", "embedding_dim", embedding_dim);
   if (dtype != DType::Float32) {
     throw std::runtime_error(
         "Embedding currently supports only Float32 dtype.");
