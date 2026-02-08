@@ -12,7 +12,7 @@ int main() {
   constexpr uint64_t vocab_size = 32;
   constexpr uint64_t hidden_size = 8;
   constexpr uint64_t intermediate_size = 16;
-  constexpr uint64_t num_hidden_states = 3;
+  constexpr uint64_t num_blocks = 3;
   constexpr uint64_t num_attention_heads = 2;
   constexpr uint64_t num_key_value_heads = 2;
 
@@ -21,7 +21,7 @@ int main() {
       {4, 2, 9, 6},
   };
   transfomer_demo::Transformer transformer(
-      vocab_size, hidden_size, intermediate_size, num_hidden_states,
+      vocab_size, hidden_size, intermediate_size, num_blocks,
       num_attention_heads, num_key_value_heads, deeptiny::Device::CPU);
 
   auto y = transformer(tokens);
@@ -33,8 +33,7 @@ int main() {
             << FormatShape({static_cast<uint64_t>(tokens.size()),
                             static_cast<uint64_t>(tokens.front().size())})
             << "\n";
-  std::cout << "hidden states layers: " << transformer.num_hidden_states()
-            << "\n";
+  std::cout << "transformer blocks: " << transformer.num_blocks() << "\n";
   std::cout << "output shape: " << FormatShape(y.shape()) << "\n";
   std::cout << "loss shape: " << FormatShape(loss.shape()) << "\n";
   std::cout << "embed.weight.grad available: " << std::boolalpha

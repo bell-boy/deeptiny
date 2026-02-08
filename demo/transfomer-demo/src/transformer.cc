@@ -1,12 +1,11 @@
 #include "transformer.h"
 
 #include <cstdint>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
-
-#include "deeptiny/math.h"
 
 namespace transfomer_demo {
 namespace {
@@ -53,30 +52,8 @@ std::pair<std::vector<int64_t>, deeptiny::Shape> FlattenTokenBatch(
 
 }  // namespace
 
-HiddenState::HiddenState(uint64_t hidden_size, uint64_t intermediate_size,
-                         uint64_t num_attention_heads,
-                         uint64_t num_key_value_heads, deeptiny::Device device)
-    : attention_norm_(hidden_size, 1.0e-5f, device),
-      attention_(hidden_size, num_attention_heads, num_key_value_heads, false,
-                 true, 10000.0f, device),
-      mlp_norm_(hidden_size, 1.0e-5f, device),
-      mlp_(hidden_size, intermediate_size, hidden_size, true, device) {
-  RegisterSubmodule(attention_norm_);
-  RegisterSubmodule(attention_);
-  RegisterSubmodule(mlp_norm_);
-  RegisterSubmodule(mlp_);
-}
-
-deeptiny::Tensor HiddenState::operator()(
-    const deeptiny::Tensor& hidden_states) const {
-  deeptiny::Tensor attention_input = attention_norm_(hidden_states);
-  deeptiny::Tensor attended = hidden_states + attention_(attention_input);
-  deeptiny::Tensor mlp_input = mlp_norm_(attended);
-  return attended + mlp_(mlp_input);
-}
-
 Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
-                         uint64_t intermediate_size, uint64_t num_hidden_states,
+                         uint64_t intermediate_size, uint64_t num_blocks,
                          uint64_t num_attention_heads,
                          uint64_t num_key_value_heads, deeptiny::Device device)
     : embed_(ValidateNonZero("vocab_size", vocab_size),
@@ -84,18 +61,18 @@ Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
              deeptiny::DType::Float32, device, true),
       norm_(hidden_size, 1.0e-5f, device) {
   ValidateNonZero("intermediate_size", intermediate_size);
-  ValidateNonZero("num_hidden_states", num_hidden_states);
+  ValidateNonZero("num_blocks", num_blocks);
   ValidateNonZero("num_attention_heads", num_attention_heads);
   ValidateNonZero("num_key_value_heads", num_key_value_heads);
 
   RegisterSubmodule(embed_);
 
-  hidden_states_.reserve(static_cast<size_t>(num_hidden_states));
-  for (uint64_t i = 0; i < num_hidden_states; ++i) {
-    hidden_states_.push_back(std::make_unique<HiddenState>(
+  blocks_.reserve(static_cast<size_t>(num_blocks));
+  for (uint64_t i = 0; i < num_blocks; ++i) {
+    blocks_.push_back(std::make_unique<deeptiny::nn::TransformerBlock>(
         hidden_size, intermediate_size, num_attention_heads,
-        num_key_value_heads, device));
-    RegisterSubmodule(*hidden_states_.back());
+        num_key_value_heads, false, true, true, 10000.0f, 1.0e-5f, device));
+    RegisterSubmodule(*blocks_.back());
   }
 
   RegisterSubmodule(norm_);
@@ -105,19 +82,33 @@ deeptiny::Tensor Transformer::operator()(
     const std::vector<std::vector<int64_t>>& tokens) const {
   auto [flat_tokens, token_shape] = FlattenTokenBatch(tokens);
   deeptiny::Tensor hidden_states = embed_(flat_tokens, token_shape);
-  for (const auto& hidden_state : hidden_states_) {
-    hidden_states = (*hidden_state)(hidden_states);
+  for (const auto& block : blocks_) {
+    hidden_states = (*block)(hidden_states, std::nullopt, 0);
   }
   return norm_(hidden_states);
 }
 
-uint64_t Transformer::num_hidden_states() const {
-  return static_cast<uint64_t>(hidden_states_.size());
+uint64_t Transformer::num_blocks() const {
+  return static_cast<uint64_t>(blocks_.size());
 }
 
 deeptiny::nn::Embedding& Transformer::embed() { return embed_; }
 
 const deeptiny::nn::Embedding& Transformer::embed() const { return embed_; }
+
+deeptiny::nn::TransformerBlock& Transformer::block(uint64_t index) {
+  if (index >= blocks_.size()) {
+    throw std::runtime_error("Transformer block index out of range.");
+  }
+  return *blocks_[index];
+}
+
+const deeptiny::nn::TransformerBlock& Transformer::block(uint64_t index) const {
+  if (index >= blocks_.size()) {
+    throw std::runtime_error("Transformer block index out of range.");
+  }
+  return *blocks_[index];
+}
 
 deeptiny::nn::RMSNorm& Transformer::norm() { return norm_; }
 
