@@ -18,12 +18,11 @@ RUN set -eux; \
     fi; \
     GROUP_NAME="$(getent group "${GID}" | cut -d: -f1)"; \
     if ! id -u "${USERNAME}" >/dev/null 2>&1; then \
-      useradd -o -m -u "${UID}" -g "${GROUP_NAME}" -s /bin/bash "${USERNAME}"; \
+      useradd -m -u "${UID}" -g "${GROUP_NAME}" -s /bin/bash "${USERNAME}"; \
     fi
 
 WORKDIR /workspace
-COPY --chown=${UID}:${GID} . /workspace
-RUN chown -R "${UID}:${GID}" /workspace
+COPY . /workspace
 USER ${USERNAME}
 
 CMD ["bash"]
