@@ -7,6 +7,7 @@
 #include <iostream>
 #include <optional>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -105,7 +106,6 @@ Tensor::Tensor(std::shared_ptr<TensorImpl> tensor_impl,
 Tensor::Tensor(Shape shape, DType dtype, Device device, bool requires_grad)
     : tensor_impl_(std::make_shared<TensorImpl>(shape, dtype, device)),
       autograd_meta_(std::make_shared<AutogradMeta>(nullptr, requires_grad)) {}
-
 
 Tensor::Tensor(std::shared_ptr<TensorImpl> tensor_impl)
     : Tensor(std::move(tensor_impl), nullptr) {}
@@ -288,6 +288,33 @@ Tensor Tensor::Zeros(Shape shape, Device device, DType dtype,
     default:
       throw std::runtime_error("DType is not supported yet");
   };
+}
+
+void Tensor::CopyFromBuffer(std::span<const std::byte> bytes,
+                            const Shape& shape, DType dtype) {
+  if (shape != this->shape()) {
+    std::stringstream err;
+    err << "CopyFromBuffer shape mismatch: expected "
+        << FormatShape(this->shape()) << " but got " << FormatShape(shape);
+    throw std::runtime_error(err.str());
+  }
+
+  if (dtype != this->dtype()) {
+    std::stringstream err;
+    err << "CopyFromBuffer dtype mismatch: expected "
+        << this->dtype().ToString() << " but got " << dtype.ToString();
+    throw std::runtime_error(err.str());
+  }
+
+  const uint64_t expected_bytes = numel() * dtype.size();
+  if (bytes.size() != expected_bytes) {
+    std::stringstream err;
+    err << "CopyFromBuffer byte-size mismatch: expected " << expected_bytes
+        << " bytes but got " << bytes.size() << " bytes";
+    throw std::runtime_error(err.str());
+  }
+
+  tensor_impl_->storage()->CopyFromHost(0, numel(), bytes.data());
 }
 
 TensorSliceProxy Tensor::operator()(std::vector<Slice> slices) {

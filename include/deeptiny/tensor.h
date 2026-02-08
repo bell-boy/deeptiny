@@ -64,6 +64,10 @@ class Tensor {
   static Tensor Zeros(Shape shape, Device device = Device::CPU,
                       DType dtype = DType::Float32, bool requires_grad = false);
 
+  // Copies raw bytes into this tensor's storage after shape/dtype validation.
+  void CopyFromBuffer(std::span<const std::byte> bytes, const Shape& shape,
+                      DType dtype);
+
   template <typename T>
   static Tensor FromVector(const std::vector<T>& values, Shape shape,
                            Device device = Device::CPU,
