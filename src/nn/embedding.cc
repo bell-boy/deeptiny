@@ -1,9 +1,12 @@
 #include "deeptiny/nn/embedding.h"
 
+#include <cstddef>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+
+#include "utils.h"
 
 namespace deeptiny::nn {
 namespace {
@@ -23,7 +26,8 @@ Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim, DType dtype,
     throw std::runtime_error("Embedding dimensions must be positive.");
   }
   if (dtype != DType::Float32) {
-    throw std::runtime_error("Embedding currently supports only Float32 dtype.");
+    throw std::runtime_error(
+        "Embedding currently supports only Float32 dtype.");
   }
   if (device != Device::CPU) {
     throw std::runtime_error("Embedding currently supports only CPU.");
@@ -31,6 +35,22 @@ Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim, DType dtype,
 
   return Tensor::CreateUniform({num_embeddings, embedding_dim}, device, dtype,
                                requires_grad);
+}
+
+void CopyTensorData(const Tensor& src, const Tensor& dst) {
+  utils::CompatabilityCheck({src, dst});
+  if (src.shape() != dst.shape()) {
+    throw std::runtime_error("Embedding weight shape mismatch");
+  }
+
+  auto src_impl = utils::TensorAccessor::GetTensorImpl(src);
+  auto dst_impl = utils::TensorAccessor::GetTensorImpl(dst);
+  auto src_storage = src_impl->getContiguousStorage();
+  const uint64_t numel = src_storage->numel();
+  std::vector<std::byte> host_buffer(
+      static_cast<size_t>(numel * src.dtype().size()));
+  src_storage->CopyToHost(0, numel, host_buffer.data());
+  dst_impl->storage()->CopyFromHost(0, numel, host_buffer.data());
 }
 
 }  // namespace
@@ -51,7 +71,8 @@ Tensor Embedding::operator()(const std::vector<int64_t>& indices,
   const uint64_t index_count = static_cast<uint64_t>(indices.size());
   Shape output_shape = shape;
   output_shape.push_back(embedding_dim_);
-  Tensor flat_output = Tensor::Zeros({index_count, embedding_dim_}, device_, dtype_);
+  Tensor flat_output =
+      Tensor::Zeros({index_count, embedding_dim_}, device_, dtype_);
 
   try {
     (void)flat_output.Reshape(output_shape);
@@ -71,16 +92,17 @@ Tensor Embedding::operator()(const std::vector<int64_t>& indices,
     }
 
     const int64_t row = ToSliceIndex(i, "row index");
-    Tensor gathered_row =
-        weight_({Slice(token), Slice(0, end_col)});
+    Tensor gathered_row = weight_({Slice(token), Slice(0, end_col)});
     flat_output({Slice(row), Slice(0, end_col)}) = gathered_row;
   }
 
   return flat_output.Reshape(output_shape);
 }
 
-Tensor& Embedding::weight() { return weight_; }
+Tensor Embedding::weight() const { return weight_; }
 
-const Tensor& Embedding::weight() const { return weight_; }
+void Embedding::set_weight(const Tensor& weight) {
+  CopyTensorData(weight, weight_);
+}
 
 }  // namespace deeptiny::nn

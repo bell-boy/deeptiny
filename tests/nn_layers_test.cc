@@ -5,8 +5,8 @@
 
 #include "deeptiny/functional.h"
 #include "deeptiny/nn/embedding.h"
-#include "deeptiny/nn/linear.h"
 #include "deeptiny/nn/gated_relu.h"
+#include "deeptiny/nn/linear.h"
 #include "doctest/doctest.h"
 #include "test_utils.h"
 
@@ -31,14 +31,13 @@ TEST_CASE("nn::Linear forward preserves leading dimensions") {
 
 TEST_CASE("nn::Linear backward has expected analytic input gradient") {
   deeptiny::nn::Linear linear(/*in_dim=*/2, /*out_dim=*/3, /*bias=*/false);
-  linear.weight() = deeptiny::Tensor::FromVector(
+  linear.set_weight(deeptiny::Tensor::FromVector(
       std::vector<float>{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f},
-      deeptiny::Shape{1, 2, 3}, deeptiny::Device::CPU, true);
+      deeptiny::Shape{1, 2, 3}, deeptiny::Device::CPU, true));
 
-  auto x = deeptiny::Tensor::FromVector(std::vector<float>{1.0f, 2.0f, 3.0f,
-                                                            4.0f},
-                                        deeptiny::Shape{2, 2},
-                                        deeptiny::Device::CPU, true);
+  auto x = deeptiny::Tensor::FromVector(
+      std::vector<float>{1.0f, 2.0f, 3.0f, 4.0f}, deeptiny::Shape{2, 2},
+      deeptiny::Device::CPU, true);
   auto y = linear(x);
   auto loss = deeptiny::functional::Reduce(y, {0, 1});
   loss.Backward();
@@ -76,12 +75,22 @@ TEST_CASE("nn::Embedding contract and backward accumulation") {
     REQUIRE(grad.has_value());
     CHECK(grad->shape() == deeptiny::Shape({5, 3}));
     CheckTensorData(*grad, {
-                             0.0f, 0.0f, 0.0f,
-                             3.0f, 3.0f, 3.0f,
-                             0.0f, 0.0f, 0.0f,
-                             1.0f, 1.0f, 1.0f,
-                             0.0f, 0.0f, 0.0f,
-                         });
+                               0.0f,
+                               0.0f,
+                               0.0f,
+                               3.0f,
+                               3.0f,
+                               3.0f,
+                               0.0f,
+                               0.0f,
+                               0.0f,
+                               1.0f,
+                               1.0f,
+                               1.0f,
+                               0.0f,
+                               0.0f,
+                               0.0f,
+                           });
   }
 
   SUBCASE("guards") {

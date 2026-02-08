@@ -1,6 +1,7 @@
 #include "deeptiny/nn/multi_head_attention.h"
 
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <stdexcept>
@@ -43,6 +44,23 @@ void ValidateConstructorArgs(uint64_t hidden_size, uint64_t num_attention_heads,
   if (!(rope_theta > 0.0f)) {
     throw std::runtime_error("MultiHeadAttention rope_theta must be > 0");
   }
+}
+
+void CopyTensorData(const Tensor& src, const Tensor& dst, const char* label) {
+  utils::CompatabilityCheck({src, dst});
+  if (src.shape() != dst.shape()) {
+    throw std::runtime_error(std::string("MultiHeadAttention ") + label +
+                             " shape mismatch");
+  }
+
+  auto src_impl = utils::TensorAccessor::GetTensorImpl(src);
+  auto dst_impl = utils::TensorAccessor::GetTensorImpl(dst);
+  auto src_storage = src_impl->getContiguousStorage();
+  const uint64_t numel = src_storage->numel();
+  std::vector<std::byte> host_buffer(
+      static_cast<size_t>(numel * src.dtype().size()));
+  src_storage->CopyToHost(0, numel, host_buffer.data());
+  dst_impl->storage()->CopyFromHost(0, numel, host_buffer.data());
 }
 
 Tensor Scalar(float value, Device device) {
@@ -252,44 +270,68 @@ Tensor MultiHeadAttention::operator()(const Tensor& hidden_states,
   return out;
 }
 
-Tensor& MultiHeadAttention::q_weight() { return q_weight_; }
+Tensor MultiHeadAttention::q_weight() const { return q_weight_; }
 
-const Tensor& MultiHeadAttention::q_weight() const { return q_weight_; }
+Tensor MultiHeadAttention::k_weight() const { return k_weight_; }
 
-Tensor& MultiHeadAttention::k_weight() { return k_weight_; }
+Tensor MultiHeadAttention::v_weight() const { return v_weight_; }
 
-const Tensor& MultiHeadAttention::k_weight() const { return k_weight_; }
+Tensor MultiHeadAttention::o_weight() const { return o_weight_; }
 
-Tensor& MultiHeadAttention::v_weight() { return v_weight_; }
+std::optional<Tensor> MultiHeadAttention::q_bias() const { return q_bias_; }
 
-const Tensor& MultiHeadAttention::v_weight() const { return v_weight_; }
+std::optional<Tensor> MultiHeadAttention::k_bias() const { return k_bias_; }
 
-Tensor& MultiHeadAttention::o_weight() { return o_weight_; }
+std::optional<Tensor> MultiHeadAttention::v_bias() const { return v_bias_; }
 
-const Tensor& MultiHeadAttention::o_weight() const { return o_weight_; }
+std::optional<Tensor> MultiHeadAttention::o_bias() const { return o_bias_; }
 
-std::optional<Tensor>& MultiHeadAttention::q_bias() { return q_bias_; }
-
-const std::optional<Tensor>& MultiHeadAttention::q_bias() const {
-  return q_bias_;
+void MultiHeadAttention::set_q_weight(const Tensor& weight) {
+  CopyTensorData(weight, q_weight_, "q_weight");
 }
 
-std::optional<Tensor>& MultiHeadAttention::k_bias() { return k_bias_; }
-
-const std::optional<Tensor>& MultiHeadAttention::k_bias() const {
-  return k_bias_;
+void MultiHeadAttention::set_k_weight(const Tensor& weight) {
+  CopyTensorData(weight, k_weight_, "k_weight");
 }
 
-std::optional<Tensor>& MultiHeadAttention::v_bias() { return v_bias_; }
-
-const std::optional<Tensor>& MultiHeadAttention::v_bias() const {
-  return v_bias_;
+void MultiHeadAttention::set_v_weight(const Tensor& weight) {
+  CopyTensorData(weight, v_weight_, "v_weight");
 }
 
-std::optional<Tensor>& MultiHeadAttention::o_bias() { return o_bias_; }
+void MultiHeadAttention::set_o_weight(const Tensor& weight) {
+  CopyTensorData(weight, o_weight_, "o_weight");
+}
 
-const std::optional<Tensor>& MultiHeadAttention::o_bias() const {
-  return o_bias_;
+void MultiHeadAttention::set_q_bias(const Tensor& bias) {
+  if (!q_bias_.has_value()) {
+    throw std::runtime_error(
+        "MultiHeadAttention was constructed without attention bias");
+  }
+  CopyTensorData(bias, *q_bias_, "q_bias");
+}
+
+void MultiHeadAttention::set_k_bias(const Tensor& bias) {
+  if (!k_bias_.has_value()) {
+    throw std::runtime_error(
+        "MultiHeadAttention was constructed without attention bias");
+  }
+  CopyTensorData(bias, *k_bias_, "k_bias");
+}
+
+void MultiHeadAttention::set_v_bias(const Tensor& bias) {
+  if (!v_bias_.has_value()) {
+    throw std::runtime_error(
+        "MultiHeadAttention was constructed without attention bias");
+  }
+  CopyTensorData(bias, *v_bias_, "v_bias");
+}
+
+void MultiHeadAttention::set_o_bias(const Tensor& bias) {
+  if (!o_bias_.has_value()) {
+    throw std::runtime_error(
+        "MultiHeadAttention was constructed without attention bias");
+  }
+  CopyTensorData(bias, *o_bias_, "o_bias");
 }
 
 }  // namespace deeptiny::nn

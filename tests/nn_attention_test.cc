@@ -16,7 +16,7 @@ void InstallRopeProbeWeights(deeptiny::nn::MultiHeadAttention& attn) {
   const deeptiny::Shape weight_shape{1, 1, 4, 4};
 
   // q = [x0, 0, 0, 0]
-  attn.q_weight() = deeptiny::Tensor::FromVector(
+  attn.set_q_weight(deeptiny::Tensor::FromVector(
       std::vector<float>{
           1.0f,
           0.0f,
@@ -35,10 +35,10 @@ void InstallRopeProbeWeights(deeptiny::nn::MultiHeadAttention& attn) {
           0.0f,
           0.0f,  //
       },
-      weight_shape, deeptiny::Device::CPU, true);
+      weight_shape, deeptiny::Device::CPU, true));
 
   // k = [x0, 0, 0, 0]
-  attn.k_weight() = deeptiny::Tensor::FromVector(
+  attn.set_k_weight(deeptiny::Tensor::FromVector(
       std::vector<float>{
           1.0f,
           0.0f,
@@ -57,10 +57,10 @@ void InstallRopeProbeWeights(deeptiny::nn::MultiHeadAttention& attn) {
           0.0f,
           0.0f,  //
       },
-      weight_shape, deeptiny::Device::CPU, true);
+      weight_shape, deeptiny::Device::CPU, true));
 
   // v = [x2, 0, 0, 0]
-  attn.v_weight() = deeptiny::Tensor::FromVector(
+  attn.set_v_weight(deeptiny::Tensor::FromVector(
       std::vector<float>{
           0.0f,
           0.0f,
@@ -79,10 +79,10 @@ void InstallRopeProbeWeights(deeptiny::nn::MultiHeadAttention& attn) {
           0.0f,
           0.0f,  //
       },
-      weight_shape, deeptiny::Device::CPU, true);
+      weight_shape, deeptiny::Device::CPU, true));
 
   // output = [context0, 0, 0, 0]
-  attn.o_weight() = deeptiny::Tensor::FromVector(
+  attn.set_o_weight(deeptiny::Tensor::FromVector(
       std::vector<float>{
           1.0f,
           0.0f,
@@ -101,7 +101,7 @@ void InstallRopeProbeWeights(deeptiny::nn::MultiHeadAttention& attn) {
           0.0f,
           0.0f,  //
       },
-      weight_shape, deeptiny::Device::CPU, true);
+      weight_shape, deeptiny::Device::CPU, true));
 }
 
 }  // namespace
@@ -214,12 +214,16 @@ TEST_CASE("nn::MultiHeadAttention backward smoke") {
   CHECK(attn.v_weight().grad().has_value());
   CHECK(attn.o_weight().grad().has_value());
 
-  REQUIRE(attn.q_bias().has_value());
-  REQUIRE(attn.k_bias().has_value());
-  REQUIRE(attn.v_bias().has_value());
-  REQUIRE(attn.o_bias().has_value());
-  CHECK(attn.q_bias()->grad().has_value());
-  CHECK(attn.k_bias()->grad().has_value());
-  CHECK(attn.v_bias()->grad().has_value());
-  CHECK(attn.o_bias()->grad().has_value());
+  auto q_bias = attn.q_bias();
+  auto k_bias = attn.k_bias();
+  auto v_bias = attn.v_bias();
+  auto o_bias = attn.o_bias();
+  REQUIRE(q_bias.has_value());
+  REQUIRE(k_bias.has_value());
+  REQUIRE(v_bias.has_value());
+  REQUIRE(o_bias.has_value());
+  CHECK(q_bias->grad().has_value());
+  CHECK(k_bias->grad().has_value());
+  CHECK(v_bias->grad().has_value());
+  CHECK(o_bias->grad().has_value());
 }
