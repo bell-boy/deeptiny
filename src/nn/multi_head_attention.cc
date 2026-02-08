@@ -114,7 +114,7 @@ Tensor BuildRoPERotationMatrices(uint64_t seq_len, uint64_t half_dim,
       rotation_values, Shape{1, 1, seq_len, half_dim, 2, 2}, device, false);
 }
 
-Tensor ApplyRoPE(const Tensor& x, uint64_t position_offset, float rope_theta) {
+Tensor ApplyRoPE(const Tensor& x, const Tensor& rotations) {
   const auto& shape = x.shape();
   if (shape.size() != 4) {
     throw std::runtime_error("ApplyRoPE expects a rank-4 tensor");
@@ -126,11 +126,16 @@ Tensor ApplyRoPE(const Tensor& x, uint64_t position_offset, float rope_theta) {
     throw std::runtime_error("ApplyRoPE requires even head_dim");
   }
   const uint64_t half_dim = head_dim / 2;
+  const Shape expected_rotation_shape{1, 1, seq_len, half_dim, 2, 2};
+  if (rotations.shape() != expected_rotation_shape) {
+    throw std::runtime_error("ApplyRoPE rotation shape mismatch");
+  }
+
+  utils::CompatabilityCheck({x, rotations});
+
   const Shape shape_6d{shape[0], shape[1], shape[2], half_dim, 1, 2};
   Tensor x_view = x;
   Tensor x_6d = x_view.Reshape(shape_6d);
-  Tensor rotations = BuildRoPERotationMatrices(
-      seq_len, half_dim, position_offset, rope_theta, x.device());
   Tensor rotated_6d = math::BatchedMatMul(x_6d, rotations);
   return rotated_6d.Reshape(shape);
 }
@@ -218,8 +223,11 @@ Tensor MultiHeadAttention::operator()(const Tensor& hidden_states,
     v = v + *v_bias_;
   }
 
-  q = ApplyRoPE(q, position_offset, rope_theta_);
-  k = ApplyRoPE(k, position_offset, rope_theta_);
+  Tensor rope_rotations =
+      BuildRoPERotationMatrices(seq_len, head_dim_ / 2, position_offset,
+                                rope_theta_, hidden_states.device());
+  q = ApplyRoPE(q, rope_rotations);
+  k = ApplyRoPE(k, rope_rotations);
 
   Tensor q_grouped = q.Reshape({batch_size, num_key_value_heads_,
                                 num_key_value_groups_, seq_len, head_dim_});
