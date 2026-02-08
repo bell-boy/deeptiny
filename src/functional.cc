@@ -152,10 +152,11 @@ Tensor ReLU(const Tensor& x) {
 }
 
 Tensor Softmax(const Tensor& x, uint64_t dim) {
-  if (x.shape().empty()) {
-    throw std::runtime_error("Softmax requires rank >= 1 tensor");
+  const auto& shape = x.shape();
+  if (shape.empty()) {
+    throw std::runtime_error("Softmax does not support scalar input");
   }
-  if (dim >= x.shape().size()) {
+  if (dim >= shape.size()) {
     throw std::runtime_error("Softmax dim out of range");
   }
 

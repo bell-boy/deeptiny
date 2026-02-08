@@ -46,6 +46,12 @@ TEST_CASE("functional::Softmax backward") {
 }
 
 TEST_CASE("functional::Softmax guards") {
+  SUBCASE("Scalar input is rejected in frontend") {
+    deeptiny::Tensor x = MakeTensor({}, {1.0f});
+    CHECK_THROWS_WITH(deeptiny::functional::Softmax(x, 0),
+                      doctest::Contains("does not support scalar input"));
+  }
+
   SUBCASE("Dim out of range") {
     deeptiny::Tensor x = MakeTensor({2, 2}, {1.0f, 2.0f, 3.0f, 4.0f});
     CHECK_THROWS_WITH(deeptiny::functional::Softmax(x, 2),
