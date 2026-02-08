@@ -2,34 +2,11 @@
 
 #include <cstddef>
 #include <stdexcept>
-#include <string>
-#include <vector>
 
 #include "deeptiny/math.h"
 #include "nn/validation.h"
-#include "utils.h"
 
 namespace deeptiny::nn {
-namespace {
-
-void CopyTensorData(const Tensor& src, const Tensor& dst, const char* label) {
-  utils::CompatabilityCheck({src, dst});
-  if (src.shape() != dst.shape()) {
-    throw std::runtime_error(std::string("Linear ") + label +
-                             " shape mismatch");
-  }
-
-  auto src_impl = utils::TensorAccessor::GetTensorImpl(src);
-  auto dst_impl = utils::TensorAccessor::GetTensorImpl(dst);
-  auto src_storage = src_impl->getContiguousStorage();
-  const uint64_t numel = src_storage->numel();
-  std::vector<std::byte> host_buffer(
-      static_cast<size_t>(numel * src.dtype().size()));
-  src_storage->CopyToHost(0, numel, host_buffer.data());
-  dst_impl->storage()->CopyFromHost(0, numel, host_buffer.data());
-}
-
-}  // namespace
 
 Linear::Linear(uint64_t in_dim, uint64_t out_dim, bool bias, Device device)
     : in_dim_(detail::ValidateNonZeroDimension("Linear", "in_dim", in_dim)),
@@ -76,15 +53,8 @@ Tensor Linear::weight() const { return weight_; }
 
 std::optional<Tensor> Linear::bias() const { return bias_; }
 
-void Linear::set_weight(const Tensor& weight) {
-  CopyTensorData(weight, weight_, "weight");
-}
+Tensor Linear::weight() { return weight_; }
 
-void Linear::set_bias(const Tensor& bias) {
-  if (!bias_.has_value()) {
-    throw std::runtime_error("Linear was constructed without bias");
-  }
-  CopyTensorData(bias, *bias_, "bias");
-}
+std::optional<Tensor> Linear::bias() { return bias_; }
 
 }  // namespace deeptiny::nn

@@ -7,6 +7,7 @@
 #include "doctest/doctest.h"
 #include "test_utils.h"
 
+using deeptiny::test_utils::CopyTensorData;
 using deeptiny::test_utils::MakeTensor;
 using deeptiny::test_utils::ToVector;
 
@@ -16,92 +17,96 @@ void InstallRopeProbeWeights(deeptiny::nn::MultiHeadAttention& attn) {
   const deeptiny::Shape weight_shape{1, 1, 4, 4};
 
   // q = [x0, 0, 0, 0]
-  attn.set_q_weight(deeptiny::Tensor::FromVector(
-      std::vector<float>{
-          1.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-      },
-      weight_shape, deeptiny::Device::CPU, true));
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{
+                         1.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                     },
+                     weight_shape, deeptiny::Device::CPU, true),
+                 attn.q_weight());
 
   // k = [x0, 0, 0, 0]
-  attn.set_k_weight(deeptiny::Tensor::FromVector(
-      std::vector<float>{
-          1.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-      },
-      weight_shape, deeptiny::Device::CPU, true));
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{
+                         1.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                     },
+                     weight_shape, deeptiny::Device::CPU, true),
+                 attn.k_weight());
 
   // v = [x2, 0, 0, 0]
-  attn.set_v_weight(deeptiny::Tensor::FromVector(
-      std::vector<float>{
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          1.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-      },
-      weight_shape, deeptiny::Device::CPU, true));
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         1.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                     },
+                     weight_shape, deeptiny::Device::CPU, true),
+                 attn.v_weight());
 
   // output = [context0, 0, 0, 0]
-  attn.set_o_weight(deeptiny::Tensor::FromVector(
-      std::vector<float>{
-          1.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-          0.0f,
-          0.0f,
-          0.0f,
-          0.0f,  //
-      },
-      weight_shape, deeptiny::Device::CPU, true));
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{
+                         1.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                         0.0f,
+                         0.0f,
+                         0.0f,
+                         0.0f,  //
+                     },
+                     weight_shape, deeptiny::Device::CPU, true),
+                 attn.o_weight());
 }
 
 }  // namespace

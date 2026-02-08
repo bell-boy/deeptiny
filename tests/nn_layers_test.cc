@@ -11,6 +11,7 @@
 #include "test_utils.h"
 
 using deeptiny::test_utils::CheckTensorData;
+using deeptiny::test_utils::CopyTensorData;
 using deeptiny::test_utils::MakeTensor;
 using deeptiny::test_utils::ToVector;
 
@@ -31,9 +32,10 @@ TEST_CASE("nn::Linear forward preserves leading dimensions") {
 
 TEST_CASE("nn::Linear backward has expected analytic input gradient") {
   deeptiny::nn::Linear linear(/*in_dim=*/2, /*out_dim=*/3, /*bias=*/false);
-  linear.set_weight(deeptiny::Tensor::FromVector(
-      std::vector<float>{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f},
-      deeptiny::Shape{1, 2, 3}, deeptiny::Device::CPU, true));
+  CopyTensorData(deeptiny::Tensor::FromVector(
+                     std::vector<float>{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f},
+                     deeptiny::Shape{1, 2, 3}, deeptiny::Device::CPU, true),
+                 linear.weight());
 
   auto x = deeptiny::Tensor::FromVector(
       std::vector<float>{1.0f, 2.0f, 3.0f, 4.0f}, deeptiny::Shape{2, 2},

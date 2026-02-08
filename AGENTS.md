@@ -36,7 +36,7 @@
 - Keep autograd interfaces minimal: `updateGrad` only accumulates gradients, and backward `Function` callbacks should not take `Engine` unless it is truly needed.
 - For unsigned dimension/count parameters, validate `== 0` (non-zero requirement) rather than using "positive" helper naming/messages.
 - Reuse `src/nn/validation.h` helpers for module constructor dimension/count guards instead of duplicating local validators per module source file.
-- Avoid mutable reference accessors for trainable tensors; expose value getters and copy-based setters so `Module` parameter registration continues to track the live tensors used in forward/update paths.
+- Avoid mutable reference accessors for trainable tensors; expose non-const/const value tensor accessors (no dedicated parameter setters) so parameter handles remain usable without replacing registered tensor objects.
 - Keep attention module wiring explicit: `nn::MultiHeadAttention` should take constructor parameters directly (no config object), apply internal RoPE from `position_offset`, use additive masks, and keep dropout/KV-cache out of scope unless explicitly requested.
 - Keep softmax as a public functional op (`functional::Softmax(x, dim)`) with kernel/dispatch implementation and explicit backward.
 - Keep slice semantics explicit: `Tensor::operator()` returns `TensorSliceProxy` for mutable slicing and a read `Tensor` via conversion, and slice assignment autograd must be owned by the destination tensor metadata (not a temporary slice object).

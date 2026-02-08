@@ -1,13 +1,11 @@
 #include "deeptiny/nn/embedding.h"
 
-#include <cstddef>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
 
 #include "nn/validation.h"
-#include "utils.h"
 
 namespace deeptiny::nn {
 namespace {
@@ -36,22 +34,6 @@ Tensor MakeWeight(uint64_t num_embeddings, uint64_t embedding_dim, DType dtype,
 
   return Tensor::CreateUniform({num_embeddings, embedding_dim}, device, dtype,
                                requires_grad);
-}
-
-void CopyTensorData(const Tensor& src, const Tensor& dst) {
-  utils::CompatabilityCheck({src, dst});
-  if (src.shape() != dst.shape()) {
-    throw std::runtime_error("Embedding weight shape mismatch");
-  }
-
-  auto src_impl = utils::TensorAccessor::GetTensorImpl(src);
-  auto dst_impl = utils::TensorAccessor::GetTensorImpl(dst);
-  auto src_storage = src_impl->getContiguousStorage();
-  const uint64_t numel = src_storage->numel();
-  std::vector<std::byte> host_buffer(
-      static_cast<size_t>(numel * src.dtype().size()));
-  src_storage->CopyToHost(0, numel, host_buffer.data());
-  dst_impl->storage()->CopyFromHost(0, numel, host_buffer.data());
 }
 
 }  // namespace
@@ -102,8 +84,6 @@ Tensor Embedding::operator()(const std::vector<int64_t>& indices,
 
 Tensor Embedding::weight() const { return weight_; }
 
-void Embedding::set_weight(const Tensor& weight) {
-  CopyTensorData(weight, weight_);
-}
+Tensor Embedding::weight() { return weight_; }
 
 }  // namespace deeptiny::nn
