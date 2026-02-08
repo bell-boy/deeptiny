@@ -61,8 +61,7 @@ class SoftmaxBackward : public Function {
     Tensor saved_y =
         context().Get(static_cast<uint64_t>(ContextObjects::SAVED_Y));
     const auto& parents = getParents();
-    assert(parents.size() == 1 &&
-           "SoftmaxBackward must have exactly 1 parent");
+    assert(parents.size() == 1 && "SoftmaxBackward must have exactly 1 parent");
     assert(parents[0] && "SoftmaxBackward parent must not be null");
 
     if (grad.shape() != saved_y.shape()) {
