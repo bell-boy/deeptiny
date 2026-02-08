@@ -8,7 +8,7 @@ include(FetchContent)
 include(CTest)
 option(TRANSFOMER_DEMO_BUILD_TESTS "Build transfomer-demo tests" ON)
 option(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP
-       "Build transfomer-demo with vendored tokenizers-cpp" ON)
+       "Build transfomer-demo with tokenizers-cpp submodule" ON)
 
 set(DEEPTINY_GIT_REPOSITORY "https://github.com/bell-boy/deeptiny.git" CACHE STRING
     "Git repository for Deep Tiny")
@@ -16,7 +16,7 @@ set(DEEPTINY_GIT_TAG "7e5284e8e2103f029ce791dbe08b6c4847a568ac" CACHE STRING
     "Pinned Deep Tiny commit")
 set(TRANSFOMER_DEMO_TOKENIZERS_CPP_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/third_party/tokenizers-cpp" CACHE PATH
-    "Path to vendored tokenizers-cpp source")
+    "Path to tokenizers-cpp submodule source")
 
 # Keep the demo isolated from Deep Tiny's internal test suite.
 set(_demo_build_testing "${TRANSFOMER_DEMO_BUILD_TESTS}")
@@ -49,8 +49,16 @@ set(BUILD_TESTING "${_demo_build_testing}" CACHE BOOL
 if(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP)
   if(NOT EXISTS "${TRANSFOMER_DEMO_TOKENIZERS_CPP_DIR}/CMakeLists.txt")
     message(FATAL_ERROR
-      "Vendored tokenizers-cpp not found at ${TRANSFOMER_DEMO_TOKENIZERS_CPP_DIR}. "
-      "Sync third_party/tokenizers-cpp or disable TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP.")
+      "tokenizers-cpp submodule not found at ${TRANSFOMER_DEMO_TOKENIZERS_CPP_DIR}. "
+      "Run `git submodule update --init --recursive` or disable "
+      "TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP.")
+  endif()
+
+  if(NOT EXISTS "${TRANSFOMER_DEMO_TOKENIZERS_CPP_DIR}/msgpack/CMakeLists.txt"
+     OR NOT EXISTS "${TRANSFOMER_DEMO_TOKENIZERS_CPP_DIR}/sentencepiece/CMakeLists.txt")
+    message(FATAL_ERROR
+      "tokenizers-cpp nested submodules are missing. "
+      "Run `git submodule update --init --recursive`.")
   endif()
 
   find_program(TRANSFOMER_DEMO_CARGO_EXECUTABLE cargo)

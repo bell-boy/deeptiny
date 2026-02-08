@@ -5,4 +5,3 @@ repos:
       - id: clang-format
         types_or: [c, c++, cuda]
         args: [-style=file]
-        exclude: ^demo/transfomer-demo/third_party/tokenizers-cpp/
