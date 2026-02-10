@@ -1,11 +1,18 @@
 #include "transformer.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <limits>
 #include <optional>
+#include <random>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+#include "deeptiny/math.h"
 
 namespace transfomer_demo {
 namespace {
@@ -50,6 +57,65 @@ std::pair<std::vector<int64_t>, deeptiny::Shape> FlattenTokenBatch(
   return {std::move(flat_tokens), deeptiny::Shape{batch_size, seq_len}};
 }
 
+std::vector<float> TensorToFloatVector(const deeptiny::Tensor& tensor) {
+  if (tensor.dtype() != deeptiny::DType::Float32) {
+    throw std::runtime_error("TensorToFloatVector expects Float32 tensor.");
+  }
+
+  std::vector<float> values(static_cast<size_t>(tensor.numel()), 0.0f);
+  tensor.CopyToBuffer(
+      std::as_writable_bytes(std::span<float>(values.data(), values.size())),
+      tensor.shape(), deeptiny::DType::Float32);
+  return values;
+}
+
+uint64_t ArgmaxIndex(const std::vector<float>& logits) {
+  if (logits.empty()) {
+    throw std::runtime_error("Cannot sample from empty logits.");
+  }
+
+  size_t best_idx = 0;
+  float best_value = logits[0];
+  for (size_t i = 1; i < logits.size(); ++i) {
+    if (logits[i] > best_value) {
+      best_idx = i;
+      best_value = logits[i];
+    }
+  }
+  return static_cast<uint64_t>(best_idx);
+}
+
+uint64_t SampleFromLogits(const std::vector<float>& logits, float temperature,
+                          std::mt19937* rng) {
+  if (!(temperature > 0.0f)) {
+    return ArgmaxIndex(logits);
+  }
+
+  const double inv_temp = 1.0 / static_cast<double>(temperature);
+  double max_scaled = -std::numeric_limits<double>::infinity();
+  for (const float value : logits) {
+    max_scaled = std::max(max_scaled, static_cast<double>(value) * inv_temp);
+  }
+
+  std::vector<double> probs(logits.size(), 0.0);
+  double total = 0.0;
+  for (size_t i = 0; i < logits.size(); ++i) {
+    const double scaled = static_cast<double>(logits[i]) * inv_temp;
+    const double prob = std::exp(scaled - max_scaled);
+    if (std::isfinite(prob) && prob > 0.0) {
+      probs[i] = prob;
+      total += prob;
+    }
+  }
+
+  if (!(total > 0.0) || !std::isfinite(total)) {
+    return ArgmaxIndex(logits);
+  }
+
+  std::discrete_distribution<size_t> distribution(probs.begin(), probs.end());
+  return static_cast<uint64_t>(distribution(*rng));
+}
+
 }  // namespace
 
 Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
@@ -88,6 +154,46 @@ deeptiny::Tensor Transformer::operator()(
   return norm_(hidden_states);
 }
 
+std::vector<int64_t> Transformer::Generate(
+    const std::vector<int64_t>& prompt_tokens, const GenerationOptions& options,
+    std::mt19937* rng) const {
+  if (prompt_tokens.empty()) {
+    throw std::runtime_error("Generate requires at least one prompt token.");
+  }
+  if (options.max_new_tokens == 0) {
+    throw std::runtime_error("Generate max_new_tokens must be non-zero.");
+  }
+  if (options.temperature < 0.0f) {
+    throw std::runtime_error("Generate temperature must be >= 0.");
+  }
+
+  std::mt19937 local_rng;
+  if (rng == nullptr) {
+    local_rng.seed(std::random_device{}());
+    rng = &local_rng;
+  }
+
+  std::vector<int64_t> context = prompt_tokens;
+  std::vector<int64_t> generated;
+  generated.reserve(static_cast<size_t>(options.max_new_tokens));
+
+  for (uint64_t step = 0; step < options.max_new_tokens; ++step) {
+    const deeptiny::Tensor logits = ComputeNextTokenLogits(context);
+    const std::vector<float> logits_values = TensorToFloatVector(logits);
+    const uint64_t next_token =
+        SampleFromLogits(logits_values, options.temperature, rng);
+
+    context.push_back(static_cast<int64_t>(next_token));
+    generated.push_back(static_cast<int64_t>(next_token));
+    if (options.eos_token_id.has_value() &&
+        next_token == *options.eos_token_id) {
+      break;
+    }
+  }
+
+  return generated;
+}
+
 uint64_t Transformer::num_blocks() const {
   return static_cast<uint64_t>(blocks_.size());
 }
@@ -113,5 +219,50 @@ const deeptiny::nn::TransformerBlock& Transformer::block(uint64_t index) const {
 deeptiny::nn::RMSNorm& Transformer::norm() { return norm_; }
 
 const deeptiny::nn::RMSNorm& Transformer::norm() const { return norm_; }
+
+deeptiny::Tensor Transformer::ComputeNextTokenLogits(
+    const std::vector<int64_t>& tokens) const {
+  if (tokens.empty()) {
+    throw std::runtime_error(
+        "ComputeNextTokenLogits requires non-empty tokens.");
+  }
+
+  const deeptiny::Tensor hidden_states = (*this)({tokens});
+  const deeptiny::Shape& hidden_shape = hidden_states.shape();
+  if (hidden_shape.size() != 3) {
+    throw std::runtime_error(
+        "Transformer forward output must have shape [batch, seq, hidden].");
+  }
+
+  const int64_t last_token_index =
+      static_cast<int64_t>(tokens.size()) - static_cast<int64_t>(1);
+  const int64_t hidden_size = static_cast<int64_t>(hidden_shape[2]);
+  deeptiny::Tensor last_hidden =
+      hidden_states({deeptiny::Slice(0, 1),
+                     deeptiny::Slice(last_token_index, last_token_index + 1),
+                     deeptiny::Slice(0, hidden_size)});
+
+  deeptiny::Tensor embedding_weight = embed_.weight();
+  const deeptiny::Shape& embedding_weight_shape = embedding_weight.shape();
+  if (embedding_weight_shape.size() != 2) {
+    throw std::runtime_error(
+        "Transformer embedding weights must have shape [vocab, hidden].");
+  }
+  const uint64_t embedding_vocab_size = embedding_weight_shape[0];
+  const uint64_t embedding_hidden_size = embedding_weight_shape[1];
+  if (embedding_hidden_size != hidden_shape[2]) {
+    std::stringstream err;
+    err << "Embedding hidden size (" << embedding_hidden_size
+        << ") does not match Transformer hidden size (" << hidden_shape[2]
+        << ").";
+    throw std::runtime_error(err.str());
+  }
+
+  deeptiny::Tensor tied_embedding =
+      embedding_weight.Reshape({1, embedding_vocab_size, hidden_shape[2]});
+  deeptiny::Tensor logits =
+      deeptiny::math::BatchedMatMul(last_hidden, tied_embedding, false, true);
+  return logits.Reshape({embedding_vocab_size});
+}
 
 }  // namespace transfomer_demo

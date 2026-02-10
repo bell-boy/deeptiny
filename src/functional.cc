@@ -137,7 +137,7 @@ Tensor ReduceImpl(const Tensor& x, const DimContainer& dims, bool keep_dims) {
         slices.pop_back();
       }
     } else {
-      slices.push_back(Slice(std::nullopt, std::nullopt));
+      slices.push_back(Slice::All());
       self(self, dim_idx + 1, slices);
       slices.pop_back();
     }

@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <random>
 #include <vector>
 
 #include "deeptiny/nn/embedding.h"
@@ -15,6 +17,19 @@ namespace transfomer_demo {
 
 class Transformer : public deeptiny::nn::Module {
  public:
+  struct GenerationOptions {
+    explicit GenerationOptions(
+        uint64_t max_new_tokens = 64, float temperature = 0.8f,
+        std::optional<uint64_t> eos_token_id = std::nullopt)
+        : max_new_tokens(max_new_tokens),
+          temperature(temperature),
+          eos_token_id(eos_token_id) {}
+
+    uint64_t max_new_tokens;
+    float temperature;
+    std::optional<uint64_t> eos_token_id;
+  };
+
   Transformer(uint64_t vocab_size, uint64_t hidden_size,
               uint64_t intermediate_size, uint64_t num_blocks,
               uint64_t num_attention_heads, uint64_t num_key_value_heads,
@@ -22,6 +37,10 @@ class Transformer : public deeptiny::nn::Module {
 
   deeptiny::Tensor operator()(
       const std::vector<std::vector<int64_t>>& tokens) const;
+  std::vector<int64_t> Generate(
+      const std::vector<int64_t>& prompt_tokens,
+      const GenerationOptions& options = GenerationOptions(),
+      std::mt19937* rng = nullptr) const;
 
   uint64_t num_blocks() const;
 
@@ -36,6 +55,9 @@ class Transformer : public deeptiny::nn::Module {
   deeptiny::nn::Embedding embed_;
   std::vector<std::unique_ptr<deeptiny::nn::TransformerBlock>> blocks_;
   deeptiny::nn::RMSNorm norm_;
+
+  deeptiny::Tensor ComputeNextTokenLogits(
+      const std::vector<int64_t>& tokens) const;
 };
 
 }  // namespace transfomer_demo
