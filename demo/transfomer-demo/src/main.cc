@@ -155,9 +155,6 @@ int main(int argc, char** argv) {
       }
     }
     options.eos_token_id = config.eos_token_id;
-    if (config.max_position_embeddings > 0) {
-      options.max_context_tokens = config.max_position_embeddings;
-    }
 
     const std::filesystem::path model_dir = arg1;
     auto model = demo::smollm2::CreateSmolLM2_135M_InstructTransformer(

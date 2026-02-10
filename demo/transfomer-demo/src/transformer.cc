@@ -176,10 +176,6 @@ std::vector<int64_t> Transformer::Generate(
   if (options.temperature < 0.0f) {
     throw std::runtime_error("Generate temperature must be >= 0.");
   }
-  if (options.max_context_tokens.has_value() &&
-      options.max_context_tokens.value() == 0) {
-    throw std::runtime_error("Generate max_context_tokens must be non-zero.");
-  }
 
   std::mt19937 local_rng;
   if (rng == nullptr) {
@@ -192,18 +188,6 @@ std::vector<int64_t> Transformer::Generate(
   generated.reserve(static_cast<size_t>(options.max_new_tokens));
 
   for (uint64_t step = 0; step < options.max_new_tokens; ++step) {
-    if (options.max_context_tokens.has_value()) {
-      const size_t max_context =
-          static_cast<size_t>(*options.max_context_tokens);
-      if (context.size() > max_context) {
-        const size_t drop = context.size() - max_context;
-        context.erase(
-            context.begin(),
-            context.begin() +
-                static_cast<std::vector<int64_t>::difference_type>(drop));
-      }
-    }
-
     const deeptiny::Tensor logits = ComputeNextTokenLogits(context);
     const std::vector<float> logits_values = TensorToFloatVector(logits);
     const uint64_t next_token =

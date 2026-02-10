@@ -20,17 +20,14 @@ class Transformer : public deeptiny::nn::Module {
   struct GenerationOptions {
     explicit GenerationOptions(
         uint64_t max_new_tokens = 64, float temperature = 0.8f,
-        std::optional<uint64_t> eos_token_id = std::nullopt,
-        std::optional<uint64_t> max_context_tokens = std::nullopt)
+        std::optional<uint64_t> eos_token_id = std::nullopt)
         : max_new_tokens(max_new_tokens),
           temperature(temperature),
-          eos_token_id(eos_token_id),
-          max_context_tokens(max_context_tokens) {}
+          eos_token_id(eos_token_id) {}
 
     uint64_t max_new_tokens;
     float temperature;
     std::optional<uint64_t> eos_token_id;
-    std::optional<uint64_t> max_context_tokens;
   };
 
   Transformer(uint64_t vocab_size, uint64_t hidden_size,
