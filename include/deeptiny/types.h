@@ -1,6 +1,5 @@
 #pragma once
 #include <cstdint>
-#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -74,9 +73,6 @@ struct Slice {
 
   Slice(int64_t x) : start(x), end(std::nullopt), stride(1) {
     if (x != -1) {
-      if (x == std::numeric_limits<int64_t>::max()) {
-        throw std::runtime_error("Slice index is too large.");
-      }
       end = x + 1;
     }
   }
