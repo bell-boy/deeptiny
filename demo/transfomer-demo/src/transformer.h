@@ -31,11 +31,11 @@ class Transformer : public deeptiny::nn::Module {
 
   deeptiny::Tensor operator()(
       const std::vector<std::vector<int64_t>>& tokens) const;
-  std::vector<int64_t> Generate(const std::vector<int64_t>& prompt_tokens,
-                                const GenerationOptions& options,
-                                std::mt19937* rng = nullptr) const;
-  std::vector<int64_t> Generate(const std::vector<int64_t>& prompt_tokens,
-                                std::mt19937* rng = nullptr) const;
+  static const GenerationOptions& DefaultGenerationOptions();
+  std::vector<int64_t> Generate(
+      const std::vector<int64_t>& prompt_tokens,
+      const GenerationOptions& options = DefaultGenerationOptions(),
+      std::mt19937* rng = nullptr) const;
 
   uint64_t num_blocks() const;
 
