@@ -79,11 +79,25 @@ Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
 }
 
 deeptiny::Tensor Transformer::operator()(
-    const std::vector<std::vector<int64_t>>& tokens) const {
+    const std::vector<std::vector<int64_t>>& tokens,
+    std::vector<deeptiny::nn::KVCache>* layer_kv_caches,
+    uint64_t position_offset) const {
+  if (layer_kv_caches != nullptr && layer_kv_caches->size() != blocks_.size()) {
+    std::stringstream err;
+    err << "Transformer layer_kv_caches size mismatch: expected "
+        << blocks_.size() << " but got " << layer_kv_caches->size() << ".";
+    throw std::runtime_error(err.str());
+  }
+
   auto [flat_tokens, token_shape] = FlattenTokenBatch(tokens);
   deeptiny::Tensor hidden_states = embed_(flat_tokens, token_shape);
-  for (const auto& block : blocks_) {
-    hidden_states = (*block)(hidden_states, std::nullopt, 0);
+  for (size_t i = 0; i < blocks_.size(); ++i) {
+    deeptiny::nn::KVCache* block_cache = nullptr;
+    if (layer_kv_caches != nullptr) {
+      block_cache = &(*layer_kv_caches)[i];
+    }
+    hidden_states = (*blocks_[i])(hidden_states, std::nullopt, position_offset,
+                                  block_cache);
   }
   return norm_(hidden_states);
 }

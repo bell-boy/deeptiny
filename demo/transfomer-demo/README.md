@@ -95,3 +95,55 @@ Disable tokenizer integration if needed:
 ```bash
 cmake --preset dev -DTRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP=OFF
 ```
+
+## Benchmark (gprof)
+
+Build benchmark executables:
+
+```bash
+cmake --build --preset benchmark
+```
+
+Benchmarks:
+- `transfomer_demo_benchmark_prefill`: one prefill forward pass over fixed eval text
+- `transfomer_demo_benchmark_generation`: fixed-prompt autoregressive generation benchmark
+
+Both benchmarks intentionally skip safetensors weight loading and instantiate
+`transfomer_demo::Transformer` with default/random-initialized parameters.
+
+Run prefill benchmark:
+
+```bash
+./build/transfomer_demo_benchmark_prefill /path/to/tokenizer_dir
+```
+
+Run generation benchmark:
+
+```bash
+./build/transfomer_demo_benchmark_generation /path/to/tokenizer_dir
+```
+
+If `tokenizer.json` is missing in the provided `tokenizer_dir` (or if no
+`tokenizer_dir` is provided), the benchmark downloads tokenizer JSON into
+`./model_files/tokenizer.json` and uses that file automatically.
+
+Run with default local tokenizer cache location (`./model_files`):
+
+```bash
+./build/transfomer_demo_benchmark_prefill
+./build/transfomer_demo_benchmark_generation
+```
+
+Generate gprof report (prefill):
+
+```bash
+./build/transfomer_demo_benchmark_prefill /path/to/tokenizer_dir
+gprof ./build/transfomer_demo_benchmark_prefill gmon.out > gprof_prefill.txt
+```
+
+Generate gprof report (generation):
+
+```bash
+./build/transfomer_demo_benchmark_generation /path/to/tokenizer_dir
+gprof ./build/transfomer_demo_benchmark_generation gmon.out > gprof_generation.txt
+```
