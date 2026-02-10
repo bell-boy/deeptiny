@@ -15,6 +15,37 @@ namespace {
 constexpr int kRank = 5;
 }  // namespace
 
+TEST_CASE("Slice convenience constructors") {
+  SUBCASE("Slice(int64_t) creates a single-element range for positive index") {
+    const int64_t index = 3;
+    deeptiny::Slice slice(index);
+
+    REQUIRE(slice.start.has_value());
+    REQUIRE(slice.end.has_value());
+    CHECK(*slice.start == 3);
+    CHECK(*slice.end == 4);
+    CHECK(slice.stride == 1);
+  }
+
+  SUBCASE("Slice(-1) selects the last element") {
+    deeptiny::Tensor t = deeptiny::test_utils::MakeTensor(
+        {2, 3}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f}, false);
+
+    deeptiny::Tensor row = t({deeptiny::Slice(-1), deeptiny::Slice::All()});
+    CHECK(row.shape() == deeptiny::Shape{1, 3});
+    deeptiny::test_utils::CheckTensorData(row, {4.0f, 5.0f, 6.0f});
+  }
+
+  SUBCASE("Slice::All() selects the full dimension") {
+    deeptiny::Tensor t = deeptiny::test_utils::MakeTensor(
+        {2, 3}, {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f}, false);
+
+    deeptiny::Tensor row = t({deeptiny::Slice(1), deeptiny::Slice::All()});
+    CHECK(row.shape() == deeptiny::Shape{1, 3});
+    deeptiny::test_utils::CheckTensorData(row, {4.0f, 5.0f, 6.0f});
+  }
+}
+
 TEST_CASE("Random slice forward test") {
   std::mt19937 rng(12345);
   std::uniform_int_distribution<int64_t> dim_dist(1, 7);

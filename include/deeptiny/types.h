@@ -1,8 +1,9 @@
 #pragma once
 #include <cstdint>
+#include <limits>
 #include <optional>
-#include <string>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace deeptiny {
@@ -71,9 +72,18 @@ struct Slice {
   Index end;
   int64_t stride;
 
-  Slice(int64_t x) : start(x), end(x + 1), stride(1) {}
+  Slice(int64_t x) : start(x), end(std::nullopt), stride(1) {
+    if (x != -1) {
+      if (x == std::numeric_limits<int64_t>::max()) {
+        throw std::runtime_error("Slice index is too large.");
+      }
+      end = x + 1;
+    }
+  }
   Slice(Index start, Index end) : start(start), end(end), stride(1) {}
   Slice(Index start, Index end, int64_t stride)
       : start(start), end(end), stride(stride) {}
+
+  static Slice All() { return Slice(std::nullopt, std::nullopt); }
 };
 };  // namespace deeptiny
