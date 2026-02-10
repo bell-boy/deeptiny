@@ -704,14 +704,18 @@ std::vector<WeightSpec> BuildWeightSpecs(const Config& config) {
 }
 
 std::unique_ptr<transfomer_demo::Transformer>
-CreateSmolLM2_135M_InstructTransformer(const std::filesystem::path& model_dir,
-                                       const Config& config) {
+CreateSmolLM2_135M_InstructTransformerUninitialized(const Config& config) {
   ValidateConfig(config);
-
-  auto model = std::make_unique<transfomer_demo::Transformer>(
+  return std::make_unique<transfomer_demo::Transformer>(
       config.vocab_size, config.hidden_size, config.intermediate_size,
       config.num_hidden_layers, config.num_attention_heads,
       config.num_key_value_heads, deeptiny::Device::CPU);
+}
+
+std::unique_ptr<transfomer_demo::Transformer>
+CreateSmolLM2_135M_InstructTransformer(const std::filesystem::path& model_dir,
+                                       const Config& config) {
+  auto model = CreateSmolLM2_135M_InstructTransformerUninitialized(config);
 
   const auto safetensors_path = ResolveSafetensorsPath(model_dir);
   const MappedFile mapped(safetensors_path);

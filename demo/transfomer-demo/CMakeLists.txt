@@ -9,6 +9,9 @@ include(CTest)
 option(TRANSFOMER_DEMO_BUILD_TESTS "Build transfomer-demo tests" ON)
 option(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP
        "Build transfomer-demo with tokenizers-cpp submodule" ON)
+option(TRANSFOMER_DEMO_ENABLE_PG
+       "Build transfomer-demo generation benchmark with -pg profiling flags"
+       OFF)
 
 set(DEEPTINY_GIT_REPOSITORY "https://github.com/bell-boy/deeptiny.git" CACHE STRING
     "Git repository for Deep Tiny")
@@ -94,4 +97,21 @@ if(TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP)
   target_compile_definitions(transfomer_demo
                              PRIVATE TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP=1)
   target_link_libraries(transfomer_demo PRIVATE tokenizers_cpp)
+endif()
+
+add_executable(
+  transfomer_generation_benchmark
+  src/generation_benchmark.cc
+  src/transformer.cc
+  src/smollm2_135m_instruct_loader.cc
+)
+
+target_compile_features(transfomer_generation_benchmark PRIVATE cxx_std_23)
+target_link_libraries(
+  transfomer_generation_benchmark PRIVATE deeptiny nlohmann_json::nlohmann_json
+)
+
+if(TRANSFOMER_DEMO_ENABLE_PG)
+  target_compile_options(transfomer_generation_benchmark PRIVATE -pg)
+  target_link_options(transfomer_generation_benchmark PRIVATE -pg)
 endif()

@@ -18,6 +18,8 @@ This demo uses `deeptiny::nn` modules from the main library:
 - `src/smollm2_135m_instruct_loader.{h,cc}` exposes a factory that builds a
   demo `Transformer` from SmolLM2 safetensors using mmap-backed reads, `F32`
   direct copy, and `BF16 -> F32` conversion for runtime compatibility
+  - also exposes an uninitialized factory that creates the SmolLM2 model
+    structure without loading weights from disk
 
 ## Configure
 
@@ -94,4 +96,29 @@ Disable tokenizer integration if needed:
 
 ```bash
 cmake --preset dev -DTRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP=OFF
+```
+
+## Generation Benchmark (No Weight Load)
+
+The benchmark target constructs the SmolLM2-135M model in memory without
+reading `model.safetensors`, starts from exactly one prompt token
+(`bos_token_id`), and generates exactly 128 new tokens.
+
+Configure and build with profiling flags (`-pg`):
+
+```bash
+cmake --preset bench-pg
+cmake --build --preset bench-pg
+```
+
+Run:
+
+```bash
+./build/transfomer_generation_benchmark
+```
+
+Optional: pass `max_new_tokens` for a shorter smoke run (default is `128`):
+
+```bash
+./build/transfomer_generation_benchmark 4
 ```
