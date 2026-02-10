@@ -9,6 +9,21 @@
 
 namespace deeptiny::nn {
 
+class KVCache {
+ public:
+  void Append(const Tensor& key, const Tensor& value);
+  Tensor keys() const;
+  Tensor values() const;
+  bool empty() const;
+  uint64_t size() const;
+
+ private:
+  std::optional<Tensor> keys_storage_;
+  std::optional<Tensor> values_storage_;
+  uint64_t length_ = 0;
+  uint64_t capacity_ = 0;
+};
+
 class MultiHeadAttention : public Module {
  public:
   MultiHeadAttention(uint64_t hidden_size, uint64_t num_attention_heads,
@@ -18,7 +33,8 @@ class MultiHeadAttention : public Module {
 
   Tensor operator()(const Tensor& hidden_states,
                     std::optional<Tensor> attention_mask = std::nullopt,
-                    uint64_t position_offset = 0) const;
+                    uint64_t position_offset = 0,
+                    KVCache* kv_cache = nullptr) const;
 
   Tensor& q_weight();
   const Tensor& q_weight() const;

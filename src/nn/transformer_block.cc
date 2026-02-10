@@ -29,7 +29,8 @@ TransformerBlock::TransformerBlock(
 
 Tensor TransformerBlock::operator()(const Tensor& hidden_states,
                                     std::optional<Tensor> attention_mask,
-                                    uint64_t position_offset) const {
+                                    uint64_t position_offset,
+                                    KVCache* kv_cache) const {
   const auto& input_shape = hidden_states.shape();
   if (input_shape.size() != 3) {
     throw std::runtime_error("TransformerBlock expects input rank == 3");
@@ -41,7 +42,7 @@ Tensor TransformerBlock::operator()(const Tensor& hidden_states,
 
   Tensor attention_input = attention_norm_(hidden_states);
   Tensor attention_output = self_attention_(
-      attention_input, std::move(attention_mask), position_offset);
+      attention_input, std::move(attention_mask), position_offset, kv_cache);
   Tensor hidden = attention_output;
   hidden += hidden_states;
 

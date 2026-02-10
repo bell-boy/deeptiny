@@ -22,20 +22,7 @@
 
 namespace {
 
-const std::string kEvalText =
-    "It's a hot summer Tuesday, and he's standing in the plaza in front of "
-    "the Centraal Station with hiseyeballs powered up and the sunlight "
-    "jangling off the canal, motor scooters and kamikaze cyclistswhizzing past "
-    "and tourists chattering on every side. The square smells of water and "
-    "dirt and hot metaland the fart-laden exhaust fumes of cold catalytic "
-    "converters; the bells of trams ding in the background,and birds flock "
-    "overhead. He glances up and grabs a pigeon, crops the shot, and squirts "
-    "it at his weblogto show he's arrived. The bandwidth is good here, he "
-    "realizes; and it's not just the bandwidth, it's thewhole scene. Amsterdam "
-    "is making him feel wanted already, even though he's fresh off the train "
-    "fromSchiphol: He's infected with the dynamic optimism of another time "
-    "zone, another city. If the mood holds,someone out there is going to "
-    "become very rich indeed.";
+const std::string kEvalText = "hello";
 
 struct GenerationOptions {
   uint64_t max_new_tokens = 64;
@@ -138,15 +125,18 @@ uint64_t SampleFromLogits(const std::vector<float>& logits, float temperature,
   return static_cast<uint64_t>(distribution(*rng));
 }
 
-deeptiny::Tensor ComputeNextTokenLogits(transfomer_demo::Transformer* model,
-                                        const std::vector<int64_t>& tokens,
-                                        const demo::smollm2::Config& config) {
+deeptiny::Tensor ComputeNextTokenLogits(
+    transfomer_demo::Transformer* model, const std::vector<int64_t>& tokens,
+    uint64_t position_offset,
+    std::vector<deeptiny::nn::KVCache>* layer_kv_caches,
+    const demo::smollm2::Config& config) {
   if (tokens.empty()) {
     throw std::runtime_error(
         "ComputeNextTokenLogits requires non-empty tokens");
   }
 
-  const deeptiny::Tensor hidden_states = (*model)({tokens});
+  const deeptiny::Tensor hidden_states =
+      (*model)({tokens}, layer_kv_caches, position_offset);
   const int64_t last_token_index =
       static_cast<int64_t>(tokens.size()) - static_cast<int64_t>(1);
   const int64_t hidden_size = static_cast<int64_t>(config.hidden_size);
@@ -171,20 +161,20 @@ std::vector<int64_t> Generate(transfomer_demo::Transformer* model,
   if (prompt_tokens.empty()) {
     throw std::runtime_error("Generate requires at least one prompt token");
   }
+  if (prompt_tokens.size() > config.max_position_embeddings) {
+    throw std::runtime_error("Prompt exceeds max_position_embeddings");
+  }
 
   std::vector<int64_t> context = prompt_tokens;
   std::vector<int64_t> generated;
   generated.reserve(static_cast<size_t>(options.max_new_tokens));
+  std::vector<deeptiny::nn::KVCache> layer_kv_caches(
+      static_cast<size_t>(model->num_blocks()));
+
+  deeptiny::Tensor logits = ComputeNextTokenLogits(
+      model, prompt_tokens, /*position_offset=*/0, &layer_kv_caches, config);
 
   for (uint64_t step = 0; step < options.max_new_tokens; ++step) {
-    if (context.size() > config.max_position_embeddings) {
-      const size_t drop = context.size() - config.max_position_embeddings;
-      context.erase(context.begin(),
-                    context.begin() + static_cast<int64_t>(drop));
-    }
-
-    const deeptiny::Tensor logits =
-        ComputeNextTokenLogits(model, context, config);
     const std::vector<float> logits_values = TensorToFloatVector(logits);
     const uint64_t next_token =
         SampleFromLogits(logits_values, options.temperature, rng);
@@ -194,6 +184,17 @@ std::vector<int64_t> Generate(transfomer_demo::Transformer* model,
     if (next_token == config.eos_token_id) {
       break;
     }
+    if (generated.size() >= options.max_new_tokens) {
+      break;
+    }
+    if (context.size() >= config.max_position_embeddings) {
+      break;
+    }
+
+    logits = ComputeNextTokenLogits(
+        model, {static_cast<int64_t>(next_token)},
+        /*position_offset=*/static_cast<uint64_t>(context.size() - 1),
+        &layer_kv_caches, config);
   }
 
   return generated;

@@ -21,7 +21,9 @@ class Transformer : public deeptiny::nn::Module {
               deeptiny::Device device = deeptiny::Device::CPU);
 
   deeptiny::Tensor operator()(
-      const std::vector<std::vector<int64_t>>& tokens) const;
+      const std::vector<std::vector<int64_t>>& tokens,
+      std::vector<deeptiny::nn::KVCache>* layer_kv_caches = nullptr,
+      uint64_t position_offset = 0) const;
 
   uint64_t num_blocks() const;
 
