@@ -31,7 +31,7 @@ const std::string kEvalText =
 
 void PrintUsage() {
   std::cout << "usage:\n";
-  std::cout << "  ./build/transfomer_demo_benchmark [tokenizer_dir]\n";
+  std::cout << "  ./build/transfomer_demo_benchmark_prefill [tokenizer_dir]\n";
 }
 
 std::string ReadAllBytes(const std::filesystem::path& path) {

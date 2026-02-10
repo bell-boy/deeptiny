@@ -26,7 +26,7 @@
     {
       "name": "benchmark",
       "configurePreset": "dev",
-      "targets": ["transfomer_demo_benchmark"]
+      "targets": ["transfomer_demo_benchmark_prefill", "transfomer_demo_benchmark_generation"]
     }
   ]
 }

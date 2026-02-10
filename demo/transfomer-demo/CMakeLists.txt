@@ -88,8 +88,15 @@ add_executable(
 )
 
 add_executable(
-  transfomer_demo_benchmark
-  src/benchmark.cc
+  transfomer_demo_benchmark_prefill
+  src/pre_fill_benchmark.cc
+  src/transformer.cc
+  src/smollm2_135m_instruct_loader.cc
+)
+
+add_executable(
+  transfomer_demo_benchmark_generation
+  src/generation_benchmark.cc
   src/transformer.cc
   src/smollm2_135m_instruct_loader.cc
 )
@@ -105,7 +112,10 @@ function(configure_transfomer_demo_target target_name)
 endfunction()
 
 configure_transfomer_demo_target(transfomer_demo)
-configure_transfomer_demo_target(transfomer_demo_benchmark)
+configure_transfomer_demo_target(transfomer_demo_benchmark_prefill)
+configure_transfomer_demo_target(transfomer_demo_benchmark_generation)
 
-target_compile_options(transfomer_demo_benchmark PRIVATE -pg)
-target_link_options(transfomer_demo_benchmark PRIVATE -pg)
+target_compile_options(transfomer_demo_benchmark_prefill PRIVATE -pg)
+target_link_options(transfomer_demo_benchmark_prefill PRIVATE -pg)
+target_compile_options(transfomer_demo_benchmark_generation PRIVATE -pg)
+target_link_options(transfomer_demo_benchmark_generation PRIVATE -pg)

@@ -98,21 +98,30 @@ cmake --preset dev -DTRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP=OFF
 
 ## Benchmark (gprof)
 
-Build the benchmark executable:
+Build benchmark executables:
 
 ```bash
 cmake --build --preset benchmark
 ```
 
-Run a forward-only benchmark on the fixed eval text:
+Benchmarks:
+- `transfomer_demo_benchmark_prefill`: one prefill forward pass over fixed eval text
+- `transfomer_demo_benchmark_generation`: fixed-prompt autoregressive generation benchmark
+
+Both benchmarks intentionally skip safetensors weight loading and instantiate
+`transfomer_demo::Transformer` with default/random-initialized parameters.
+
+Run prefill benchmark:
 
 ```bash
-./build/transfomer_demo_benchmark /path/to/tokenizer_dir
+./build/transfomer_demo_benchmark_prefill /path/to/tokenizer_dir
 ```
 
-This benchmark intentionally does not load model weights; it instantiates a
-`Transformer` with default/random-initialized parameters for profiling call
-paths.
+Run generation benchmark:
+
+```bash
+./build/transfomer_demo_benchmark_generation /path/to/tokenizer_dir
+```
 
 If `tokenizer.json` is missing in the provided `tokenizer_dir` (or if no
 `tokenizer_dir` is provided), the benchmark downloads tokenizer JSON into
@@ -121,14 +130,20 @@ If `tokenizer.json` is missing in the provided `tokenizer_dir` (or if no
 Run with default local tokenizer cache location (`./model_files`):
 
 ```bash
-./build/transfomer_demo_benchmark
+./build/transfomer_demo_benchmark_prefill
+./build/transfomer_demo_benchmark_generation
 ```
 
-Generate a gprof report:
+Generate gprof report (prefill):
 
 ```bash
-./build/transfomer_demo_benchmark /path/to/SmolLM2-135M-Instruct
+./build/transfomer_demo_benchmark_prefill /path/to/tokenizer_dir
+gprof ./build/transfomer_demo_benchmark_prefill gmon.out > gprof_prefill.txt
 ```
 
-gprof ./build/transfomer_demo_benchmark gmon.out > gprof.txt
+Generate gprof report (generation):
+
+```bash
+./build/transfomer_demo_benchmark_generation /path/to/tokenizer_dir
+gprof ./build/transfomer_demo_benchmark_generation gmon.out > gprof_generation.txt
 ```
