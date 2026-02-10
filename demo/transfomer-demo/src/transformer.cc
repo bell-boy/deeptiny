@@ -116,16 +116,6 @@ uint64_t SampleFromLogits(const std::vector<float>& logits, float temperature,
   return static_cast<uint64_t>(distribution(*rng));
 }
 
-std::pair<uint64_t, uint64_t> EmbeddingWeightShape(
-    const deeptiny::Tensor& embedding_weight) {
-  const deeptiny::Shape& shape = embedding_weight.shape();
-  if (shape.size() != 2) {
-    throw std::runtime_error(
-        "Transformer embedding weights must have shape [vocab, hidden].");
-  }
-  return {shape[0], shape[1]};
-}
-
 }  // namespace
 
 Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
@@ -253,8 +243,13 @@ deeptiny::Tensor Transformer::ComputeNextTokenLogits(
                      deeptiny::Slice(0, hidden_size)});
 
   deeptiny::Tensor embedding_weight = embed_.weight();
-  const auto [vocab_size, embedding_hidden_size] =
-      EmbeddingWeightShape(embedding_weight);
+  const deeptiny::Shape& embedding_weight_shape = embedding_weight.shape();
+  if (embedding_weight_shape.size() != 2) {
+    throw std::runtime_error(
+        "Transformer embedding weights must have shape [vocab, hidden].");
+  }
+  const uint64_t embedding_vocab_size = embedding_weight_shape[0];
+  const uint64_t embedding_hidden_size = embedding_weight_shape[1];
   if (embedding_hidden_size != hidden_shape[2]) {
     std::stringstream err;
     err << "Embedding hidden size (" << embedding_hidden_size
@@ -264,10 +259,10 @@ deeptiny::Tensor Transformer::ComputeNextTokenLogits(
   }
 
   deeptiny::Tensor tied_embedding =
-      embedding_weight.Reshape({1, vocab_size, hidden_shape[2]});
+      embedding_weight.Reshape({1, embedding_vocab_size, hidden_shape[2]});
   deeptiny::Tensor logits =
       deeptiny::math::BatchedMatMul(last_hidden, tied_embedding, false, true);
-  return logits.Reshape({vocab_size});
+  return logits.Reshape({embedding_vocab_size});
 }
 
 }  // namespace transfomer_demo
