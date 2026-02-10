@@ -65,6 +65,12 @@ std::filesystem::path DownloadSmolLM2_135M_InstructTokenizerJson(
 
 std::vector<WeightSpec> BuildWeightSpecs(const Config& config);
 
+// Builds the SmolLM2 demo Transformer with initialized module parameters only.
+// This does not read model files or load safetensors weights.
+std::unique_ptr<transfomer_demo::Transformer>
+CreateSmolLM2_135M_InstructTransformerUninitialized(
+    const Config& config = DefaultSmolLM2_135M_InstructConfig());
+
 std::unique_ptr<transfomer_demo::Transformer>
 CreateSmolLM2_135M_InstructTransformer(
     const std::filesystem::path& model_dir,

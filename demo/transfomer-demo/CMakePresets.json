@@ -15,6 +15,16 @@
       "name": "dev",
       "displayName": "Dev",
       "inherits": "base"
+    },
+    {
+      "name": "bench-pg",
+      "displayName": "Benchmark (pg)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP": "OFF",
+        "TRANSFOMER_DEMO_ENABLE_PG": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -22,6 +32,11 @@
       "name": "dev",
       "configurePreset": "dev",
       "targets": ["transfomer_demo"]
+    },
+    {
+      "name": "bench-pg",
+      "configurePreset": "bench-pg",
+      "targets": ["transfomer_generation_benchmark"]
     }
   ]
 }
