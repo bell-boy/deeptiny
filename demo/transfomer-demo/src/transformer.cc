@@ -263,11 +263,10 @@ deeptiny::Tensor Transformer::ComputeNextTokenLogits(
     throw std::runtime_error(err.str());
   }
 
-  deeptiny::Tensor query = last_hidden.Reshape({1, 1, hidden_shape[2]});
   deeptiny::Tensor tied_embedding =
       embedding_weight.Reshape({1, vocab_size, hidden_shape[2]});
   deeptiny::Tensor logits =
-      deeptiny::math::BatchedMatMul(query, tied_embedding, false, true);
+      deeptiny::math::BatchedMatMul(last_hidden, tied_embedding, false, true);
   return logits.Reshape({vocab_size});
 }
 
