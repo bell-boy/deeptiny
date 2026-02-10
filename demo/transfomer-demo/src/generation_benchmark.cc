@@ -29,7 +29,7 @@ uint64_t ParseMaxNewTokensArg(const std::string& value) {
 
 int main(int argc, char** argv) {
   try {
-    uint64_t max_new_tokens = 128;
+    uint64_t max_new_tokens = 64;
     if (argc > 2) {
       throw std::runtime_error(
           "usage: transfomer_generation_benchmark [max_new_tokens]");
