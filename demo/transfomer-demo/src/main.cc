@@ -1,19 +1,13 @@
-#include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <random>
-#include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-#include "deeptiny/math.h"
-#include "deeptiny/tensor.h"
-#include "deeptiny/types.h"
 #include "smollm2_135m_instruct_loader.h"
 #include "transformer.h"
 #ifdef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
@@ -22,10 +16,7 @@
 
 namespace {
 
-struct GenerationOptions {
-  uint64_t max_new_tokens = 64;
-  float temperature = 0.8f;
-};
+using GenerationOptions = transfomer_demo::Transformer::GenerationOptions;
 
 void PrintUsage() {
   std::cout << "usage:\n"
@@ -67,123 +58,6 @@ std::string ReadAllBytes(const std::filesystem::path& path) {
   return bytes;
 }
 
-std::vector<float> TensorToFloatVector(const deeptiny::Tensor& tensor) {
-  if (tensor.dtype() != deeptiny::DType::Float32) {
-    throw std::runtime_error("TensorToFloatVector expects Float32 tensor");
-  }
-  std::vector<float> values(static_cast<size_t>(tensor.numel()), 0.0f);
-  tensor.CopyToBuffer(
-      std::as_writable_bytes(std::span<float>(values.data(), values.size())),
-      tensor.shape(), deeptiny::DType::Float32);
-  return values;
-}
-
-uint64_t ArgmaxIndex(const std::vector<float>& logits) {
-  if (logits.empty()) {
-    throw std::runtime_error("Cannot sample from empty logits");
-  }
-  size_t best_idx = 0;
-  float best_value = logits[0];
-  for (size_t i = 1; i < logits.size(); ++i) {
-    if (logits[i] > best_value) {
-      best_value = logits[i];
-      best_idx = i;
-    }
-  }
-  return static_cast<uint64_t>(best_idx);
-}
-
-uint64_t SampleFromLogits(const std::vector<float>& logits, float temperature,
-                          std::mt19937* rng) {
-  if (!(temperature > 0.0f)) {
-    return ArgmaxIndex(logits);
-  }
-
-  const double inv_temp = 1.0 / static_cast<double>(temperature);
-  double max_scaled = -std::numeric_limits<double>::infinity();
-  for (const float value : logits) {
-    max_scaled = std::max(max_scaled, static_cast<double>(value) * inv_temp);
-  }
-
-  std::vector<double> probs(logits.size(), 0.0);
-  double total = 0.0;
-  for (size_t i = 0; i < logits.size(); ++i) {
-    const double scaled = static_cast<double>(logits[i]) * inv_temp;
-    const double prob = std::exp(scaled - max_scaled);
-    if (std::isfinite(prob) && prob > 0.0) {
-      probs[i] = prob;
-      total += prob;
-    }
-  }
-
-  if (!(total > 0.0) || !std::isfinite(total)) {
-    return ArgmaxIndex(logits);
-  }
-
-  std::discrete_distribution<size_t> distribution(probs.begin(), probs.end());
-  return static_cast<uint64_t>(distribution(*rng));
-}
-
-deeptiny::Tensor ComputeNextTokenLogits(transfomer_demo::Transformer* model,
-                                        const std::vector<int64_t>& tokens,
-                                        const demo::smollm2::Config& config) {
-  if (tokens.empty()) {
-    throw std::runtime_error(
-        "ComputeNextTokenLogits requires non-empty tokens");
-  }
-  const deeptiny::Tensor hidden_states = (*model)({tokens});
-  const int64_t last_token_index =
-      static_cast<int64_t>(tokens.size()) - static_cast<int64_t>(1);
-  const int64_t hidden_size = static_cast<int64_t>(config.hidden_size);
-  deeptiny::Tensor last_hidden =
-      hidden_states({deeptiny::Slice(0, 1),
-                     deeptiny::Slice(last_token_index, last_token_index + 1),
-                     deeptiny::Slice(0, hidden_size)});
-
-  deeptiny::Tensor query = last_hidden.Reshape({1, 1, config.hidden_size});
-  deeptiny::Tensor tied_embedding = model->embed().weight().Reshape(
-      {1, config.vocab_size, config.hidden_size});
-  deeptiny::Tensor logits =
-      deeptiny::math::BatchedMatMul(query, tied_embedding, false, true);
-  return logits.Reshape({config.vocab_size});
-}
-
-std::vector<int64_t> Generate(transfomer_demo::Transformer* model,
-                              const std::vector<int64_t>& prompt_tokens,
-                              const demo::smollm2::Config& config,
-                              const GenerationOptions& options,
-                              std::mt19937* rng) {
-  if (prompt_tokens.empty()) {
-    throw std::runtime_error("Generate requires at least one prompt token");
-  }
-
-  std::vector<int64_t> context = prompt_tokens;
-  std::vector<int64_t> generated;
-  generated.reserve(static_cast<size_t>(options.max_new_tokens));
-
-  for (uint64_t step = 0; step < options.max_new_tokens; ++step) {
-    if (context.size() > config.max_position_embeddings) {
-      const size_t drop = context.size() - config.max_position_embeddings;
-      context.erase(context.begin(),
-                    context.begin() + static_cast<int64_t>(drop));
-    }
-
-    const deeptiny::Tensor logits =
-        ComputeNextTokenLogits(model, context, config);
-    const std::vector<float> logits_values = TensorToFloatVector(logits);
-    const uint64_t next_token =
-        SampleFromLogits(logits_values, options.temperature, rng);
-
-    context.push_back(static_cast<int64_t>(next_token));
-    generated.push_back(static_cast<int64_t>(next_token));
-    if (next_token == config.eos_token_id) {
-      break;
-    }
-  }
-
-  return generated;
-}
-
 std::vector<int32_t> ToInt32Tokens(const std::vector<int64_t>& tokens,
                                    const char* name) {
   std::vector<int32_t> out;
@@ -210,7 +84,6 @@ void PrintTokenIds(const char* label, const std::vector<int64_t>& ids) {
 #ifdef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
 void RunChatLoop(transfomer_demo::Transformer* model,
                  tokenizers::Tokenizer* tokenizer,
-                 const demo::smollm2::Config& config,
                  const GenerationOptions& options) {
   std::mt19937 rng(std::random_device{}());
   std::string line;
@@ -237,7 +110,7 @@ void RunChatLoop(transfomer_demo::Transformer* model,
     }
 
     const std::vector<int64_t> generated =
-        Generate(model, encoded_prompt, config, options, &rng);
+        model->Generate(encoded_prompt, options, &rng);
     const std::vector<int32_t> generated_i32 =
         ToInt32Tokens(generated, "generated");
 
@@ -281,6 +154,10 @@ int main(int argc, char** argv) {
         throw std::runtime_error("temperature must be >= 0");
       }
     }
+    options.eos_token_id = config.eos_token_id;
+    if (config.max_position_embeddings > 0) {
+      options.max_context_tokens = config.max_position_embeddings;
+    }
 
     const std::filesystem::path model_dir = arg1;
     auto model = demo::smollm2::CreateSmolLM2_135M_InstructTransformer(
@@ -313,7 +190,7 @@ int main(int argc, char** argv) {
     std::cout << "tokenizer: " << tokenizer_path << "\n";
     std::cout << "max_new_tokens: " << options.max_new_tokens << "\n";
     std::cout << "temperature: " << options.temperature << "\n";
-    RunChatLoop(model.get(), tokenizer.get(), config, options);
+    RunChatLoop(model.get(), tokenizer.get(), options);
 #endif
   } catch (const std::exception& err) {
     std::cerr << "error: " << err.what() << "\n";
