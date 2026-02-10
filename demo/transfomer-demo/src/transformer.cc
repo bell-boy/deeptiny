@@ -164,11 +164,6 @@ deeptiny::Tensor Transformer::operator()(
   return norm_(hidden_states);
 }
 
-const Transformer::GenerationOptions& Transformer::DefaultGenerationOptions() {
-  static const GenerationOptions kDefaultOptions{};
-  return kDefaultOptions;
-}
-
 std::vector<int64_t> Transformer::Generate(
     const std::vector<int64_t>& prompt_tokens, const GenerationOptions& options,
     std::mt19937* rng) const {
