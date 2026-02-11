@@ -31,6 +31,7 @@ class Tensor {
  public:
   // Create a a contingous tensor with uninitialized data
   Tensor(Shape shape, DType dtype, Device device, bool requires_grad);
+  Tensor();
 
   // Implicitly wrap a TensorImpl with no autograd metadata.
   Tensor(std::shared_ptr<TensorImpl> tensor_impl);
@@ -47,6 +48,7 @@ class Tensor {
   Tensor Reshape(const Shape& shape);
   Tensor Squeeze(const std::vector<uint64_t>& dims);
   bool requires_grad() const;
+  bool is_contiguous() const;
   std::optional<Tensor> grad() const;
   void Backward();
 

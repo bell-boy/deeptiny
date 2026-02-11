@@ -1,5 +1,6 @@
 #include "autograd_meta.h"
 
+#include <cassert>
 #include <utility>
 
 #include "deeptiny/autograd.h"
@@ -25,7 +26,9 @@ void AutogradMeta::updateGrad(const Tensor& grad) {
     grad_ = std::make_shared<Tensor>(grad.Clone());
     return;
   }
-  deeptiny::dispatch::binary::Inplace(deeptiny::dispatch::binary::Op::Add, *grad_, grad);
+  assert(grad_->shape() == grad.shape());
+  deeptiny::dispatch::binary::Inplace(deeptiny::dispatch::binary::Op::Add,
+                                      *grad_, grad);
 }
 
 }  // namespace deeptiny

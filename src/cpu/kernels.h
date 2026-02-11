@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <unordered_set>
 
 #include "tensor_impl.h"
 
@@ -51,6 +52,15 @@ void SqrtBackward(std::shared_ptr<TensorImpl> x,
 void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
                    std::shared_ptr<TensorImpl> out, bool transpose_a = false,
                    bool transpose_b = false);
+
+/**
+ * Reduce (sum).
+ * Expects out to be contiguous
+ */
+
+void Reduce(std::shared_ptr<const TensorImpl> a,
+            std::shared_ptr<TensorImpl> out,
+            const std::unordered_set<uint64_t>& dims, bool keep_dims);
 
 };  // namespace cpu
 
