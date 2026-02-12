@@ -1,5 +1,7 @@
 #include "deeptiny/nn/gated_mlp.h"
 
+#include <stdexcept>
+
 #include "deeptiny/functional.h"
 #include "deeptiny/math.h"
 
@@ -13,6 +15,7 @@ Tensor ApplyHiddenAct(const Tensor& x, GatedMLP::HiddenAct hidden_act) {
     case GatedMLP::HiddenAct::SiLU:
       return functional::SiLU(x);
   }
+  throw std::runtime_error("Unsupported GatedMLP hidden activation");
 }
 
 }  // namespace
