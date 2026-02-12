@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "deeptiny/nn/embedding.h"
+#include "deeptiny/nn/kv_cache.h"
 #include "deeptiny/nn/module.h"
 #include "deeptiny/nn/rms_norm.h"
 #include "deeptiny/nn/transformer_block.h"
@@ -52,8 +53,17 @@ class Transformer : public deeptiny::nn::Module {
   const deeptiny::nn::RMSNorm& norm() const;
 
  private:
+  void ResetKVCache() const;
+  deeptiny::Tensor ForwardChunkWithCache(
+      const std::vector<int64_t>& flat_tokens,
+      const deeptiny::Shape& token_shape, uint64_t position_offset) const;
+  deeptiny::Tensor ComputeNextTokenLogitsFromHidden(
+      const deeptiny::Tensor& hidden_states) const;
+
+  uint64_t head_dim_;
   deeptiny::nn::Embedding embed_;
   std::vector<std::unique_ptr<deeptiny::nn::TransformerBlock>> blocks_;
+  mutable std::vector<std::unique_ptr<deeptiny::nn::KVCache>> kv_caches_;
   deeptiny::nn::RMSNorm norm_;
 
   deeptiny::Tensor ComputeNextTokenLogits(

@@ -103,6 +103,8 @@ Tensor::Tensor(std::shared_ptr<TensorImpl> tensor_impl,
                std::shared_ptr<AutogradMeta> autograd_meta)
     : tensor_impl_(tensor_impl), autograd_meta_(autograd_meta) {}
 
+Tensor::Tensor() : tensor_impl_(nullptr), autograd_meta_(nullptr) {}
+
 Tensor::Tensor(Shape shape, DType dtype, Device device, bool requires_grad)
     : tensor_impl_(std::make_shared<TensorImpl>(shape, dtype, device)),
       autograd_meta_(std::make_shared<AutogradMeta>(nullptr, requires_grad)) {}
