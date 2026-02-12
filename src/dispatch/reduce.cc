@@ -1,6 +1,5 @@
 #include "reduce.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <sstream>
@@ -15,18 +14,18 @@ namespace deeptiny::dispatch::reduce {
 std::shared_ptr<TensorImpl> OutOfPlace(const std::shared_ptr<TensorImpl>& a,
                                        const std::vector<uint64_t>& dims,
                                        bool keep_dims) {
-  if (!std::is_sorted(dims.begin(), dims.end())) {
-    throw std::runtime_error("Reduce dispatch expects sorted dims");
-  }
+  utils::UInt64IdentitySet dims_lookup;
+  dims_lookup.reserve(dims.size());
   for (const auto dim : dims) {
     if (dim >= a->shape().size()) {
       throw std::runtime_error("Reduce dim out of range");
     }
+    dims_lookup.insert(dim);
   }
 
   Shape new_shape;
   for (uint64_t i = 0; i < a->shape().size(); ++i) {
-    const bool is_reduced_dim = std::binary_search(dims.begin(), dims.end(), i);
+    const bool is_reduced_dim = dims_lookup.contains(i);
     if (is_reduced_dim) {
       if (keep_dims) {
         new_shape.push_back(1);

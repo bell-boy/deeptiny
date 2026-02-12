@@ -5,6 +5,7 @@
 
 #include <initializer_list>
 #include <optional>
+#include <unordered_set>
 #include <vector>
 
 #include "autograd_meta.h"
@@ -15,6 +16,14 @@
 namespace deeptiny {
 
 namespace utils {
+
+struct IdentityHash {
+  size_t operator()(uint64_t value) const noexcept {
+    return static_cast<size_t>(value);
+  }
+};
+
+using UInt64IdentitySet = std::unordered_set<uint64_t, IdentityHash>;
 
 struct TensorAccessor {
   static std::shared_ptr<TensorImpl> GetTensorImpl(const Tensor& t);
