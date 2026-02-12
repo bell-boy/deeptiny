@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <optional>
 
-#include "deeptiny/nn/gated_relu.h"
+#include "deeptiny/nn/gated_mlp.h"
 #include "deeptiny/nn/module.h"
 #include "deeptiny/nn/multi_head_attention.h"
 #include "deeptiny/nn/rms_norm.h"
@@ -14,12 +14,13 @@ namespace deeptiny::nn {
 
 class TransformerBlock : public Module {
  public:
-  TransformerBlock(uint64_t hidden_size, uint64_t mlp_hidden_dim,
-                   uint64_t num_attention_heads, uint64_t num_key_value_heads,
-                   bool attention_bias = false, bool mlp_bias = false,
-                   bool is_causal = true, float rope_theta = 10000.0f,
-                   float norm_eps = 1e-5f, Device device = Device::CPU,
-                   HiddenAct mlp_hidden_act = HiddenAct::ReLU);
+  TransformerBlock(
+      uint64_t hidden_size, uint64_t mlp_hidden_dim,
+      uint64_t num_attention_heads, uint64_t num_key_value_heads,
+      bool attention_bias = false, bool mlp_bias = false, bool is_causal = true,
+      float rope_theta = 10000.0f, float norm_eps = 1e-5f,
+      Device device = Device::CPU,
+      GatedMLP::HiddenAct mlp_hidden_act = GatedMLP::HiddenAct::ReLU);
 
   Tensor operator()(const Tensor& hidden_states,
                     std::optional<Tensor> attention_mask = std::nullopt,
@@ -31,15 +32,15 @@ class TransformerBlock : public Module {
   const MultiHeadAttention& self_attention() const;
   RMSNorm& ffn_norm();
   const RMSNorm& ffn_norm() const;
-  GatedReLU& ffn();
-  const GatedReLU& ffn() const;
+  GatedMLP& ffn();
+  const GatedMLP& ffn() const;
 
  private:
   uint64_t hidden_size_;
   RMSNorm attention_norm_;
   MultiHeadAttention self_attention_;
   RMSNorm ffn_norm_;
-  GatedReLU ffn_;
+  GatedMLP ffn_;
 };
 
 }  // namespace deeptiny::nn
