@@ -6,8 +6,9 @@
 namespace deeptiny::nn {
 
 GatedReLU::GatedReLU(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
-                     bool bias, Device device)
-    : gate_proj_(in_dim, hidden_dim, bias, device),
+                     bool bias, Device device, HiddenAct hidden_act)
+    : hidden_act_(hidden_act),
+      gate_proj_(in_dim, hidden_dim, bias, device),
       up_proj_(in_dim, hidden_dim, bias, device),
       down_proj_(hidden_dim, out_dim, bias, device) {
   RegisterSubmodule(gate_proj_);
@@ -16,7 +17,16 @@ GatedReLU::GatedReLU(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
 }
 
 Tensor GatedReLU::operator()(const Tensor& x) const {
-  Tensor gated = functional::ReLU(gate_proj_(x));
+  Tensor gate_input = gate_proj_(x);
+  Tensor gated = gate_input;
+  switch (hidden_act_) {
+    case HiddenAct::ReLU:
+      gated = functional::ReLU(gate_input);
+      break;
+    case HiddenAct::SiLU:
+      gated = functional::SiLU(gate_input);
+      break;
+  }
   Tensor up = up_proj_(x);
   Tensor hidden = gated * up;
   return down_proj_(hidden);

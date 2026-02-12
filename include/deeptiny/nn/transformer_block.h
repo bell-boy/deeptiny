@@ -18,7 +18,8 @@ class TransformerBlock : public Module {
                    uint64_t num_attention_heads, uint64_t num_key_value_heads,
                    bool attention_bias = false, bool mlp_bias = false,
                    bool is_causal = true, float rope_theta = 10000.0f,
-                   float norm_eps = 1e-5f, Device device = Device::CPU);
+                   float norm_eps = 1e-5f, Device device = Device::CPU,
+                   HiddenAct mlp_hidden_act = HiddenAct::ReLU);
 
   Tensor operator()(const Tensor& hidden_states,
                     std::optional<Tensor> attention_mask = std::nullopt,

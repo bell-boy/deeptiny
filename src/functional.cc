@@ -46,6 +46,33 @@ class ReLUBackward : public Function {
   }
 };
 
+class SiLUBackward : public Function {
+ public:
+  enum struct ContextObjects : uint64_t {
+    SAVED_X = 0,
+  };
+
+  explicit SiLUBackward(const Tensor& parent_x, const Tensor& saved_x)
+      : Function({utils::TensorAccessor::GetAutogradMeta(parent_x)}) {
+    context().Set(static_cast<uint64_t>(ContextObjects::SAVED_X), saved_x);
+  }
+
+  void operator()(const Tensor& grad) override {
+    Tensor saved_x =
+        context().Get(static_cast<uint64_t>(ContextObjects::SAVED_X));
+    const auto& parents = getParents();
+    assert(parents.size() == 1 && "SiLUBackward must have exactly 1 parent");
+    assert(parents[0] && "SiLUBackward parent must not be null");
+
+    if (grad.shape() != saved_x.shape()) {
+      throw std::runtime_error("SiLUBackward received invalid grad shape");
+    }
+
+    auto grad_x_impl = dispatch::silu::Backward(saved_x, grad);
+    parents[0]->updateGrad(grad_x_impl);
+  }
+};
+
 class SoftmaxBackward : public Function {
  public:
   enum struct ContextObjects : uint64_t {
@@ -154,6 +181,14 @@ Tensor ReLU(const Tensor& x) {
   auto out_impl = dispatch::relu::OutOfPlace(x);
 
   auto backward = std::make_shared<ReLUBackward>(x, x);
+  auto out_meta = std::make_shared<AutogradMeta>(backward);
+  return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
+}
+
+Tensor SiLU(const Tensor& x) {
+  auto out_impl = dispatch::silu::OutOfPlace(x);
+
+  auto backward = std::make_shared<SiLUBackward>(x, x);
   auto out_meta = std::make_shared<AutogradMeta>(backward);
   return utils::TensorAccessor::MakeTensor(out_impl, out_meta);
 }

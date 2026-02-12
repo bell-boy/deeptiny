@@ -118,6 +118,28 @@ TEST_CASE("Functional ReLU forward/backward") {
   }
 }
 
+TEST_CASE("Functional SiLU forward/backward") {
+  SUBCASE("Forward") {
+    deeptiny::Tensor x = MakeTensor({1, 5}, {-2.0f, -1.0f, 0.0f, 1.0f, 2.0f});
+    auto out = deeptiny::functional::SiLU(x);
+    CheckTensorData(out,
+                    {-0.23840584f, -0.26894143f, 0.0f, 0.7310586f, 1.7615942f});
+  }
+
+  SUBCASE("Backward") {
+    deeptiny::Tensor x =
+        MakeTensor({1, 5}, {-2.0f, -1.0f, 0.0f, 1.0f, 2.0f}, true);
+    auto loss =
+        deeptiny::functional::Reduce(deeptiny::functional::SiLU(x), {0, 1});
+    loss.Backward();
+
+    auto grad = x.grad();
+    REQUIRE(grad.has_value());
+    CheckTensorData(*grad,
+                    {-0.09078425f, 0.07232949f, 0.5f, 0.92767054f, 1.0907843f});
+  }
+}
+
 TEST_CASE("Functional Sqrt forward/backward") {
   SUBCASE("Forward") {
     deeptiny::Tensor x = MakeTensor({2, 2}, {1.0f, 4.0f, 9.0f, 16.0f});

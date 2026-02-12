@@ -121,7 +121,8 @@ uint64_t SampleFromLogits(const std::vector<float>& logits, float temperature,
 Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
                          uint64_t intermediate_size, uint64_t num_blocks,
                          uint64_t num_attention_heads,
-                         uint64_t num_key_value_heads, deeptiny::Device device)
+                         uint64_t num_key_value_heads, deeptiny::Device device,
+                         deeptiny::nn::HiddenAct mlp_hidden_act)
     : embed_(ValidateNonZero("vocab_size", vocab_size),
              ValidateNonZero("hidden_size", hidden_size),
              deeptiny::DType::Float32, device, true),
@@ -137,7 +138,8 @@ Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
   for (uint64_t i = 0; i < num_blocks; ++i) {
     blocks_.push_back(std::make_unique<deeptiny::nn::TransformerBlock>(
         hidden_size, intermediate_size, num_attention_heads,
-        num_key_value_heads, false, true, true, 10000.0f, 1.0e-5f, device));
+        num_key_value_heads, false, true, true, 10000.0f, 1.0e-5f, device,
+        mlp_hidden_act));
     RegisterSubmodule(*blocks_.back());
   }
 
