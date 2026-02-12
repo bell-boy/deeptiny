@@ -240,11 +240,11 @@ deeptiny::nn::GatedMLP::HiddenAct ValidateConfig(const Config& config) {
 
 void AddWeight(std::vector<WeightSpec>* specs, std::string hf_name,
                std::string deeptiny_target, deeptiny::Shape hf_shape,
-               deeptiny::Shape deeptiny_shape, bool transpose_last_two,
+               deeptiny::Shape deeptiny_shape, WeightSpec::Transform transform,
                bool required = true) {
   specs->push_back(WeightSpec{std::move(hf_name), std::move(deeptiny_target),
                               std::move(hf_shape), std::move(deeptiny_shape),
-                              transpose_last_two, required});
+                              transform, required});
 }
 
 uint64_t ParseJsonUint64(const nlohmann::json& value,
@@ -481,6 +481,48 @@ std::vector<float> TransposeLastTwoToFloat32(const std::byte* src,
   return transposed;
 }
 
+std::vector<float> RemapOutInToHeadInDimToFloat32(
+    const std::byte* src, const deeptiny::Shape& src_shape,
+    const deeptiny::Shape& dst_shape, std::string_view dtype) {
+  if (src_shape.size() != 2) {
+    throw std::runtime_error("QKV remap requires rank-2 source tensor");
+  }
+  if (dst_shape.size() != 4) {
+    throw std::runtime_error("QKV remap requires rank-4 destination tensor");
+  }
+  if (dst_shape[0] != 1) {
+    throw std::runtime_error("QKV remap expects destination leading dim == 1");
+  }
+
+  const uint64_t src_out = src_shape[0];
+  const uint64_t src_in = src_shape[1];
+  const uint64_t heads = dst_shape[1];
+  const uint64_t hidden = dst_shape[2];
+  const uint64_t head_dim = dst_shape[3];
+
+  if (src_in != hidden) {
+    throw std::runtime_error(
+        "QKV remap source input dimension does not match destination hidden");
+  }
+  if (src_out != heads * head_dim) {
+    throw std::runtime_error(
+        "QKV remap source output dimension does not match heads * head_dim");
+  }
+
+  std::vector<float> remapped(static_cast<size_t>(Numel(dst_shape)), 0.0f);
+  for (uint64_t h = 0; h < heads; ++h) {
+    for (uint64_t i = 0; i < hidden; ++i) {
+      for (uint64_t d = 0; d < head_dim; ++d) {
+        const uint64_t src_index = (h * head_dim + d) * hidden + i;
+        const uint64_t dst_index = (h * hidden + i) * head_dim + d;
+        remapped[static_cast<size_t>(dst_index)] =
+            ReadSourceAsFloat32(src, src_index, dtype);
+      }
+    }
+  }
+  return remapped;
+}
+
 std::unordered_map<std::string, deeptiny::Tensor*> BuildTargetTensorMap(
     transfomer_demo::Transformer& model, const Config& config) {
   if (model.num_blocks() != config.num_hidden_layers) {
@@ -573,7 +615,7 @@ void LoadOneTensor(const WeightSpec& spec, const SafetensorsEntry& entry,
   const std::byte* src = payload_base + entry.data_start;
   const uint64_t src_bytes = entry.data_end - entry.data_start;
 
-  if (!spec.transpose_last_two && entry.dtype == "F32") {
+  if (spec.transform == WeightSpec::Transform::kNone && entry.dtype == "F32") {
     target->CopyFromBuffer(
         std::span<const std::byte>(src, static_cast<size_t>(src_bytes)),
         target->shape(), deeptiny::DType::Float32);
@@ -581,10 +623,17 @@ void LoadOneTensor(const WeightSpec& spec, const SafetensorsEntry& entry,
   }
 
   std::vector<float> f32_values;
-  if (spec.transpose_last_two) {
-    f32_values = TransposeLastTwoToFloat32(src, entry.shape, entry.dtype);
-  } else {
-    f32_values = ConvertToFloat32(src, src_numel, entry.dtype);
+  switch (spec.transform) {
+    case WeightSpec::Transform::kNone:
+      f32_values = ConvertToFloat32(src, src_numel, entry.dtype);
+      break;
+    case WeightSpec::Transform::kTransposeLastTwo:
+      f32_values = TransposeLastTwoToFloat32(src, entry.shape, entry.dtype);
+      break;
+    case WeightSpec::Transform::kQkvOutInToHeadInDim:
+      f32_values = RemapOutInToHeadInDimToFloat32(
+          src, entry.shape, spec.deeptiny_shape, entry.dtype);
+      break;
   }
 
   target->CopyFromBuffer(std::as_bytes(std::span<const float>(
@@ -627,7 +676,8 @@ std::vector<WeightSpec> BuildWeightSpecs(const Config& config) {
 
   AddWeight(&specs, "model.embed_tokens.weight", "transformer.embed.weight",
             {config.vocab_size, config.hidden_size},
-            {config.vocab_size, config.hidden_size}, false);
+            {config.vocab_size, config.hidden_size},
+            WeightSpec::Transform::kNone);
 
   for (uint64_t layer = 0; layer < config.num_hidden_layers; ++layer) {
     const std::string prefix = "model.layers." + std::to_string(layer);
@@ -636,82 +686,89 @@ std::vector<WeightSpec> BuildWeightSpecs(const Config& config) {
 
     AddWeight(&specs, prefix + ".input_layernorm.weight",
               block_prefix + ".attention_norm.weight", {config.hidden_size},
-              {config.hidden_size}, false);
+              {config.hidden_size}, WeightSpec::Transform::kNone);
 
     AddWeight(&specs, prefix + ".self_attn.q_proj.weight",
               block_prefix + ".self_attention.q_weight",
               {config.hidden_size, config.hidden_size},
               {1, config.num_attention_heads, config.hidden_size, head_dim},
-              true);
+              WeightSpec::Transform::kQkvOutInToHeadInDim);
     AddWeight(&specs, prefix + ".self_attn.k_proj.weight",
               block_prefix + ".self_attention.k_weight",
               {kv_hidden_size, config.hidden_size},
               {1, config.num_key_value_heads, config.hidden_size, head_dim},
-              true);
+              WeightSpec::Transform::kQkvOutInToHeadInDim);
     AddWeight(&specs, prefix + ".self_attn.v_proj.weight",
               block_prefix + ".self_attention.v_weight",
               {kv_hidden_size, config.hidden_size},
               {1, config.num_key_value_heads, config.hidden_size, head_dim},
-              true);
+              WeightSpec::Transform::kQkvOutInToHeadInDim);
     AddWeight(&specs, prefix + ".self_attn.o_proj.weight",
               block_prefix + ".self_attention.o_weight",
               {config.hidden_size, config.hidden_size},
               {1, config.num_attention_heads, head_dim, config.hidden_size},
-              true);
+              WeightSpec::Transform::kTransposeLastTwo);
 
     AddWeight(&specs, prefix + ".post_attention_layernorm.weight",
               block_prefix + ".ffn_norm.weight", {config.hidden_size},
-              {config.hidden_size}, false);
+              {config.hidden_size}, WeightSpec::Transform::kNone);
 
     AddWeight(&specs, prefix + ".mlp.gate_proj.weight",
               block_prefix + ".ffn.gate_proj.weight",
               {config.intermediate_size, config.hidden_size},
-              {1, config.hidden_size, config.intermediate_size}, true);
+              {1, config.hidden_size, config.intermediate_size},
+              WeightSpec::Transform::kTransposeLastTwo);
     AddWeight(&specs, prefix + ".mlp.up_proj.weight",
               block_prefix + ".ffn.up_proj.weight",
               {config.intermediate_size, config.hidden_size},
-              {1, config.hidden_size, config.intermediate_size}, true);
+              {1, config.hidden_size, config.intermediate_size},
+              WeightSpec::Transform::kTransposeLastTwo);
     AddWeight(&specs, prefix + ".mlp.down_proj.weight",
               block_prefix + ".ffn.down_proj.weight",
               {config.hidden_size, config.intermediate_size},
-              {1, config.intermediate_size, config.hidden_size}, true);
+              {1, config.intermediate_size, config.hidden_size},
+              WeightSpec::Transform::kTransposeLastTwo);
 
     if (config.attention_bias) {
       AddWeight(&specs, prefix + ".self_attn.q_proj.bias",
                 block_prefix + ".self_attention.q_bias", {config.hidden_size},
-                {1, config.num_attention_heads, 1, head_dim}, false);
+                {1, config.num_attention_heads, 1, head_dim},
+                WeightSpec::Transform::kNone);
       AddWeight(&specs, prefix + ".self_attn.k_proj.bias",
                 block_prefix + ".self_attention.k_bias", {kv_hidden_size},
-                {1, config.num_key_value_heads, 1, head_dim}, false);
+                {1, config.num_key_value_heads, 1, head_dim},
+                WeightSpec::Transform::kNone);
       AddWeight(&specs, prefix + ".self_attn.v_proj.bias",
                 block_prefix + ".self_attention.v_bias", {kv_hidden_size},
-                {1, config.num_key_value_heads, 1, head_dim}, false);
+                {1, config.num_key_value_heads, 1, head_dim},
+                WeightSpec::Transform::kNone);
       AddWeight(&specs, prefix + ".self_attn.o_proj.bias",
                 block_prefix + ".self_attention.o_bias", {config.hidden_size},
-                {1, 1, config.hidden_size}, false);
+                {1, 1, config.hidden_size}, WeightSpec::Transform::kNone);
     }
 
     if (config.mlp_bias) {
       AddWeight(&specs, prefix + ".mlp.gate_proj.bias",
                 block_prefix + ".ffn.gate_proj.bias",
                 {config.intermediate_size}, {1, 1, config.intermediate_size},
-                false);
+                WeightSpec::Transform::kNone);
       AddWeight(&specs, prefix + ".mlp.up_proj.bias",
                 block_prefix + ".ffn.up_proj.bias", {config.intermediate_size},
-                {1, 1, config.intermediate_size}, false);
+                {1, 1, config.intermediate_size}, WeightSpec::Transform::kNone);
       AddWeight(&specs, prefix + ".mlp.down_proj.bias",
                 block_prefix + ".ffn.down_proj.bias", {config.hidden_size},
-                {1, 1, config.hidden_size}, false);
+                {1, 1, config.hidden_size}, WeightSpec::Transform::kNone);
     }
   }
 
   AddWeight(&specs, "model.norm.weight", "transformer.norm.weight",
-            {config.hidden_size}, {config.hidden_size}, false);
+            {config.hidden_size}, {config.hidden_size},
+            WeightSpec::Transform::kNone);
 
   AddWeight(&specs, "lm_head.weight", "lm_head.weight",
             {config.vocab_size, config.hidden_size},
-            {config.vocab_size, config.hidden_size}, false,
-            !config.tie_word_embeddings);
+            {config.vocab_size, config.hidden_size},
+            WeightSpec::Transform::kNone, !config.tie_word_embeddings);
 
   return specs;
 }

@@ -42,11 +42,17 @@ struct Config {
 };
 
 struct WeightSpec {
+  enum class Transform {
+    kNone,
+    kTransposeLastTwo,
+    kQkvOutInToHeadInDim,
+  };
+
   std::string hf_name;
   std::string deeptiny_target;
   deeptiny::Shape hf_shape;
   deeptiny::Shape deeptiny_shape;
-  bool transpose_last_two = false;
+  Transform transform = Transform::kNone;
   bool required = true;
 };
 
