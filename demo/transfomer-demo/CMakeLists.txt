@@ -132,3 +132,15 @@ target_compile_features(transfomer_activation_dump PRIVATE cxx_std_23)
 target_link_libraries(
   transfomer_activation_dump PRIVATE deeptiny nlohmann_json::nlohmann_json
 )
+
+add_executable(
+  transfomer_self_attention_debug_dump
+  src/self_attention_debug_dump.cc
+  src/transformer.cc
+  src/smollm2_135m_instruct_loader.cc
+)
+
+target_compile_features(transfomer_self_attention_debug_dump PRIVATE cxx_std_23)
+target_link_libraries(
+  transfomer_self_attention_debug_dump PRIVATE deeptiny nlohmann_json::nlohmann_json
+)
