@@ -242,14 +242,7 @@ deeptiny::nn::RMSNorm& Transformer::norm() { return norm_; }
 const deeptiny::nn::RMSNorm& Transformer::norm() const { return norm_; }
 
 void Transformer::ResetKVCache() const {
-  if (kv_caches_.size() != blocks_.size()) {
-    throw std::runtime_error(
-        "Transformer KV cache count does not match block count.");
-  }
   for (const auto& cache : kv_caches_) {
-    if (!cache) {
-      throw std::runtime_error("Transformer KV cache is null.");
-    }
     cache->Clear();
   }
 }
@@ -258,10 +251,6 @@ deeptiny::Tensor Transformer::ForwardChunkWithCache(
     const std::vector<int64_t>& flat_tokens, const deeptiny::Shape& token_shape,
     uint64_t position_offset) const {
   deeptiny::Tensor hidden_states = embed_(flat_tokens, token_shape);
-  if (kv_caches_.size() != blocks_.size()) {
-    throw std::runtime_error(
-        "Transformer KV cache count does not match block count.");
-  }
   for (size_t i = 0; i < blocks_.size(); ++i) {
     hidden_states = (*blocks_[i])(hidden_states, std::nullopt, position_offset,
                                   kv_caches_[i].get());
@@ -309,17 +298,6 @@ deeptiny::Tensor Transformer::ComputeNextTokenLogitsFromHidden(
   deeptiny::Tensor logits =
       deeptiny::math::BatchedMatMul(last_hidden, tied_embedding, false, true);
   return logits.Reshape({embedding_vocab_size});
-}
-
-deeptiny::Tensor Transformer::ComputeNextTokenLogits(
-    const std::vector<int64_t>& tokens) const {
-  if (tokens.empty()) {
-    throw std::runtime_error(
-        "ComputeNextTokenLogits requires non-empty tokens.");
-  }
-
-  const deeptiny::Tensor hidden_states = (*this)({tokens});
-  return ComputeNextTokenLogitsFromHidden(hidden_states);
 }
 
 }  // namespace transfomer_demo

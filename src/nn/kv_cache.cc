@@ -26,10 +26,6 @@ uint64_t ValidateNonZero(const char* field, uint64_t value) {
 void ValidateUpdateTensor(const Tensor& t, const char* name,
                           uint64_t batch_size, uint64_t num_key_value_heads,
                           uint64_t head_dim) {
-  if (GradState.grad_enabled) {
-    throw std::runtime_error(
-        "KVCache is inference-only and requires NoGrad mode");
-  }
   if (t.dtype() != DType::Float32) {
     std::stringstream err;
     err << "KVCache " << name << " must use Float32 dtype";
@@ -100,9 +96,6 @@ void KVCache::GrowIfNeeded(uint64_t required_seq_len) {
   uint64_t new_capacity_seq_len = std::max<uint64_t>(1, capacity_seq_len_);
   while (new_capacity_seq_len < required_seq_len) {
     new_capacity_seq_len *= 2;
-  }
-  if (new_capacity_seq_len < required_seq_len) {
-    new_capacity_seq_len = required_seq_len;
   }
 
   auto new_key_impl = std::make_shared<TensorImpl>(
@@ -199,6 +192,11 @@ void KVCache::RefreshActiveViews() {
 }
 
 void KVCache::update(const Tensor& keys, const Tensor& values) {
+  if (GradState.grad_enabled) {
+    throw std::runtime_error(
+        "KVCache is inference-only and requires NoGrad mode");
+  }
+
   ValidateUpdateTensor(keys, "keys", batch_size_, num_key_value_heads_,
                        head_dim_);
   ValidateUpdateTensor(values, "values", batch_size_, num_key_value_heads_,

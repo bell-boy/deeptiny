@@ -65,9 +65,6 @@ class Transformer : public deeptiny::nn::Module {
   std::vector<std::unique_ptr<deeptiny::nn::TransformerBlock>> blocks_;
   mutable std::vector<std::unique_ptr<deeptiny::nn::KVCache>> kv_caches_;
   deeptiny::nn::RMSNorm norm_;
-
-  deeptiny::Tensor ComputeNextTokenLogits(
-      const std::vector<int64_t>& tokens) const;
 };
 
 }  // namespace transfomer_demo
