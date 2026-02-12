@@ -1,17 +1,42 @@
-#include "cpu/kernels.h"
-
 #include <cblas.h>
 
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
+#include "cpu/kernels.h"
 #include "cpu/kernels/common.h"
 #include "utils.h"
 
 namespace deeptiny::cpu {
 
 namespace {
+bool InnerMatrixIsContiguous(const Shape& shape, const Stride& stride) {
+  const size_t rank = shape.size();
+  assert(rank >= 2 && "Expected rank >= 2 shape");
+
+  const uint64_t rows = shape[rank - 2];
+  const uint64_t cols = shape[rank - 1];
+
+  if (cols > 1 && stride[rank - 1] != 1) {
+    return false;
+  }
+  if (rows > 1 && stride[rank - 2] != static_cast<int64_t>(cols)) {
+    return false;
+  }
+  return true;
+}
+
+int64_t ComputeBatchBaseOffset(const std::vector<uint64_t>& batch_index,
+                               const Stride& stride, int64_t base_offset) {
+  int64_t offset = base_offset;
+  for (size_t dim = 0; dim < batch_index.size(); ++dim) {
+    offset += static_cast<int64_t>(batch_index[dim]) * stride[dim];
+  }
+  return offset;
+}
+
 void ValidateBatchedMatMulInputs(const std::shared_ptr<TensorImpl>& a,
                                  const std::shared_ptr<TensorImpl>& b,
                                  const std::shared_ptr<TensorImpl>& out,
@@ -23,7 +48,8 @@ void ValidateBatchedMatMulInputs(const std::shared_ptr<TensorImpl>& a,
     throw std::runtime_error("BatchedMatMul requires matching tensor dtypes.");
   }
   if (a->dtype() != DType::Float32) {
-    throw std::runtime_error("Only Float32 dtype is supported in BatchedMatMul.");
+    throw std::runtime_error(
+        "Only Float32 dtype is supported in BatchedMatMul.");
   }
 
   const auto& a_shape = a->shape();
@@ -84,18 +110,36 @@ void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
     return;
   }
 
-  std::shared_ptr<const Storage> a_storage = a->getContiguousStorage();
-  std::shared_ptr<const Storage> b_storage = b->getContiguousStorage();
+  const auto& a_shape = a->shape();
+  const auto& b_shape = b->shape();
+  const size_t rank = out_shape.size();
+  const size_t batch_rank = rank - 2;
+
+  std::shared_ptr<const Storage> a_storage =
+      static_cast<const TensorImpl&>(*a).storage();
+  std::shared_ptr<const Storage> b_storage =
+      static_cast<const TensorImpl&>(*b).storage();
+  Stride a_stride = a->stride();
+  Stride b_stride = b->stride();
+  int64_t a_base_offset = static_cast<int64_t>(a->offset());
+  int64_t b_base_offset = static_cast<int64_t>(b->offset());
+
+  if (!InnerMatrixIsContiguous(a_shape, a_stride)) {
+    a_storage = a->getContiguousStorage();
+    a_stride = utils::GetContinguousStride(a_shape);
+    a_base_offset = 0;
+  }
+  if (!InnerMatrixIsContiguous(b_shape, b_stride)) {
+    b_storage = b->getContiguousStorage();
+    b_stride = utils::GetContinguousStride(b_shape);
+    b_base_offset = 0;
+  }
+
   auto out_storage = out->storage();
 
   const auto* a_data = static_cast<const float*>(a_storage->data(0));
   const auto* b_data = static_cast<const float*>(b_storage->data(0));
   auto* out_data = static_cast<float*>(out_storage->data(0));
-
-  const auto& a_shape = a->shape();
-  const auto& b_shape = b->shape();
-  const size_t rank = out_shape.size();
-  const size_t batch_rank = rank - 2;
 
   const uint64_t a_src_rows = a_shape[rank - 2];
   const uint64_t a_src_cols = a_shape[rank - 1];
@@ -109,8 +153,6 @@ void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
   const int cblas_rows = detail::ToCblasInt(rows, "rows");
   const int cblas_cols = detail::ToCblasInt(cols, "cols");
   const int cblas_inner = detail::ToCblasInt(inner, "inner dimension");
-  const uint64_t a_matrix_size = a_src_rows * a_src_cols;
-  const uint64_t b_matrix_size = b_src_rows * b_src_cols;
   const uint64_t out_matrix_size = out_shape[rank - 2] * out_shape[rank - 1];
 
   uint64_t batch_size = 1;
@@ -126,13 +168,31 @@ void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
   const int ldb = transpose_b ? cblas_inner : cblas_cols;
   const int ldc = cblas_cols;
 
+  std::vector<uint64_t> batch_index(batch_rank, 0);
   for (uint64_t batch = 0; batch < batch_size; ++batch) {
-    const float* a_batch = a_data + static_cast<size_t>(batch * a_matrix_size);
-    const float* b_batch = b_data + static_cast<size_t>(batch * b_matrix_size);
+    const int64_t a_batch_offset =
+        ComputeBatchBaseOffset(batch_index, a_stride, a_base_offset);
+    const int64_t b_batch_offset =
+        ComputeBatchBaseOffset(batch_index, b_stride, b_base_offset);
+    assert(a_batch_offset >= 0 &&
+           "BatchedMatMul kernel computed negative a batch offset");
+    assert(b_batch_offset >= 0 &&
+           "BatchedMatMul kernel computed negative b batch offset");
+
+    const float* a_batch = a_data + static_cast<size_t>(a_batch_offset);
+    const float* b_batch = b_data + static_cast<size_t>(b_batch_offset);
     float* out_batch = out_data + static_cast<size_t>(batch * out_matrix_size);
-    cblas_sgemm(CblasRowMajor, cblas_transpose_a, cblas_transpose_b,
-                cblas_rows, cblas_cols, cblas_inner, 1.0f, a_batch, lda,
-                b_batch, ldb, 0.0f, out_batch, ldc);
+    cblas_sgemm(CblasRowMajor, cblas_transpose_a, cblas_transpose_b, cblas_rows,
+                cblas_cols, cblas_inner, 1.0f, a_batch, lda, b_batch, ldb, 0.0f,
+                out_batch, ldc);
+
+    for (size_t dim = batch_rank; dim-- > 0;) {
+      batch_index[dim] += 1;
+      if (batch_index[dim] < out_shape[dim]) {
+        break;
+      }
+      batch_index[dim] = 0;
+    }
   }
 }
 

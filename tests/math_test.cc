@@ -322,6 +322,40 @@ TEST_CASE("BatchedMatMul forward") {
                           10, 12, 14, 16, 9, 10, 11, 12, 18, 20, 22, 24});
   }
 
+  SUBCASE("Supports non-contiguous batch views with contiguous inner dims") {
+    deeptiny::Tensor a_base =
+        MakeTensor({4, 2, 3}, {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12,
+                               13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24});
+    deeptiny::Tensor b_base =
+        MakeTensor({4, 3, 2}, {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12,
+                               13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24});
+
+    deeptiny::Tensor a =
+        a_base({deeptiny::Slice(1, 4, 2), deeptiny::Slice::All(),
+                deeptiny::Slice::All()});
+    deeptiny::Tensor b =
+        b_base({deeptiny::Slice(1, 4, 2), deeptiny::Slice::All(),
+                deeptiny::Slice::All()});
+    auto out = deeptiny::math::BatchedMatMul(a, b);
+
+    const deeptiny::Shape expected_shape{2, 2, 2};
+    CHECK(out.shape() == expected_shape);
+    CheckTensorData(out, {220, 244, 301, 334, 1264, 1324, 1453, 1522});
+  }
+
+  SUBCASE("Supports non-contiguous inner dims via contiguous fallback") {
+    deeptiny::Tensor a_base = MakeTensor({1, 2, 4}, {1, 2, 3, 4, 5, 6, 7, 8});
+    deeptiny::Tensor b = MakeTensor({1, 2, 3}, {1, 2, 3, 4, 5, 6});
+
+    deeptiny::Tensor a = a_base({deeptiny::Slice::All(), deeptiny::Slice::All(),
+                                 deeptiny::Slice(0, 4, 2)});
+    auto out = deeptiny::math::BatchedMatMul(a, b);
+
+    const deeptiny::Shape expected_shape{1, 2, 3};
+    CHECK(out.shape() == expected_shape);
+    CheckTensorData(out, {13, 17, 21, 33, 45, 57});
+  }
+
   SUBCASE("Rejects rank smaller than 3") {
     deeptiny::Tensor a = MakeTensor({2, 3}, {1, 2, 3, 4, 5, 6});
     deeptiny::Tensor b = MakeTensor({3, 2}, {1, 2, 3, 4, 5, 6});
