@@ -98,7 +98,17 @@ Tensor BuildRoPERotationMatrices(uint64_t seq_len, uint64_t half_dim,
       rotation_values, Shape{1, 1, seq_len, half_dim, 2, 2}, device, false);
 }
 
-Tensor ApplyRoPE(const Tensor& x, const Tensor& rotations) {
+Tensor BuildIdentityMatrix(uint64_t dim, Device device) {
+  std::vector<float> values(static_cast<size_t>(dim * dim), 0.0f);
+  for (uint64_t i = 0; i < dim; ++i) {
+    values[static_cast<size_t>(i * dim + i)] = 1.0f;
+  }
+  return Tensor::FromVector(values, Shape{1, 1, 1, dim, dim}, device, false);
+}
+
+Tensor ApplyRoPE(const Tensor& x, const Tensor& rotations,
+                 bool rope_interleaved, const Tensor& transpose_identity_2,
+                 const Tensor& transpose_identity_half) {
   const auto& shape = x.shape();
   if (shape.size() != 4) {
     throw std::runtime_error("ApplyRoPE expects a rank-4 tensor");
@@ -115,13 +125,43 @@ Tensor ApplyRoPE(const Tensor& x, const Tensor& rotations) {
     throw std::runtime_error("ApplyRoPE rotation shape mismatch");
   }
 
-  utils::CompatabilityCheck({x, rotations});
+  if (rope_interleaved) {
+    utils::CompatabilityCheck({x, rotations});
+    const Shape shape_6d{shape[0], shape[1], shape[2], half_dim, 1, 2};
+    Tensor x_view = x;
+    Tensor x_6d = x_view.Reshape(shape_6d);
+    Tensor rotated_6d = math::BatchedMatMul(x_6d, rotations);
+    return rotated_6d.Reshape(shape);
+  }
 
-  const Shape shape_6d{shape[0], shape[1], shape[2], half_dim, 1, 2};
+  const Shape expected_identity_2_shape{1, 1, 1, 2, 2};
+  if (transpose_identity_2.shape() != expected_identity_2_shape) {
+    throw std::runtime_error("ApplyRoPE transpose_identity_2 shape mismatch");
+  }
+  const Shape expected_identity_half_shape{1, 1, 1, half_dim, half_dim};
+  if (transpose_identity_half.shape() != expected_identity_half_shape) {
+    throw std::runtime_error(
+        "ApplyRoPE transpose_identity_half shape mismatch");
+  }
+  utils::CompatabilityCheck(
+      {x, rotations, transpose_identity_2, transpose_identity_half});
+
   Tensor x_view = x;
-  Tensor x_6d = x_view.Reshape(shape_6d);
-  Tensor rotated_6d = math::BatchedMatMul(x_6d, rotations);
-  return rotated_6d.Reshape(shape);
+  Tensor split_non_interleaved =
+      x_view.Reshape({shape[0], shape[1], shape[2], 2, half_dim});
+  Tensor interleaved_pairs = math::BatchedMatMul(
+      split_non_interleaved, transpose_identity_2, /*transpose_a=*/true,
+      /*transpose_b=*/false);
+  Tensor interleaved_pairs_6d =
+      interleaved_pairs.Reshape({shape[0], shape[1], shape[2], half_dim, 1, 2});
+  Tensor rotated_pairs_6d =
+      math::BatchedMatMul(interleaved_pairs_6d, rotations);
+  Tensor rotated_pairs =
+      rotated_pairs_6d.Reshape({shape[0], shape[1], shape[2], half_dim, 2});
+  Tensor split_non_interleaved_rotated = math::BatchedMatMul(
+      rotated_pairs, transpose_identity_half, /*transpose_a=*/true,
+      /*transpose_b=*/false);
+  return split_non_interleaved_rotated.Reshape(shape);
 }
 
 Tensor MakeGroupedQueryView(const Tensor& q, uint64_t num_key_value_heads,
@@ -168,7 +208,8 @@ MultiHeadAttention::MultiHeadAttention(uint64_t hidden_size,
                                        uint64_t num_attention_heads,
                                        uint64_t num_key_value_heads,
                                        bool attention_bias, bool is_causal,
-                                       float rope_theta, Device device)
+                                       float rope_theta, Device device,
+                                       bool rope_interleaved)
     : hidden_size_(detail::ValidateNonZeroDimension(
           "MultiHeadAttention", "hidden_size", hidden_size)),
       num_attention_heads_(detail::ValidateNonZeroDimension(
@@ -179,6 +220,7 @@ MultiHeadAttention::MultiHeadAttention(uint64_t hidden_size,
       head_dim_(hidden_size_ / num_attention_heads_),
       is_causal_(is_causal),
       rope_theta_(rope_theta),
+      rope_interleaved_(rope_interleaved),
       q_weight_(Tensor::CreateUniform(
           {1, num_attention_heads_, hidden_size_, head_dim_}, device,
           DType::Float32, true)),
@@ -190,7 +232,9 @@ MultiHeadAttention::MultiHeadAttention(uint64_t hidden_size,
           DType::Float32, true)),
       o_weight_(Tensor::CreateUniform(
           {1, num_attention_heads_, head_dim_, hidden_size_}, device,
-          DType::Float32, true)) {
+          DType::Float32, true)),
+      transpose_identity_2_(BuildIdentityMatrix(2, device)),
+      transpose_identity_half_(BuildIdentityMatrix(head_dim_ / 2, device)) {
   ValidateConstructorArgs(hidden_size_, num_attention_heads_,
                           num_key_value_heads_, rope_theta_);
 
@@ -250,8 +294,10 @@ Tensor MultiHeadAttention::operator()(const Tensor& hidden_states,
   Tensor rope_rotations =
       BuildRoPERotationMatrices(query_len, head_dim_ / 2, position_offset,
                                 rope_theta_, hidden_states.device());
-  q = ApplyRoPE(q, rope_rotations);
-  k = ApplyRoPE(k, rope_rotations);
+  q = ApplyRoPE(q, rope_rotations, rope_interleaved_, transpose_identity_2_,
+                transpose_identity_half_);
+  k = ApplyRoPE(k, rope_rotations, rope_interleaved_, transpose_identity_2_,
+                transpose_identity_half_);
 
   Tensor q_grouped;
   Tensor k_grouped;

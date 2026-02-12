@@ -1,5 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
+#include <cmath>
 #include <vector>
 
 #include "deeptiny/autograd.h"
@@ -111,6 +112,28 @@ void InstallRopeProbeWeights(deeptiny::nn::MultiHeadAttention& attn) {
                  attn.o_weight());
 }
 
+void InstallIdentityProjectionWeights(deeptiny::nn::MultiHeadAttention& attn) {
+  const deeptiny::Shape weight_shape{1, 1, 4, 4};
+  const std::vector<float> identity{
+      1.0f, 0.0f, 0.0f, 0.0f,  //
+      0.0f, 1.0f, 0.0f, 0.0f,  //
+      0.0f, 0.0f, 1.0f, 0.0f,  //
+      0.0f, 0.0f, 0.0f, 1.0f,  //
+  };
+  CopyTensorData(deeptiny::Tensor::FromVector(identity, weight_shape,
+                                              deeptiny::Device::CPU, true),
+                 attn.q_weight());
+  CopyTensorData(deeptiny::Tensor::FromVector(identity, weight_shape,
+                                              deeptiny::Device::CPU, true),
+                 attn.k_weight());
+  CopyTensorData(deeptiny::Tensor::FromVector(identity, weight_shape,
+                                              deeptiny::Device::CPU, true),
+                 attn.v_weight());
+  CopyTensorData(deeptiny::Tensor::FromVector(identity, weight_shape,
+                                              deeptiny::Device::CPU, true),
+                 attn.o_weight());
+}
+
 }  // namespace
 
 TEST_CASE("nn::MultiHeadAttention constructor and shape guards") {
@@ -166,6 +189,30 @@ TEST_CASE("nn::MultiHeadAttention RoPE and masking behavior") {
     const float token0 = out[0];
     const float token1 = out[4];
     CHECK(token0 != deeptiny::test_utils::Approx(token1, 1e-4));
+  }
+
+  SUBCASE("RoPE interleaving mode affects rotary output semantics") {
+    deeptiny::nn::MultiHeadAttention non_interleaved(
+        4, 1, 1, false, false, 10000.0f, deeptiny::Device::CPU, false);
+    deeptiny::nn::MultiHeadAttention interleaved(
+        4, 1, 1, false, false, 10000.0f, deeptiny::Device::CPU, true);
+    InstallIdentityProjectionWeights(non_interleaved);
+    InstallIdentityProjectionWeights(interleaved);
+
+    auto x = MakeTensor({1, 2, 4}, {1.0f, 0.0f, 0.0f, 0.0f,  //
+                                    0.0f, 0.0f, 1.0f, 0.0f});
+    const auto out_non_interleaved = ToVector(non_interleaved(x));
+    const auto out_interleaved = ToVector(interleaved(x));
+    REQUIRE(out_non_interleaved.size() == out_interleaved.size());
+
+    bool any_diff = false;
+    for (size_t i = 0; i < out_non_interleaved.size(); ++i) {
+      if (std::abs(out_non_interleaved[i] - out_interleaved[i]) > 1.0e-4f) {
+        any_diff = true;
+        break;
+      }
+    }
+    CHECK(any_diff);
   }
 
   SUBCASE("Causal mask blocks future token influence") {

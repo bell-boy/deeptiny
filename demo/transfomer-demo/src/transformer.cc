@@ -193,14 +193,18 @@ void Transformer::TokenStream::Join() {
 Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
                          uint64_t intermediate_size, uint64_t num_blocks,
                          uint64_t num_attention_heads,
-                         uint64_t num_key_value_heads, deeptiny::Device device,
+                         uint64_t num_key_value_heads, bool attention_bias,
+                         bool mlp_bias, float rope_theta, float norm_eps,
+                         bool use_cache, bool rope_interleaved,
+                         deeptiny::Device device,
                          deeptiny::nn::GatedMLP::HiddenAct mlp_hidden_act)
     : head_dim_(ValidateNonZero("hidden_size", hidden_size) /
                 ValidateNonZero("num_attention_heads", num_attention_heads)),
+      use_cache_(use_cache),
       embed_(ValidateNonZero("vocab_size", vocab_size),
              ValidateNonZero("hidden_size", hidden_size),
              deeptiny::DType::Float32, device, true),
-      norm_(hidden_size, 1.0e-5f, device) {
+      norm_(hidden_size, norm_eps, device) {
   ValidateNonZero("intermediate_size", intermediate_size);
   ValidateNonZero("num_blocks", num_blocks);
   ValidateNonZero("num_key_value_heads", num_key_value_heads);
@@ -208,15 +212,19 @@ Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
   RegisterSubmodule(embed_);
 
   blocks_.reserve(static_cast<size_t>(num_blocks));
-  kv_caches_.reserve(static_cast<size_t>(num_blocks));
+  if (use_cache_) {
+    kv_caches_.reserve(static_cast<size_t>(num_blocks));
+  }
   for (uint64_t i = 0; i < num_blocks; ++i) {
     blocks_.push_back(std::make_unique<deeptiny::nn::TransformerBlock>(
         hidden_size, intermediate_size, num_attention_heads,
-        num_key_value_heads, false, true, true, 10000.0f, 1.0e-5f, device,
-        mlp_hidden_act));
+        num_key_value_heads, attention_bias, mlp_bias, true, rope_theta,
+        norm_eps, device, mlp_hidden_act, rope_interleaved));
     RegisterSubmodule(*blocks_.back());
-    kv_caches_.push_back(std::make_unique<deeptiny::nn::KVCache>(
-        /*batch_size=*/1, num_key_value_heads, head_dim_));
+    if (use_cache_) {
+      kv_caches_.push_back(std::make_unique<deeptiny::nn::KVCache>(
+          /*batch_size=*/1, num_key_value_heads, head_dim_));
+    }
   }
 
   RegisterSubmodule(norm_);
@@ -304,12 +312,17 @@ void Transformer::GenerateWithCallback(
     rng = &local_rng;
   }
 
-  ResetKVCache();
-
-  const deeptiny::Shape prompt_shape{
-      1, static_cast<uint64_t>(prompt_tokens.size())};
-  deeptiny::Tensor hidden_states =
-      ForwardChunkWithCache(prompt_tokens, prompt_shape, /*position_offset=*/0);
+  deeptiny::Tensor hidden_states;
+  std::vector<int64_t> full_sequence = prompt_tokens;
+  if (use_cache_) {
+    ResetKVCache();
+    const deeptiny::Shape prompt_shape{
+        1, static_cast<uint64_t>(prompt_tokens.size())};
+    hidden_states = ForwardChunkWithCache(prompt_tokens, prompt_shape,
+                                          /*position_offset=*/0);
+  } else {
+    hidden_states = (*this)({prompt_tokens});
+  }
   deeptiny::Tensor logits = ComputeNextTokenLogitsFromHidden(hidden_states);
 
   for (uint64_t step = 0; step < options.max_new_tokens; ++step) {
@@ -327,10 +340,15 @@ void Transformer::GenerateWithCallback(
       break;
     }
 
-    const uint64_t position_offset = kv_caches_.front()->seq_len();
-    const std::vector<int64_t> step_tokens{next_token_i64};
-    hidden_states = ForwardChunkWithCache(step_tokens, deeptiny::Shape{1, 1},
-                                          position_offset);
+    if (use_cache_) {
+      const uint64_t position_offset = kv_caches_.front()->seq_len();
+      const std::vector<int64_t> step_tokens{next_token_i64};
+      hidden_states = ForwardChunkWithCache(step_tokens, deeptiny::Shape{1, 1},
+                                            position_offset);
+    } else {
+      full_sequence.push_back(next_token_i64);
+      hidden_states = (*this)({full_sequence});
+    }
     logits = ComputeNextTokenLogitsFromHidden(hidden_states);
   }
 }
@@ -362,6 +380,9 @@ deeptiny::nn::RMSNorm& Transformer::norm() { return norm_; }
 const deeptiny::nn::RMSNorm& Transformer::norm() const { return norm_; }
 
 void Transformer::ResetKVCache() const {
+  if (!use_cache_) {
+    return;
+  }
   for (const auto& cache : kv_caches_) {
     cache->Clear();
   }
@@ -370,6 +391,10 @@ void Transformer::ResetKVCache() const {
 deeptiny::Tensor Transformer::ForwardChunkWithCache(
     const std::vector<int64_t>& flat_tokens, const deeptiny::Shape& token_shape,
     uint64_t position_offset) const {
+  if (!use_cache_) {
+    throw std::runtime_error(
+        "ForwardChunkWithCache requires Transformer use_cache=true.");
+  }
   deeptiny::Tensor hidden_states = embed_(flat_tokens, token_shape);
   for (size_t i = 0; i < blocks_.size(); ++i) {
     hidden_states = (*blocks_[i])(hidden_states, std::nullopt, position_offset,
