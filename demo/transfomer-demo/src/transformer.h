@@ -1,9 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <random>
+#include <thread>
 #include <vector>
 
 #include "deeptiny/nn/embedding.h"
@@ -18,6 +21,28 @@ namespace transfomer_demo {
 
 class Transformer : public deeptiny::nn::Module {
  public:
+  class TokenStream {
+   public:
+    TokenStream(const TokenStream&) = delete;
+    TokenStream& operator=(const TokenStream&) = delete;
+    TokenStream(TokenStream&& other) noexcept;
+    TokenStream& operator=(TokenStream&& other) noexcept;
+    ~TokenStream();
+
+    bool WaitNext(int64_t* token);
+    void Join();
+
+   private:
+    struct SharedState;
+
+    TokenStream(std::thread worker, std::shared_ptr<SharedState> shared_state);
+
+    std::thread worker_;
+    std::shared_ptr<SharedState> shared_state_;
+
+    friend class Transformer;
+  };
+
   struct GenerationOptions {
     explicit GenerationOptions(
         uint64_t max_new_tokens = 64, float temperature = 0.8f,
@@ -44,6 +69,10 @@ class Transformer : public deeptiny::nn::Module {
       const std::vector<int64_t>& prompt_tokens,
       const GenerationOptions& options = GenerationOptions(),
       std::mt19937* rng = nullptr) const;
+  TokenStream GenerateAsync(
+      const std::vector<int64_t>& prompt_tokens,
+      const GenerationOptions& options = GenerationOptions(),
+      std::optional<uint64_t> seed = std::nullopt) const;
 
   uint64_t num_blocks() const;
 
@@ -61,11 +90,15 @@ class Transformer : public deeptiny::nn::Module {
       const deeptiny::Shape& token_shape, uint64_t position_offset) const;
   deeptiny::Tensor ComputeNextTokenLogitsFromHidden(
       const deeptiny::Tensor& hidden_states) const;
+  void GenerateWithCallback(const std::vector<int64_t>& prompt_tokens,
+                            const GenerationOptions& options, std::mt19937* rng,
+                            const std::function<void(int64_t)>& on_token) const;
 
   uint64_t head_dim_;
   deeptiny::nn::Embedding embed_;
   std::vector<std::unique_ptr<deeptiny::nn::TransformerBlock>> blocks_;
   mutable std::vector<std::unique_ptr<deeptiny::nn::KVCache>> kv_caches_;
+  mutable std::mutex generation_mutex_;
   deeptiny::nn::RMSNorm norm_;
 };
 
