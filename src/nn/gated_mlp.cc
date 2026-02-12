@@ -1,12 +1,12 @@
-#include "deeptiny/nn/gated_relu.h"
+#include "deeptiny/nn/gated_mlp.h"
 
 #include "deeptiny/functional.h"
 #include "deeptiny/math.h"
 
 namespace deeptiny::nn {
 
-GatedReLU::GatedReLU(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
-                     bool bias, Device device, HiddenAct hidden_act)
+GatedMLP::GatedMLP(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
+                   bool bias, Device device, HiddenAct hidden_act)
     : hidden_act_(hidden_act),
       gate_proj_(in_dim, hidden_dim, bias, device),
       up_proj_(in_dim, hidden_dim, bias, device),
@@ -16,7 +16,7 @@ GatedReLU::GatedReLU(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
   RegisterSubmodule(down_proj_);
 }
 
-Tensor GatedReLU::operator()(const Tensor& x) const {
+Tensor GatedMLP::operator()(const Tensor& x) const {
   Tensor gate_input = gate_proj_(x);
   Tensor gated = gate_input;
   switch (hidden_act_) {
@@ -32,16 +32,16 @@ Tensor GatedReLU::operator()(const Tensor& x) const {
   return down_proj_(hidden);
 }
 
-Linear& GatedReLU::gate_proj() { return gate_proj_; }
+Linear& GatedMLP::gate_proj() { return gate_proj_; }
 
-const Linear& GatedReLU::gate_proj() const { return gate_proj_; }
+const Linear& GatedMLP::gate_proj() const { return gate_proj_; }
 
-Linear& GatedReLU::up_proj() { return up_proj_; }
+Linear& GatedMLP::up_proj() { return up_proj_; }
 
-const Linear& GatedReLU::up_proj() const { return up_proj_; }
+const Linear& GatedMLP::up_proj() const { return up_proj_; }
 
-Linear& GatedReLU::down_proj() { return down_proj_; }
+Linear& GatedMLP::down_proj() { return down_proj_; }
 
-const Linear& GatedReLU::down_proj() const { return down_proj_; }
+const Linear& GatedMLP::down_proj() const { return down_proj_; }
 
 }  // namespace deeptiny::nn

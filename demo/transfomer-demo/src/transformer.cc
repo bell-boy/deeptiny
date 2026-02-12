@@ -123,7 +123,7 @@ Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
                          uint64_t intermediate_size, uint64_t num_blocks,
                          uint64_t num_attention_heads,
                          uint64_t num_key_value_heads, deeptiny::Device device,
-                         deeptiny::nn::HiddenAct mlp_hidden_act)
+                         deeptiny::nn::GatedMLP::HiddenAct mlp_hidden_act)
     : head_dim_(ValidateNonZero("hidden_size", hidden_size) /
                 ValidateNonZero("num_attention_heads", num_attention_heads)),
       embed_(ValidateNonZero("vocab_size", vocab_size),

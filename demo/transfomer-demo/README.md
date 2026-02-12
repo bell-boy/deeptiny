@@ -6,7 +6,7 @@ The demo also uses the `tokenizers-cpp` git submodule at
 
 This demo uses `deeptiny::nn` modules from the main library:
 
-- `Embedding`, `MultiHeadAttention`, `GatedReLU`, and `RMSNorm`
+- `Embedding`, `MultiHeadAttention`, `GatedMLP`, and `RMSNorm`
 - `nn::TransformerBlock` for repeated hidden-state updates
 - demo-local `Transformer` module with pipeline: `embed -> transformer_block * N -> norm`
 - demo-local `Transformer::Generate(...)` for autoregressive completion

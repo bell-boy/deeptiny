@@ -229,7 +229,7 @@ TEST_CASE("nn::TransformerBlock supports SiLU MLP hidden activation") {
       /*is_causal=*/false,
       /*rope_theta=*/10000.0f,
       /*norm_eps=*/1.0e-5f, deeptiny::Device::CPU,
-      deeptiny::nn::HiddenAct::SiLU);
+      deeptiny::nn::GatedMLP::HiddenAct::SiLU);
   auto x = MakeTensor({1, 2, 4},
                       {0.1f, -0.2f, 0.3f, -0.4f,  //
                        0.5f, -0.6f, 0.7f, -0.8f},

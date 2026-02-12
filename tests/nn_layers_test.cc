@@ -5,7 +5,7 @@
 
 #include "deeptiny/functional.h"
 #include "deeptiny/nn/embedding.h"
-#include "deeptiny/nn/gated_relu.h"
+#include "deeptiny/nn/gated_mlp.h"
 #include "deeptiny/nn/linear.h"
 #include "deeptiny/nn/rms_norm.h"
 #include "doctest/doctest.h"
@@ -103,8 +103,8 @@ TEST_CASE("nn::Embedding contract and backward accumulation") {
   }
 }
 
-TEST_CASE("nn::GatedReLU forward/backward smoke") {
-  deeptiny::nn::GatedReLU mlp(/*in_dim=*/4, /*hidden_dim=*/8, /*out_dim=*/4);
+TEST_CASE("nn::GatedMLP forward/backward smoke") {
+  deeptiny::nn::GatedMLP mlp(/*in_dim=*/4, /*hidden_dim=*/8, /*out_dim=*/4);
   auto x = MakeTensor({2, 3, 4}, std::vector<float>(24, 0.25f), true);
   auto y = mlp(x);
   CHECK(y.shape() == deeptiny::Shape({2, 3, 4}));
@@ -114,10 +114,10 @@ TEST_CASE("nn::GatedReLU forward/backward smoke") {
   CHECK(x.grad().has_value());
 }
 
-TEST_CASE("nn::GatedReLU SiLU forward/backward smoke") {
-  deeptiny::nn::GatedReLU mlp(/*in_dim=*/4, /*hidden_dim=*/8, /*out_dim=*/4,
-                              /*bias=*/true, deeptiny::Device::CPU,
-                              deeptiny::nn::HiddenAct::SiLU);
+TEST_CASE("nn::GatedMLP SiLU forward/backward smoke") {
+  deeptiny::nn::GatedMLP mlp(
+      /*in_dim=*/4, /*hidden_dim=*/8, /*out_dim=*/4, /*bias=*/true,
+      deeptiny::Device::CPU, deeptiny::nn::GatedMLP::HiddenAct::SiLU);
   auto x = MakeTensor({2, 3, 4}, std::vector<float>(24, 0.25f), true);
   auto y = mlp(x);
   CHECK(y.shape() == deeptiny::Shape({2, 3, 4}));
@@ -127,13 +127,14 @@ TEST_CASE("nn::GatedReLU SiLU forward/backward smoke") {
   CHECK(x.grad().has_value());
 }
 
-TEST_CASE("nn::GatedReLU hidden_act controls negative gate behavior") {
-  deeptiny::nn::GatedReLU relu_mlp(/*in_dim=*/1, /*hidden_dim=*/1,
-                                   /*out_dim=*/1,
-                                   /*bias=*/false);
-  deeptiny::nn::GatedReLU silu_mlp(
+TEST_CASE("nn::GatedMLP hidden_act controls negative gate behavior") {
+  deeptiny::nn::GatedMLP relu_mlp(/*in_dim=*/1, /*hidden_dim=*/1,
+                                  /*out_dim=*/1,
+                                  /*bias=*/false);
+  deeptiny::nn::GatedMLP silu_mlp(
       /*in_dim=*/1, /*hidden_dim=*/1, /*out_dim=*/1,
-      /*bias=*/false, deeptiny::Device::CPU, deeptiny::nn::HiddenAct::SiLU);
+      /*bias=*/false, deeptiny::Device::CPU,
+      deeptiny::nn::GatedMLP::HiddenAct::SiLU);
   const auto one_weight = deeptiny::Tensor::FromVector(
       std::vector<float>{1.0f}, deeptiny::Shape{1, 1, 1}, deeptiny::Device::CPU,
       true);

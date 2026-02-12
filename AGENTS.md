@@ -40,8 +40,8 @@
 - Avoid mutable reference accessors for trainable tensors; expose non-const/const value tensor accessors (no dedicated parameter setters) so parameter handles remain usable without replacing registered tensor objects.
 - Keep attention module wiring explicit: `nn::MultiHeadAttention` should take constructor parameters directly (no config object), apply internal RoPE from `position_offset`, use additive masks, and keep dropout/KV-cache out of scope unless explicitly requested.
 - When KV cache support is enabled, keep cache tensors as 4D `[batch, num_key_value_heads, seq_len, head_dim]`, treat cache mode as inference-only, and preserve cache-free defaults via `kv_cache=nullptr`.
-- Keep `nn::TransformerBlock` as a pre-norm residual block (`RMSNorm -> MultiHeadAttention -> residual -> RMSNorm -> GatedReLU -> residual`) and forward additive mask + `position_offset` straight through to attention.
-- Keep MLP hidden activation typed via `nn::HiddenAct` with `ReLU` default, and map demo/config activation strings explicitly (`relu` / `silu`) with strict validation.
+- Keep `nn::TransformerBlock` as a pre-norm residual block (`RMSNorm -> MultiHeadAttention -> residual -> RMSNorm -> GatedMLP -> residual`) and forward additive mask + `position_offset` straight through to attention.
+- Keep MLP hidden activation typed via `nn::GatedMLP::HiddenAct` with `ReLU` default, and map demo/config activation strings explicitly (`relu` / `silu`) with strict validation.
 - Keep softmax as a public functional op (`functional::Softmax(x, dim)`) with kernel/dispatch implementation and explicit backward.
 - Keep slice semantics explicit: `Tensor::operator()` returns `TensorSliceProxy` for mutable slicing and a read `Tensor` via conversion, and slice assignment autograd must be owned by the destination tensor metadata (not a temporary slice object).
 - Keep CMake presets split by intent: `dev` for debug/testing, and `release` for optimized builds with `DEEPTINY_BUILD_TESTS=OFF` (output in `build/release`).
