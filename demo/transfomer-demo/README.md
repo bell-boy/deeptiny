@@ -73,7 +73,7 @@ Optional generation args:
 
 The demo runs a simple CLI chat loop:
 
-- input line is tokenized
+- chat history is formatted with the SmolLM chat template, then tokenized
 - `Transformer::GenerateAsync(...)` runs autoregressive token generation on a
   background thread
 - decoded output text is printed incrementally as tokens are produced
