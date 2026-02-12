@@ -9,10 +9,13 @@
 
 namespace deeptiny::nn {
 
+enum class HiddenAct { ReLU, SiLU };
+
 class GatedReLU : public Module {
  public:
   GatedReLU(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
-            bool bias = true, Device device = Device::CPU);
+            bool bias = true, Device device = Device::CPU,
+            HiddenAct hidden_act = HiddenAct::ReLU);
 
   Tensor operator()(const Tensor& x) const;
 
@@ -24,6 +27,7 @@ class GatedReLU : public Module {
   const Linear& down_proj() const;
 
  private:
+  HiddenAct hidden_act_;
   Linear gate_proj_;
   Linear up_proj_;
   Linear down_proj_;

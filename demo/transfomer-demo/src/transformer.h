@@ -31,10 +31,12 @@ class Transformer : public deeptiny::nn::Module {
     std::optional<uint64_t> eos_token_id;
   };
 
-  Transformer(uint64_t vocab_size, uint64_t hidden_size,
-              uint64_t intermediate_size, uint64_t num_blocks,
-              uint64_t num_attention_heads, uint64_t num_key_value_heads,
-              deeptiny::Device device = deeptiny::Device::CPU);
+  Transformer(
+      uint64_t vocab_size, uint64_t hidden_size, uint64_t intermediate_size,
+      uint64_t num_blocks, uint64_t num_attention_heads,
+      uint64_t num_key_value_heads,
+      deeptiny::Device device = deeptiny::Device::CPU,
+      deeptiny::nn::HiddenAct mlp_hidden_act = deeptiny::nn::HiddenAct::ReLU);
 
   deeptiny::Tensor operator()(
       const std::vector<std::vector<int64_t>>& tokens) const;

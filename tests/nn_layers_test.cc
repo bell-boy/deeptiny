@@ -114,6 +114,47 @@ TEST_CASE("nn::GatedReLU forward/backward smoke") {
   CHECK(x.grad().has_value());
 }
 
+TEST_CASE("nn::GatedReLU SiLU forward/backward smoke") {
+  deeptiny::nn::GatedReLU mlp(/*in_dim=*/4, /*hidden_dim=*/8, /*out_dim=*/4,
+                              /*bias=*/true, deeptiny::Device::CPU,
+                              deeptiny::nn::HiddenAct::SiLU);
+  auto x = MakeTensor({2, 3, 4}, std::vector<float>(24, 0.25f), true);
+  auto y = mlp(x);
+  CHECK(y.shape() == deeptiny::Shape({2, 3, 4}));
+
+  auto loss = deeptiny::functional::Reduce(y, {0, 1, 2});
+  loss.Backward();
+  CHECK(x.grad().has_value());
+}
+
+TEST_CASE("nn::GatedReLU hidden_act controls negative gate behavior") {
+  deeptiny::nn::GatedReLU relu_mlp(/*in_dim=*/1, /*hidden_dim=*/1,
+                                   /*out_dim=*/1,
+                                   /*bias=*/false);
+  deeptiny::nn::GatedReLU silu_mlp(
+      /*in_dim=*/1, /*hidden_dim=*/1, /*out_dim=*/1,
+      /*bias=*/false, deeptiny::Device::CPU, deeptiny::nn::HiddenAct::SiLU);
+  const auto one_weight = deeptiny::Tensor::FromVector(
+      std::vector<float>{1.0f}, deeptiny::Shape{1, 1, 1}, deeptiny::Device::CPU,
+      true);
+  CopyTensorData(one_weight, relu_mlp.gate_proj().weight());
+  CopyTensorData(one_weight, relu_mlp.up_proj().weight());
+  CopyTensorData(one_weight, relu_mlp.down_proj().weight());
+  CopyTensorData(one_weight, silu_mlp.gate_proj().weight());
+  CopyTensorData(one_weight, silu_mlp.up_proj().weight());
+  CopyTensorData(one_weight, silu_mlp.down_proj().weight());
+
+  const auto x = MakeTensor({1, 1, 1}, {-1.0f});
+  const auto relu_out = relu_mlp(x);
+  const auto silu_out = silu_mlp(x);
+  const auto relu_values = ToVector(relu_out);
+  const auto silu_values = ToVector(silu_out);
+  REQUIRE(relu_values.size() == 1);
+  REQUIRE(silu_values.size() == 1);
+  CHECK(relu_values[0] == deeptiny::test_utils::Approx(0.0f));
+  CHECK(silu_values[0] == deeptiny::test_utils::Approx(0.26894143f));
+}
+
 TEST_CASE("nn::RMSNorm forward/backward") {
   deeptiny::nn::RMSNorm norm(/*dim=*/2, /*eps=*/0.0f);
   auto x = MakeTensor({2, 2}, {3.0f, 4.0f, 6.0f, 8.0f}, true);

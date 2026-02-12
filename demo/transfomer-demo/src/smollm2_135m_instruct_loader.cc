@@ -141,6 +141,17 @@ bool FileExistsAndNonEmpty(const std::filesystem::path& path) {
   return std::filesystem::file_size(path) > 0;
 }
 
+deeptiny::nn::HiddenAct ParseHiddenAct(const std::string& hidden_act) {
+  if (hidden_act == "relu") {
+    return deeptiny::nn::HiddenAct::ReLU;
+  }
+  if (hidden_act == "silu") {
+    return deeptiny::nn::HiddenAct::SiLU;
+  }
+  throw std::runtime_error(
+      "SmolLM2 config hidden_act must be one of: relu, silu");
+}
+
 void DownloadUrlToPath(const std::string& url,
                        const std::filesystem::path& destination) {
   if (FileExistsAndNonEmpty(destination)) {
@@ -223,6 +234,7 @@ void ValidateConfig(const Config& config) {
   if (!(config.rope_theta > 0.0f)) {
     throw std::runtime_error("SmolLM2 config rope_theta must be > 0");
   }
+  ParseHiddenAct(config.hidden_act);
 }
 
 void AddWeight(std::vector<WeightSpec>* specs, std::string hf_name,
@@ -706,10 +718,11 @@ std::vector<WeightSpec> BuildWeightSpecs(const Config& config) {
 std::unique_ptr<transfomer_demo::Transformer>
 CreateSmolLM2_135M_InstructTransformerUninitialized(const Config& config) {
   ValidateConfig(config);
+  const deeptiny::nn::HiddenAct hidden_act = ParseHiddenAct(config.hidden_act);
   return std::make_unique<transfomer_demo::Transformer>(
       config.vocab_size, config.hidden_size, config.intermediate_size,
       config.num_hidden_layers, config.num_attention_heads,
-      config.num_key_value_heads, deeptiny::Device::CPU);
+      config.num_key_value_heads, deeptiny::Device::CPU, hidden_act);
 }
 
 std::unique_ptr<transfomer_demo::Transformer>

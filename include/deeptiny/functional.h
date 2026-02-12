@@ -17,6 +17,10 @@ Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
  */
 Tensor ReLU(const Tensor& x);
 /**
+ * Element-wise SiLU activation.
+ */
+Tensor SiLU(const Tensor& x);
+/**
  * Softmax along a single dimension.
  */
 Tensor Softmax(const Tensor& x, uint64_t dim);
