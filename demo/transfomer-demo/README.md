@@ -76,8 +76,7 @@ The demo runs a simple CLI chat loop:
 - input line is tokenized
 - `Transformer::GenerateAsync(...)` runs autoregressive token generation on a
   background thread
-- generated token IDs are printed as soon as they are produced, then decoded
-  and printed as text
+- decoded output text is printed incrementally as tokens are produced
 
 If `tokenizer.json` is missing in your provided model directory, the demo
 downloads `tokenizer.json` into `model_files/` under the current working

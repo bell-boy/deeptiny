@@ -57,27 +57,17 @@ std::string ReadAllBytes(const std::filesystem::path& path) {
   return bytes;
 }
 
-std::vector<int32_t> ToInt32Tokens(const std::vector<int64_t>& tokens,
-                                   const char* name) {
-  std::vector<int32_t> out;
-  out.reserve(tokens.size());
-  for (const int64_t token : tokens) {
-    if (token < std::numeric_limits<int32_t>::min() ||
-        token > std::numeric_limits<int32_t>::max()) {
-      throw std::runtime_error(std::string("Token id out of int32 range in ") +
-                               name);
-    }
-    out.push_back(static_cast<int32_t>(token));
+void PrintDecodedIncrement(const std::string& decoded, std::string* emitted) {
+  if (emitted == nullptr) {
+    throw std::runtime_error("PrintDecodedIncrement requires output state.");
   }
-  return out;
-}
-
-void PrintTokenIds(const char* label, const std::vector<int64_t>& ids) {
-  std::cout << label << ":";
-  for (const int64_t id : ids) {
-    std::cout << " " << id;
+  if (decoded.size() >= emitted->size() &&
+      decoded.compare(0, emitted->size(), *emitted) == 0) {
+    std::cout << decoded.substr(emitted->size()) << std::flush;
+  } else {
+    std::cout << decoded << std::flush;
   }
-  std::cout << "\n";
+  *emitted = decoded;
 }
 
 #ifdef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
@@ -102,30 +92,28 @@ void RunChatLoop(transfomer_demo::Transformer* model,
     std::vector<int64_t> encoded_prompt(encoded_prompt_i32.begin(),
                                         encoded_prompt_i32.end());
     if (encoded_prompt.empty()) {
-      std::cout << "out_ids:\n";
       std::cout << "out_text:\n";
       continue;
     }
 
-    PrintTokenIds("in_ids", encoded_prompt);
-
-    std::vector<int64_t> generated;
-    generated.reserve(static_cast<size_t>(options.max_new_tokens));
-
     auto token_stream = model->GenerateAsync(encoded_prompt, options);
-    std::cout << "out_ids:" << std::flush;
+    std::cout << "out_text: " << std::flush;
+    std::vector<int32_t> generated_i32;
+    generated_i32.reserve(static_cast<size_t>(options.max_new_tokens));
+    std::string emitted;
+
     int64_t token = 0;
     while (token_stream.WaitNext(&token)) {
-      generated.push_back(token);
-      std::cout << " " << token << std::flush;
+      if (token < std::numeric_limits<int32_t>::min() ||
+          token > std::numeric_limits<int32_t>::max()) {
+        throw std::runtime_error("Token id out of int32 range in generated");
+      }
+      generated_i32.push_back(static_cast<int32_t>(token));
+      const std::string decoded = tokenizer->Decode(generated_i32);
+      PrintDecodedIncrement(decoded, &emitted);
     }
     token_stream.Join();
     std::cout << "\n";
-
-    const std::vector<int32_t> generated_i32 =
-        ToInt32Tokens(generated, "generated");
-
-    std::cout << "out_text: " << tokenizer->Decode(generated_i32) << "\n";
   }
 }
 #endif
