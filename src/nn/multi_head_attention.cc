@@ -11,6 +11,7 @@
 
 #include "deeptiny/functional.h"
 #include "deeptiny/math.h"
+#include "deeptiny/nn/kv_cache.h"
 #include "nn/validation.h"
 #include "utils.h"
 
@@ -44,21 +45,28 @@ Tensor Scalar(float value, Device device) {
                                    false);
 }
 
-Tensor MakeCausalMask(uint64_t seq_len, Device device, DType dtype) {
+Tensor MakeCausalMask(uint64_t query_len, uint64_t key_len,
+                      uint64_t query_position_offset,
+                      uint64_t key_position_offset, Device device,
+                      DType dtype) {
   if (dtype != DType::Float32) {
     throw std::runtime_error(
         "MultiHeadAttention causal mask supports only Float32");
   }
 
-  std::vector<float> values(static_cast<size_t>(seq_len * seq_len), 0.0f);
+  std::vector<float> values(static_cast<size_t>(query_len * key_len), 0.0f);
   constexpr float kBlockedValue = -1.0e9f;
-  for (uint64_t q = 0; q < seq_len; ++q) {
-    for (uint64_t k = q + 1; k < seq_len; ++k) {
-      values[static_cast<size_t>(q * seq_len + k)] = kBlockedValue;
+  for (uint64_t q = 0; q < query_len; ++q) {
+    const uint64_t query_abs_pos = query_position_offset + q;
+    for (uint64_t k = 0; k < key_len; ++k) {
+      const uint64_t key_abs_pos = key_position_offset + k;
+      if (key_abs_pos > query_abs_pos) {
+        values[static_cast<size_t>(q * key_len + k)] = kBlockedValue;
+      }
     }
   }
 
-  return Tensor::FromVector(values, Shape{1, 1, seq_len, seq_len}, device,
+  return Tensor::FromVector(values, Shape{1, 1, query_len, key_len}, device,
                             false);
 }
 
@@ -114,6 +122,44 @@ Tensor ApplyRoPE(const Tensor& x, const Tensor& rotations) {
   Tensor x_6d = x_view.Reshape(shape_6d);
   Tensor rotated_6d = math::BatchedMatMul(x_6d, rotations);
   return rotated_6d.Reshape(shape);
+}
+
+Tensor MakeGroupedQueryView(const Tensor& q, uint64_t num_key_value_heads,
+                            uint64_t num_key_value_groups) {
+  const auto& shape = q.shape();
+  if (shape.size() != 4) {
+    throw std::runtime_error("Query tensor must be rank-4");
+  }
+  if (shape[1] != num_key_value_heads * num_key_value_groups) {
+    throw std::runtime_error(
+        "Query tensor head dimension does not match grouped attention layout");
+  }
+  auto q_impl = utils::TensorAccessor::GetTensorImpl(q);
+  const auto& stride = q_impl->stride();
+  Stride grouped_stride{
+      stride[0], stride[1] * static_cast<int64_t>(num_key_value_groups),
+      stride[1], stride[2],
+      stride[3],
+  };
+  return utils::TensorAccessor::MakeTensor(
+      q_impl->View(Shape{shape[0], num_key_value_heads, num_key_value_groups,
+                         shape[2], shape[3]},
+                   std::move(grouped_stride), q_impl->offset()),
+      nullptr);
+}
+
+Tensor MakeGroupedKeyValueView(const Tensor& kv) {
+  const auto& shape = kv.shape();
+  if (shape.size() != 4) {
+    throw std::runtime_error("Key/value tensor must be rank-4");
+  }
+  auto kv_impl = utils::TensorAccessor::GetTensorImpl(kv);
+  const auto& stride = kv_impl->stride();
+  Stride grouped_stride{stride[0], stride[1], 0, stride[2], stride[3]};
+  return utils::TensorAccessor::MakeTensor(
+      kv_impl->View(Shape{shape[0], shape[1], 1, shape[2], shape[3]},
+                    std::move(grouped_stride), kv_impl->offset()),
+      nullptr);
 }
 
 }  // namespace
@@ -172,7 +218,8 @@ MultiHeadAttention::MultiHeadAttention(uint64_t hidden_size,
 
 Tensor MultiHeadAttention::operator()(const Tensor& hidden_states,
                                       std::optional<Tensor> attention_mask,
-                                      uint64_t position_offset) const {
+                                      uint64_t position_offset,
+                                      KVCache* kv_cache) const {
   const auto& input_shape = hidden_states.shape();
   if (input_shape.size() != 3) {
     throw std::runtime_error("MultiHeadAttention expects input rank == 3");
@@ -186,10 +233,10 @@ Tensor MultiHeadAttention::operator()(const Tensor& hidden_states,
       {hidden_states, q_weight_, k_weight_, v_weight_, o_weight_});
 
   const uint64_t batch_size = input_shape[0];
-  const uint64_t seq_len = input_shape[1];
+  const uint64_t query_len = input_shape[1];
 
   Tensor hidden_view = hidden_states;
-  Tensor x_4d = hidden_view.Reshape({batch_size, 1, seq_len, hidden_size_});
+  Tensor x_4d = hidden_view.Reshape({batch_size, 1, query_len, hidden_size_});
   Tensor q = math::BatchedMatMul(x_4d, q_weight_);
   Tensor k = math::BatchedMatMul(x_4d, k_weight_);
   Tensor v = math::BatchedMatMul(x_4d, v_weight_);
@@ -201,27 +248,68 @@ Tensor MultiHeadAttention::operator()(const Tensor& hidden_states,
   }
 
   Tensor rope_rotations =
-      BuildRoPERotationMatrices(seq_len, head_dim_ / 2, position_offset,
+      BuildRoPERotationMatrices(query_len, head_dim_ / 2, position_offset,
                                 rope_theta_, hidden_states.device());
   q = ApplyRoPE(q, rope_rotations);
   k = ApplyRoPE(k, rope_rotations);
 
-  Tensor q_grouped = q.Reshape({batch_size, num_key_value_heads_,
-                                num_key_value_groups_, seq_len, head_dim_});
-  Tensor k_grouped =
-      k.Reshape({batch_size, num_key_value_heads_, 1, seq_len, head_dim_});
+  Tensor q_grouped;
+  Tensor k_grouped;
+  Tensor v_grouped;
+  uint64_t key_len = query_len;
+  uint64_t key_position_offset = position_offset;
+
+  if (kv_cache == nullptr) {
+    q_grouped = q.Reshape({batch_size, num_key_value_heads_,
+                           num_key_value_groups_, query_len, head_dim_});
+    k_grouped =
+        k.Reshape({batch_size, num_key_value_heads_, 1, query_len, head_dim_});
+    v_grouped =
+        v.Reshape({batch_size, num_key_value_heads_, 1, query_len, head_dim_});
+  } else {
+    if (position_offset != kv_cache->seq_len()) {
+      throw std::runtime_error(
+          "MultiHeadAttention position_offset must match KV cache sequence "
+          "length");
+    }
+    kv_cache->update(k, v);
+    Tensor k_for_attention = kv_cache->keys();
+    Tensor v_for_attention = kv_cache->values();
+    key_position_offset = 0;
+    const auto& key_shape = k_for_attention.shape();
+    const auto& value_shape = v_for_attention.shape();
+    if (key_shape.size() != 4 || value_shape.size() != 4) {
+      throw std::runtime_error(
+          "MultiHeadAttention expects rank-4 key/value tensors");
+    }
+    if (key_shape[0] != batch_size || key_shape[1] != num_key_value_heads_ ||
+        key_shape[3] != head_dim_) {
+      throw std::runtime_error("MultiHeadAttention key shape mismatch");
+    }
+    if (value_shape != key_shape) {
+      throw std::runtime_error(
+          "MultiHeadAttention expects key/value tensors to share shape");
+    }
+    key_len = key_shape[2];
+    q_grouped =
+        MakeGroupedQueryView(q, num_key_value_heads_, num_key_value_groups_);
+    k_grouped = MakeGroupedKeyValueView(k_for_attention);
+    v_grouped = MakeGroupedKeyValueView(v_for_attention);
+  }
 
   Tensor scores_grouped =
       math::BatchedMatMul(q_grouped, k_grouped, false, true);
   Tensor scores = scores_grouped.Reshape(
-      {batch_size, num_attention_heads_, seq_len, seq_len});
+      {batch_size, num_attention_heads_, query_len, key_len});
 
   const float scale = 1.0f / std::sqrt(static_cast<float>(head_dim_));
   scores = scores * Scalar(scale, hidden_states.device());
 
   if (is_causal_) {
-    scores = scores + MakeCausalMask(seq_len, hidden_states.device(),
-                                     hidden_states.dtype());
+    scores =
+        scores + MakeCausalMask(query_len, key_len, position_offset,
+                                key_position_offset, hidden_states.device(),
+                                hidden_states.dtype());
   }
 
   if (attention_mask.has_value()) {
@@ -239,12 +327,10 @@ Tensor MultiHeadAttention::operator()(const Tensor& hidden_states,
   Tensor probs = functional::Softmax(scores, scores.shape().size() - 1);
   Tensor probs_grouped =
       probs.Reshape({batch_size, num_key_value_heads_, num_key_value_groups_,
-                     seq_len, seq_len});
-  Tensor v_grouped =
-      v.Reshape({batch_size, num_key_value_heads_, 1, seq_len, head_dim_});
+                     query_len, key_len});
   Tensor context_grouped = math::BatchedMatMul(probs_grouped, v_grouped);
   Tensor context = context_grouped.Reshape(
-      {batch_size, num_attention_heads_, seq_len, head_dim_});
+      {batch_size, num_attention_heads_, query_len, head_dim_});
 
   Tensor projected = math::BatchedMatMul(context, o_weight_);
   Tensor out = functional::Reduce(projected, {1}, true).Squeeze({1});

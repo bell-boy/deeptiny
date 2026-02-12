@@ -12,6 +12,8 @@
 
 namespace deeptiny::nn {
 
+class KVCache;
+
 class TransformerBlock : public Module {
  public:
   TransformerBlock(uint64_t hidden_size, uint64_t mlp_hidden_dim,
@@ -22,7 +24,8 @@ class TransformerBlock : public Module {
 
   Tensor operator()(const Tensor& hidden_states,
                     std::optional<Tensor> attention_mask = std::nullopt,
-                    uint64_t position_offset = 0) const;
+                    uint64_t position_offset = 0,
+                    KVCache* kv_cache = nullptr) const;
 
   RMSNorm& attention_norm();
   const RMSNorm& attention_norm() const;

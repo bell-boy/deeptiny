@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "deeptiny/autograd.h"
 #include "deeptiny/math.h"
 
 namespace transfomer_demo {
@@ -122,23 +123,27 @@ Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
                          uint64_t intermediate_size, uint64_t num_blocks,
                          uint64_t num_attention_heads,
                          uint64_t num_key_value_heads, deeptiny::Device device)
-    : embed_(ValidateNonZero("vocab_size", vocab_size),
+    : head_dim_(ValidateNonZero("hidden_size", hidden_size) /
+                ValidateNonZero("num_attention_heads", num_attention_heads)),
+      embed_(ValidateNonZero("vocab_size", vocab_size),
              ValidateNonZero("hidden_size", hidden_size),
              deeptiny::DType::Float32, device, true),
       norm_(hidden_size, 1.0e-5f, device) {
   ValidateNonZero("intermediate_size", intermediate_size);
   ValidateNonZero("num_blocks", num_blocks);
-  ValidateNonZero("num_attention_heads", num_attention_heads);
   ValidateNonZero("num_key_value_heads", num_key_value_heads);
 
   RegisterSubmodule(embed_);
 
   blocks_.reserve(static_cast<size_t>(num_blocks));
+  kv_caches_.reserve(static_cast<size_t>(num_blocks));
   for (uint64_t i = 0; i < num_blocks; ++i) {
     blocks_.push_back(std::make_unique<deeptiny::nn::TransformerBlock>(
         hidden_size, intermediate_size, num_attention_heads,
         num_key_value_heads, false, true, true, 10000.0f, 1.0e-5f, device));
     RegisterSubmodule(*blocks_.back());
+    kv_caches_.push_back(std::make_unique<deeptiny::nn::KVCache>(
+        /*batch_size=*/1, num_key_value_heads, head_dim_));
   }
 
   RegisterSubmodule(norm_);
@@ -167,28 +172,44 @@ std::vector<int64_t> Transformer::Generate(
     throw std::runtime_error("Generate temperature must be >= 0.");
   }
 
+  deeptiny::NoGrad no_grad_guard;
+
   std::mt19937 local_rng;
   if (rng == nullptr) {
     local_rng.seed(std::random_device{}());
     rng = &local_rng;
   }
 
-  std::vector<int64_t> context = prompt_tokens;
+  ResetKVCache();
+
+  const deeptiny::Shape prompt_shape{
+      1, static_cast<uint64_t>(prompt_tokens.size())};
+  deeptiny::Tensor hidden_states =
+      ForwardChunkWithCache(prompt_tokens, prompt_shape, /*position_offset=*/0);
+  deeptiny::Tensor logits = ComputeNextTokenLogitsFromHidden(hidden_states);
+
   std::vector<int64_t> generated;
   generated.reserve(static_cast<size_t>(options.max_new_tokens));
 
   for (uint64_t step = 0; step < options.max_new_tokens; ++step) {
-    const deeptiny::Tensor logits = ComputeNextTokenLogits(context);
     const std::vector<float> logits_values = TensorToFloatVector(logits);
     const uint64_t next_token =
         SampleFromLogits(logits_values, options.temperature, rng);
 
-    context.push_back(static_cast<int64_t>(next_token));
     generated.push_back(static_cast<int64_t>(next_token));
     if (options.eos_token_id.has_value() &&
         next_token == *options.eos_token_id) {
       break;
     }
+    if (step + 1 == options.max_new_tokens) {
+      break;
+    }
+
+    const uint64_t position_offset = kv_caches_.front()->seq_len();
+    const std::vector<int64_t> step_tokens{static_cast<int64_t>(next_token)};
+    hidden_states = ForwardChunkWithCache(step_tokens, deeptiny::Shape{1, 1},
+                                          position_offset);
+    logits = ComputeNextTokenLogitsFromHidden(hidden_states);
   }
 
   return generated;
@@ -220,22 +241,36 @@ deeptiny::nn::RMSNorm& Transformer::norm() { return norm_; }
 
 const deeptiny::nn::RMSNorm& Transformer::norm() const { return norm_; }
 
-deeptiny::Tensor Transformer::ComputeNextTokenLogits(
-    const std::vector<int64_t>& tokens) const {
-  if (tokens.empty()) {
-    throw std::runtime_error(
-        "ComputeNextTokenLogits requires non-empty tokens.");
+void Transformer::ResetKVCache() const {
+  for (const auto& cache : kv_caches_) {
+    cache->Clear();
   }
+}
 
-  const deeptiny::Tensor hidden_states = (*this)({tokens});
+deeptiny::Tensor Transformer::ForwardChunkWithCache(
+    const std::vector<int64_t>& flat_tokens, const deeptiny::Shape& token_shape,
+    uint64_t position_offset) const {
+  deeptiny::Tensor hidden_states = embed_(flat_tokens, token_shape);
+  for (size_t i = 0; i < blocks_.size(); ++i) {
+    hidden_states = (*blocks_[i])(hidden_states, std::nullopt, position_offset,
+                                  kv_caches_[i].get());
+  }
+  return norm_(hidden_states);
+}
+
+deeptiny::Tensor Transformer::ComputeNextTokenLogitsFromHidden(
+    const deeptiny::Tensor& hidden_states) const {
   const deeptiny::Shape& hidden_shape = hidden_states.shape();
   if (hidden_shape.size() != 3) {
     throw std::runtime_error(
         "Transformer forward output must have shape [batch, seq, hidden].");
   }
+  if (hidden_shape[0] != 1) {
+    throw std::runtime_error("Transformer generation expects batch size 1.");
+  }
 
   const int64_t last_token_index =
-      static_cast<int64_t>(tokens.size()) - static_cast<int64_t>(1);
+      static_cast<int64_t>(hidden_shape[1]) - static_cast<int64_t>(1);
   const int64_t hidden_size = static_cast<int64_t>(hidden_shape[2]);
   deeptiny::Tensor last_hidden =
       hidden_states({deeptiny::Slice(0, 1),

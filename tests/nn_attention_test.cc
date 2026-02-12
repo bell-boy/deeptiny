@@ -2,7 +2,9 @@
 
 #include <vector>
 
+#include "deeptiny/autograd.h"
 #include "deeptiny/functional.h"
+#include "deeptiny/nn/kv_cache.h"
 #include "deeptiny/nn/multi_head_attention.h"
 #include "doctest/doctest.h"
 #include "test_utils.h"
@@ -198,6 +200,86 @@ TEST_CASE("nn::MultiHeadAttention RoPE and masking behavior") {
     const auto masked_data = ToVector(masked);
     CHECK(unmasked_data[4] > 0.1f);
     CHECK(masked_data[4] == deeptiny::test_utils::Approx(0.0f, 1e-4));
+  }
+}
+
+TEST_CASE("nn::MultiHeadAttention KV cache behavior") {
+  SUBCASE("Cache mode is inference-only") {
+    deeptiny::nn::MultiHeadAttention attn(4, 1, 1, false, true);
+    deeptiny::nn::KVCache cache(/*batch_size=*/1, /*num_key_value_heads=*/1,
+                                /*head_dim=*/4);
+    auto x = MakeTensor({1, 1, 4}, {1.0f, 0.0f, 0.0f, 0.0f});
+    CHECK_THROWS_WITH(attn(x, std::nullopt, 0, &cache),
+                      doctest::Contains("inference-only"));
+  }
+
+  SUBCASE("Chunked cached forward matches full-sequence forward") {
+    deeptiny::nn::MultiHeadAttention attn(4, 1, 1, false, true);
+    InstallRopeProbeWeights(attn);
+    deeptiny::NoGrad no_grad_guard;
+
+    auto x = MakeTensor({1, 4, 4}, {1.0f, 0.0f, 0.0f, 0.0f,  //
+                                    1.0f, 0.0f, 1.0f, 0.0f,  //
+                                    1.0f, 0.0f, 2.0f, 0.0f,  //
+                                    1.0f, 0.0f, 3.0f, 0.0f});
+    auto y_full = attn(x);
+
+    deeptiny::nn::KVCache cache(/*batch_size=*/1, /*num_key_value_heads=*/1,
+                                /*head_dim=*/4);
+    auto x0 = x(
+        {deeptiny::Slice(0, 1), deeptiny::Slice(0, 2), deeptiny::Slice(0, 4)});
+    auto x1 = x(
+        {deeptiny::Slice(0, 1), deeptiny::Slice(2, 4), deeptiny::Slice(0, 4)});
+
+    auto y0 = attn(x0, std::nullopt, /*position_offset=*/0, &cache);
+    auto y1 = attn(x1, std::nullopt, /*position_offset=*/2, &cache);
+    CHECK(cache.seq_len() == 4);
+
+    const auto full = ToVector(y_full);
+    const auto out0 = ToVector(y0);
+    const auto out1 = ToVector(y1);
+    REQUIRE(full.size() == 16);
+    REQUIRE(out0.size() == 8);
+    REQUIRE(out1.size() == 8);
+
+    for (size_t i = 0; i < out0.size(); ++i) {
+      CHECK(out0[i] == deeptiny::test_utils::Approx(full[i], 1e-4));
+    }
+    for (size_t i = 0; i < out1.size(); ++i) {
+      CHECK(out1[i] ==
+            deeptiny::test_utils::Approx(full[out0.size() + i], 1e-4));
+    }
+  }
+
+  SUBCASE("Cache mode supports non-square external masks") {
+    deeptiny::nn::MultiHeadAttention attn(4, 1, 1, false, true);
+    InstallRopeProbeWeights(attn);
+    deeptiny::NoGrad no_grad_guard;
+
+    deeptiny::nn::KVCache cache(/*batch_size=*/1, /*num_key_value_heads=*/1,
+                                /*head_dim=*/4);
+    auto x0 = MakeTensor({1, 2, 4}, {1.0f, 0.0f, 0.0f, 0.0f,  //
+                                     1.0f, 0.0f, 1.0f, 0.0f});
+    auto x1 = MakeTensor({1, 2, 4}, {1.0f, 0.0f, 2.0f, 0.0f,  //
+                                     1.0f, 0.0f, 3.0f, 0.0f});
+    (void)attn(x0, std::nullopt, /*position_offset=*/0, &cache);
+
+    auto mask = MakeTensor({1, 1, 2, 4}, {0.0f, 0.0f, -1.0e9f, -1.0e9f,  //
+                                          0.0f, 0.0f, -1.0e9f, -1.0e9f});
+    auto y = attn(x1, mask, /*position_offset=*/2, &cache);
+    CHECK(y.shape() == deeptiny::Shape({1, 2, 4}));
+  }
+
+  SUBCASE("Cache mode validates position offsets") {
+    deeptiny::nn::MultiHeadAttention attn(4, 1, 1, false, true);
+    deeptiny::NoGrad no_grad_guard;
+    deeptiny::nn::KVCache cache(/*batch_size=*/1, /*num_key_value_heads=*/1,
+                                /*head_dim=*/4);
+    auto x0 = MakeTensor({1, 2, 4}, {1.0f, 0.0f, 0.0f, 0.0f,  //
+                                     1.0f, 0.0f, 1.0f, 0.0f});
+    (void)attn(x0, std::nullopt, /*position_offset=*/0, &cache);
+    CHECK_THROWS_WITH(attn(x0, std::nullopt, /*position_offset=*/1, &cache),
+                      doctest::Contains("position_offset"));
   }
 }
 

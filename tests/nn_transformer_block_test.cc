@@ -2,7 +2,9 @@
 
 #include <vector>
 
+#include "deeptiny/autograd.h"
 #include "deeptiny/functional.h"
+#include "deeptiny/nn/kv_cache.h"
 #include "deeptiny/nn/transformer_block.h"
 #include "doctest/doctest.h"
 #include "test_utils.h"
@@ -168,6 +170,52 @@ TEST_CASE("nn::TransformerBlock forward shape and optional attention args") {
   const auto masked_data = ToVector(y_masked);
   CHECK(unmasked_data[4] > masked_data[4]);
   CHECK(masked_data[4] == deeptiny::test_utils::Approx(1.0f, 1e-4));
+}
+
+TEST_CASE("nn::TransformerBlock KV cache behavior") {
+  deeptiny::nn::TransformerBlock block(
+      /*hidden_size=*/4,
+      /*mlp_hidden_dim=*/8,
+      /*num_attention_heads=*/1,
+      /*num_key_value_heads=*/1,
+      /*attention_bias=*/false,
+      /*mlp_bias=*/false,
+      /*is_causal=*/true);
+  InstallAttentionProbeWeights(block);
+  ZeroFeedForward(block);
+  deeptiny::NoGrad no_grad_guard;
+
+  auto x = MakeTensor({1, 4, 4}, {1.0f, 0.0f, 0.0f, 0.0f,  //
+                                  1.0f, 0.0f, 1.0f, 0.0f,  //
+                                  1.0f, 0.0f, 2.0f, 0.0f,  //
+                                  1.0f, 0.0f, 3.0f, 0.0f});
+  auto y_full = block(x);
+
+  deeptiny::nn::KVCache cache(/*batch_size=*/1, /*num_key_value_heads=*/1,
+                              /*head_dim=*/4);
+  auto x0 =
+      x({deeptiny::Slice(0, 1), deeptiny::Slice(0, 2), deeptiny::Slice(0, 4)});
+  auto x1 =
+      x({deeptiny::Slice(0, 1), deeptiny::Slice(2, 4), deeptiny::Slice(0, 4)});
+  auto y0 = block(x0, std::nullopt, /*position_offset=*/0, &cache);
+  auto y1 = block(x1, std::nullopt, /*position_offset=*/2, &cache);
+
+  const auto full = ToVector(y_full);
+  const auto out0 = ToVector(y0);
+  const auto out1 = ToVector(y1);
+  REQUIRE(full.size() == 16);
+  REQUIRE(out0.size() == 8);
+  REQUIRE(out1.size() == 8);
+
+  for (size_t i = 0; i < out0.size(); ++i) {
+    CHECK(out0[i] == deeptiny::test_utils::Approx(full[i], 1e-4));
+  }
+  for (size_t i = 0; i < out1.size(); ++i) {
+    CHECK(out1[i] == deeptiny::test_utils::Approx(full[out0.size() + i], 1e-4));
+  }
+
+  CHECK_THROWS_WITH(block(x1, std::nullopt, /*position_offset=*/1, &cache),
+                    doctest::Contains("position_offset"));
 }
 
 TEST_CASE("nn::TransformerBlock backward smoke") {
