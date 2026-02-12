@@ -9,7 +9,8 @@ This demo uses `deeptiny::nn` modules from the main library:
 - `Embedding`, `MultiHeadAttention`, `GatedMLP`, and `RMSNorm`
 - `nn::TransformerBlock` for repeated hidden-state updates
 - demo-local `Transformer` module with pipeline: `embed -> transformer_block * N -> norm`
-- demo-local `Transformer::Generate(...)` for autoregressive completion
+- demo-local `Transformer::Generate(...)` / `Transformer::GenerateAsync(...)`
+  for autoregressive completion
 - `Embedding` with PyTorch-style lookup via `Embedding::operator()(indices, shape)`
 - `Embedding::operator()(indices, shape)` expects
   `indices.size() == product(shape)`
@@ -73,8 +74,10 @@ Optional generation args:
 The demo runs a simple CLI chat loop:
 
 - input line is tokenized
-- `Transformer::Generate(...)` runs autoregressive token generation
-- generated token IDs are decoded and printed
+- `Transformer::GenerateAsync(...)` runs autoregressive token generation on a
+  background thread
+- generated token IDs are printed as soon as they are produced, then decoded
+  and printed as text
 
 If `tokenizer.json` is missing in your provided model directory, the demo
 downloads `tokenizer.json` into `model_files/` under the current working

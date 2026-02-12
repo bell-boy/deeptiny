@@ -2,13 +2,19 @@
 
 #include <algorithm>
 #include <cmath>
+#include <condition_variable>
 #include <cstdint>
+#include <deque>
+#include <exception>
+#include <functional>
 #include <limits>
+#include <mutex>
 #include <optional>
 #include <random>
 #include <span>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -119,6 +125,71 @@ uint64_t SampleFromLogits(const std::vector<float>& logits, float temperature,
 
 }  // namespace
 
+struct Transformer::TokenStream::SharedState {
+  std::mutex mutex;
+  std::condition_variable cv;
+  std::deque<int64_t> tokens;
+  bool done = false;
+  std::exception_ptr error = nullptr;
+};
+
+Transformer::TokenStream::TokenStream(std::thread worker,
+                                      std::shared_ptr<SharedState> shared_state)
+    : worker_(std::move(worker)), shared_state_(std::move(shared_state)) {}
+
+Transformer::TokenStream::TokenStream(TokenStream&& other) noexcept
+    : worker_(std::move(other.worker_)),
+      shared_state_(std::move(other.shared_state_)) {}
+
+Transformer::TokenStream& Transformer::TokenStream::operator=(
+    TokenStream&& other) noexcept {
+  if (this == &other) {
+    return *this;
+  }
+  Join();
+  worker_ = std::move(other.worker_);
+  shared_state_ = std::move(other.shared_state_);
+  return *this;
+}
+
+Transformer::TokenStream::~TokenStream() { Join(); }
+
+bool Transformer::TokenStream::WaitNext(int64_t* token) {
+  if (token == nullptr) {
+    throw std::runtime_error("TokenStream::WaitNext requires non-null token.");
+  }
+  if (!shared_state_) {
+    return false;
+  }
+
+  std::exception_ptr error = nullptr;
+  {
+    std::unique_lock lock(shared_state_->mutex);
+    shared_state_->cv.wait(lock, [this] {
+      return !shared_state_->tokens.empty() || shared_state_->done;
+    });
+
+    if (!shared_state_->tokens.empty()) {
+      *token = shared_state_->tokens.front();
+      shared_state_->tokens.pop_front();
+      return true;
+    }
+
+    error = shared_state_->error;
+  }
+
+  if (error != nullptr) {
+    std::rethrow_exception(error);
+  }
+  return false;
+}
+
+void Transformer::TokenStream::Join() {
+  if (worker_.joinable()) {
+    worker_.join();
+  }
+}
+
 Transformer::Transformer(uint64_t vocab_size, uint64_t hidden_size,
                          uint64_t intermediate_size, uint64_t num_blocks,
                          uint64_t num_attention_heads,
@@ -164,6 +235,53 @@ deeptiny::Tensor Transformer::operator()(
 std::vector<int64_t> Transformer::Generate(
     const std::vector<int64_t>& prompt_tokens, const GenerationOptions& options,
     std::mt19937* rng) const {
+  std::vector<int64_t> generated;
+  generated.reserve(static_cast<size_t>(options.max_new_tokens));
+  GenerateWithCallback(
+      prompt_tokens, options, rng,
+      [&generated](int64_t token) { generated.push_back(token); });
+  return generated;
+}
+
+Transformer::TokenStream Transformer::GenerateAsync(
+    const std::vector<int64_t>& prompt_tokens, const GenerationOptions& options,
+    std::optional<uint64_t> seed) const {
+  auto shared_state = std::make_shared<TokenStream::SharedState>();
+  std::thread worker([this, prompt_tokens, options, seed, shared_state]() {
+    std::mt19937 local_rng;
+    if (seed.has_value()) {
+      local_rng.seed(*seed);
+    } else {
+      local_rng.seed(std::random_device{}());
+    }
+
+    try {
+      GenerateWithCallback(prompt_tokens, options, &local_rng,
+                           [shared_state](int64_t token) {
+                             {
+                               std::lock_guard lock(shared_state->mutex);
+                               shared_state->tokens.push_back(token);
+                             }
+                             shared_state->cv.notify_one();
+                           });
+    } catch (...) {
+      std::lock_guard lock(shared_state->mutex);
+      shared_state->error = std::current_exception();
+    }
+
+    {
+      std::lock_guard lock(shared_state->mutex);
+      shared_state->done = true;
+    }
+    shared_state->cv.notify_all();
+  });
+
+  return TokenStream(std::move(worker), std::move(shared_state));
+}
+
+void Transformer::GenerateWithCallback(
+    const std::vector<int64_t>& prompt_tokens, const GenerationOptions& options,
+    std::mt19937* rng, const std::function<void(int64_t)>& on_token) const {
   if (prompt_tokens.empty()) {
     throw std::runtime_error("Generate requires at least one prompt token.");
   }
@@ -173,8 +291,12 @@ std::vector<int64_t> Transformer::Generate(
   if (options.temperature < 0.0f) {
     throw std::runtime_error("Generate temperature must be >= 0.");
   }
+  if (!on_token) {
+    throw std::runtime_error("Generate callback must be set.");
+  }
 
   deeptiny::NoGrad no_grad_guard;
+  std::lock_guard lock(generation_mutex_);
 
   std::mt19937 local_rng;
   if (rng == nullptr) {
@@ -190,15 +312,13 @@ std::vector<int64_t> Transformer::Generate(
       ForwardChunkWithCache(prompt_tokens, prompt_shape, /*position_offset=*/0);
   deeptiny::Tensor logits = ComputeNextTokenLogitsFromHidden(hidden_states);
 
-  std::vector<int64_t> generated;
-  generated.reserve(static_cast<size_t>(options.max_new_tokens));
-
   for (uint64_t step = 0; step < options.max_new_tokens; ++step) {
     const std::vector<float> logits_values = TensorToFloatVector(logits);
     const uint64_t next_token =
         SampleFromLogits(logits_values, options.temperature, rng);
+    const int64_t next_token_i64 = static_cast<int64_t>(next_token);
+    on_token(next_token_i64);
 
-    generated.push_back(static_cast<int64_t>(next_token));
     if (options.eos_token_id.has_value() &&
         next_token == *options.eos_token_id) {
       break;
@@ -208,13 +328,11 @@ std::vector<int64_t> Transformer::Generate(
     }
 
     const uint64_t position_offset = kv_caches_.front()->seq_len();
-    const std::vector<int64_t> step_tokens{static_cast<int64_t>(next_token)};
+    const std::vector<int64_t> step_tokens{next_token_i64};
     hidden_states = ForwardChunkWithCache(step_tokens, deeptiny::Shape{1, 1},
                                           position_offset);
     logits = ComputeNextTokenLogitsFromHidden(hidden_states);
   }
-
-  return generated;
 }
 
 uint64_t Transformer::num_blocks() const {

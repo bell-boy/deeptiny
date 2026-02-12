@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-#include <random>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -85,7 +84,6 @@ void PrintTokenIds(const char* label, const std::vector<int64_t>& ids) {
 void RunChatLoop(transfomer_demo::Transformer* model,
                  tokenizers::Tokenizer* tokenizer,
                  const GenerationOptions& options) {
-  std::mt19937 rng(std::random_device{}());
   std::string line;
   std::cout << "chat ready (type 'exit' to quit)\n";
   while (true) {
@@ -109,13 +107,24 @@ void RunChatLoop(transfomer_demo::Transformer* model,
       continue;
     }
 
-    const std::vector<int64_t> generated =
-        model->Generate(encoded_prompt, options, &rng);
+    PrintTokenIds("in_ids", encoded_prompt);
+
+    std::vector<int64_t> generated;
+    generated.reserve(static_cast<size_t>(options.max_new_tokens));
+
+    auto token_stream = model->GenerateAsync(encoded_prompt, options);
+    std::cout << "out_ids:" << std::flush;
+    int64_t token = 0;
+    while (token_stream.WaitNext(&token)) {
+      generated.push_back(token);
+      std::cout << " " << token << std::flush;
+    }
+    token_stream.Join();
+    std::cout << "\n";
+
     const std::vector<int32_t> generated_i32 =
         ToInt32Tokens(generated, "generated");
 
-    PrintTokenIds("in_ids", encoded_prompt);
-    PrintTokenIds("out_ids", generated);
     std::cout << "out_text: " << tokenizer->Decode(generated_i32) << "\n";
   }
 }
