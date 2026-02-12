@@ -40,7 +40,9 @@
 - Reuse `src/nn/validation.h` helpers for module constructor dimension/count guards instead of duplicating local validators per module source file.
 - Avoid mutable reference accessors for trainable tensors; expose non-const/const value tensor accessors (no dedicated parameter setters) so parameter handles remain usable without replacing registered tensor objects.
 - Keep attention module wiring explicit: `nn::MultiHeadAttention` should take constructor parameters directly (no config object), apply internal RoPE from `position_offset`, use additive masks, and keep dropout/KV-cache out of scope unless explicitly requested.
+- Keep RoPE layout explicit and configurable: default to non-interleaved Llama semantics (`rope_interleaved=false`, pair first-half/second-half channels), with optional interleaved mode only when requested.
 - When KV cache support is enabled, keep cache tensors as 4D `[batch, num_key_value_heads, seq_len, head_dim]`, treat cache mode as inference-only, and preserve cache-free defaults via `kv_cache=nullptr`.
+- Keep SmolLM2 demo factory wiring aligned with config flags for `attention_bias`, `mlp_bias`, `rope_theta`, `rms_norm_eps`, `rope_interleaved`, and `use_cache` (avoid hardcoded block defaults).
 - Keep `nn::TransformerBlock` as a pre-norm residual block (`RMSNorm -> MultiHeadAttention -> residual -> RMSNorm -> GatedMLP -> residual`) and forward additive mask + `position_offset` straight through to attention.
 - Keep MLP hidden activation typed via `nn::GatedMLP::HiddenAct` with `ReLU` default, and map demo/config activation strings explicitly (`relu` / `silu`) with strict validation.
 - Keep softmax as a public functional op (`functional::Softmax(x, dim)`) with kernel/dispatch implementation and explicit backward.

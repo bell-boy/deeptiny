@@ -11,12 +11,13 @@ TransformerBlock::TransformerBlock(
     uint64_t hidden_size, uint64_t mlp_hidden_dim, uint64_t num_attention_heads,
     uint64_t num_key_value_heads, bool attention_bias, bool mlp_bias,
     bool is_causal, float rope_theta, float norm_eps, Device device,
-    GatedMLP::HiddenAct mlp_hidden_act)
+    GatedMLP::HiddenAct mlp_hidden_act, bool rope_interleaved)
     : hidden_size_(detail::ValidateNonZeroDimension(
           "TransformerBlock", "hidden_size", hidden_size)),
       attention_norm_(hidden_size_, norm_eps, device),
       self_attention_(hidden_size_, num_attention_heads, num_key_value_heads,
-                      attention_bias, is_causal, rope_theta, device),
+                      attention_bias, is_causal, rope_theta, device,
+                      rope_interleaved),
       ffn_norm_(hidden_size_, norm_eps, device),
       ffn_(hidden_size_,
            detail::ValidateNonZeroDimension("TransformerBlock",

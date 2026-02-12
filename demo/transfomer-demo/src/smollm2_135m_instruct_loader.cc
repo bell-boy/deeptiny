@@ -722,7 +722,9 @@ CreateSmolLM2_135M_InstructTransformerUninitialized(const Config& config) {
   return std::make_unique<transfomer_demo::Transformer>(
       config.vocab_size, config.hidden_size, config.intermediate_size,
       config.num_hidden_layers, config.num_attention_heads,
-      config.num_key_value_heads, deeptiny::Device::CPU, hidden_act);
+      config.num_key_value_heads, config.attention_bias, config.mlp_bias,
+      config.rope_theta, config.rms_norm_eps, config.use_cache,
+      config.rope_interleaved, deeptiny::Device::CPU, hidden_act);
 }
 
 std::unique_ptr<transfomer_demo::Transformer>

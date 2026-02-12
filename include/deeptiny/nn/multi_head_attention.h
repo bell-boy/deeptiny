@@ -16,7 +16,8 @@ class MultiHeadAttention : public Module {
   MultiHeadAttention(uint64_t hidden_size, uint64_t num_attention_heads,
                      uint64_t num_key_value_heads, bool attention_bias = false,
                      bool is_causal = true, float rope_theta = 10000.0f,
-                     Device device = Device::CPU);
+                     Device device = Device::CPU,
+                     bool rope_interleaved = false);
 
   Tensor operator()(const Tensor& hidden_states,
                     std::optional<Tensor> attention_mask = std::nullopt,
@@ -48,11 +49,14 @@ class MultiHeadAttention : public Module {
   uint64_t head_dim_;
   bool is_causal_;
   float rope_theta_;
+  bool rope_interleaved_;
 
   Tensor q_weight_;
   Tensor k_weight_;
   Tensor v_weight_;
   Tensor o_weight_;
+  Tensor transpose_identity_2_;
+  Tensor transpose_identity_half_;
   std::optional<Tensor> q_bias_;
   std::optional<Tensor> k_bias_;
   std::optional<Tensor> v_bias_;

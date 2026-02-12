@@ -22,7 +22,8 @@ class TransformerBlock : public Module {
       bool attention_bias = false, bool mlp_bias = false, bool is_causal = true,
       float rope_theta = 10000.0f, float norm_eps = 1e-5f,
       Device device = Device::CPU,
-      GatedMLP::HiddenAct mlp_hidden_act = GatedMLP::HiddenAct::ReLU);
+      GatedMLP::HiddenAct mlp_hidden_act = GatedMLP::HiddenAct::ReLU,
+      bool rope_interleaved = false);
 
   Tensor operator()(const Tensor& hidden_states,
                     std::optional<Tensor> attention_mask = std::nullopt,

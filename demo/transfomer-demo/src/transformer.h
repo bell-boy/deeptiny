@@ -59,6 +59,9 @@ class Transformer : public deeptiny::nn::Module {
   Transformer(uint64_t vocab_size, uint64_t hidden_size,
               uint64_t intermediate_size, uint64_t num_blocks,
               uint64_t num_attention_heads, uint64_t num_key_value_heads,
+              bool attention_bias = false, bool mlp_bias = false,
+              float rope_theta = 10000.0f, float norm_eps = 1.0e-5f,
+              bool use_cache = true, bool rope_interleaved = false,
               deeptiny::Device device = deeptiny::Device::CPU,
               deeptiny::nn::GatedMLP::HiddenAct mlp_hidden_act =
                   deeptiny::nn::GatedMLP::HiddenAct::ReLU);
@@ -95,6 +98,7 @@ class Transformer : public deeptiny::nn::Module {
                             const std::function<void(int64_t)>& on_token) const;
 
   uint64_t head_dim_;
+  bool use_cache_;
   deeptiny::nn::Embedding embed_;
   std::vector<std::unique_ptr<deeptiny::nn::TransformerBlock>> blocks_;
   mutable std::vector<std::unique_ptr<deeptiny::nn::KVCache>> kv_caches_;
