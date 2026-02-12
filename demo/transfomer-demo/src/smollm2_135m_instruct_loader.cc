@@ -191,7 +191,7 @@ void DownloadUrlToPath(const std::string& url,
   }
 }
 
-void ValidateConfig(const Config& config) {
+deeptiny::nn::GatedMLP::HiddenAct ValidateConfig(const Config& config) {
   if (config.hidden_size == 0) {
     throw std::runtime_error("SmolLM2 config hidden_size must be non-zero");
   }
@@ -235,7 +235,7 @@ void ValidateConfig(const Config& config) {
   if (!(config.rope_theta > 0.0f)) {
     throw std::runtime_error("SmolLM2 config rope_theta must be > 0");
   }
-  ParseHiddenAct(config.hidden_act);
+  return ParseHiddenAct(config.hidden_act);
 }
 
 void AddWeight(std::vector<WeightSpec>* specs, std::string hf_name,
@@ -718,9 +718,7 @@ std::vector<WeightSpec> BuildWeightSpecs(const Config& config) {
 
 std::unique_ptr<transfomer_demo::Transformer>
 CreateSmolLM2_135M_InstructTransformerUninitialized(const Config& config) {
-  ValidateConfig(config);
-  const deeptiny::nn::GatedMLP::HiddenAct hidden_act =
-      ParseHiddenAct(config.hidden_act);
+  const deeptiny::nn::GatedMLP::HiddenAct hidden_act = ValidateConfig(config);
   return std::make_unique<transfomer_demo::Transformer>(
       config.vocab_size, config.hidden_size, config.intermediate_size,
       config.num_hidden_layers, config.num_attention_heads,
