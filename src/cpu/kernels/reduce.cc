@@ -13,14 +13,10 @@
 
 namespace deeptiny::cpu {
 namespace {
-bool IsReducedDim(const std::vector<uint64_t>& dims, uint64_t dim) {
-  return std::binary_search(dims.begin(), dims.end(), dim);
-}
-
 // expects out to be zerod out
 bool ReduceContiguous(std::shared_ptr<const TensorImpl> a,
                       std::shared_ptr<TensorImpl> out,
-                      const std::vector<uint64_t>& dims) {
+                      const utils::UInt64IdentityMap<bool>& dims) {
   assert(out->isContiguous());
   assert(out->dtype() == DType::Float32);
   if (!a->isContiguous()) {
@@ -31,7 +27,7 @@ bool ReduceContiguous(std::shared_ptr<const TensorImpl> a,
   uint64_t step = 1;
   uint64_t numel = 1;
   for (uint64_t i = 0; i < a->shape().size(); ++i) {
-    if (IsReducedDim(dims, i)) {
+    if (dims.contains(i)) {
       earliest_reduced = std::min(earliest_reduced, i);
       step *= a->shape()[i];
     } else {
@@ -58,13 +54,20 @@ void Reduce(std::shared_ptr<const TensorImpl> a,
             bool keep_dims) {
   assert(out->isContiguous());
   assert(out->dtype() == DType::Float32);
-  assert(std::is_sorted(dims.begin(), dims.end()));
+
+  utils::UInt64IdentityMap<bool> dims_lookup;
+  dims_lookup.reserve(dims.size());
+  for (const auto dim : dims) {
+    dims_lookup.emplace(dim, true);
+  }
 
   memset(out->data(), 0, out->storage()->numel() * out->dtype().size());
-  if (ReduceContiguous(a, out, dims)) return;
+  if (ReduceContiguous(a, out, dims_lookup)) return;
   if (keep_dims == false) {
     Shape unsqueezed_shape = a->shape();
-    for (const auto& dim : dims) unsqueezed_shape[dim] = 1;
+    for (const auto& dim_entry : dims_lookup) {
+      unsqueezed_shape[dim_entry.first] = 1;
+    }
     out = std::make_shared<TensorImpl>(
         unsqueezed_shape, utils::GetContinguousStride(unsqueezed_shape), 0,
         out->storage());
@@ -75,13 +78,13 @@ void Reduce(std::shared_ptr<const TensorImpl> a,
   uint64_t a_rank = a_shape.size();
   float* ap = (float*)a->data();
   float* outp = (float*)out->data();
-  auto recursive_reduce = [&dims, &ap, &a_shape, &a_stride, &a_rank, &outp,
-                           &out_stride](auto&& self, uint64_t dim_idx,
-                                        int64_t a_offset,
-                                        int64_t out_offset) -> void {
+  auto recursive_reduce = [&dims_lookup, &ap, &a_shape, &a_stride, &a_rank,
+                           &outp, &out_stride](auto&& self, uint64_t dim_idx,
+                                               int64_t a_offset,
+                                               int64_t out_offset) -> void {
     for (int64_t i = 0; i < (int64_t)a_shape[dim_idx]; ++i) {
       int64_t new_out_offset = out_offset;
-      if (!IsReducedDim(dims, dim_idx)) {
+      if (!dims_lookup.contains(dim_idx)) {
         new_out_offset += i * out_stride[dim_idx];
       }
       int64_t new_a_offset = a_offset + i * a_stride[dim_idx];
