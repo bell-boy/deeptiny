@@ -110,6 +110,11 @@ target_compile_features(transfomer_generation_benchmark PRIVATE cxx_std_23)
 target_link_libraries(
   transfomer_generation_benchmark PRIVATE deeptiny nlohmann_json::nlohmann_json
 )
+if(MSVC)
+  target_compile_options(transfomer_generation_benchmark PRIVATE /O2)
+else()
+  target_compile_options(transfomer_generation_benchmark PRIVATE -O3)
+endif()
 
 if(TRANSFOMER_DEMO_ENABLE_PG)
   target_compile_options(transfomer_generation_benchmark PRIVATE -pg)
