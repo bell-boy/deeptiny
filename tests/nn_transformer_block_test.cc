@@ -217,6 +217,29 @@ TEST_CASE("nn::TransformerBlock KV cache behavior") {
   CHECK_THROWS_WITH(block(x1, std::nullopt, /*position_offset=*/1, &cache),
                     doctest::Contains("position_offset"));
 }
+TEST_CASE("nn::TransformerBlock supports SiLU MLP hidden activation") {
+  deeptiny::nn::TransformerBlock block(
+      /*hidden_size=*/4,
+      /*mlp_hidden_dim=*/8,
+      /*num_attention_heads=*/1,
+      /*num_key_value_heads=*/1,
+      /*attention_bias=*/false,
+      /*mlp_bias=*/false,
+      /*is_causal=*/false,
+      /*rope_theta=*/10000.0f,
+      /*norm_eps=*/1.0e-5f, deeptiny::Device::CPU,
+      deeptiny::nn::GatedMLP::HiddenAct::SiLU);
+  auto x = MakeTensor({1, 2, 4},
+                      {0.1f, -0.2f, 0.3f, -0.4f,  //
+                       0.5f, -0.6f, 0.7f, -0.8f},
+                      true);
+
+  auto y = block(x);
+  CHECK(y.shape() == deeptiny::Shape({1, 2, 4}));
+  auto loss = deeptiny::functional::Reduce(y, {0, 1, 2});
+  loss.Backward();
+  CHECK(x.grad().has_value());
+}
 
 TEST_CASE("nn::TransformerBlock backward smoke") {
   deeptiny::nn::TransformerBlock block(

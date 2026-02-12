@@ -10,7 +10,8 @@ namespace deeptiny::nn {
 TransformerBlock::TransformerBlock(
     uint64_t hidden_size, uint64_t mlp_hidden_dim, uint64_t num_attention_heads,
     uint64_t num_key_value_heads, bool attention_bias, bool mlp_bias,
-    bool is_causal, float rope_theta, float norm_eps, Device device)
+    bool is_causal, float rope_theta, float norm_eps, Device device,
+    GatedMLP::HiddenAct mlp_hidden_act)
     : hidden_size_(detail::ValidateNonZeroDimension(
           "TransformerBlock", "hidden_size", hidden_size)),
       attention_norm_(hidden_size_, norm_eps, device),
@@ -20,7 +21,7 @@ TransformerBlock::TransformerBlock(
       ffn_(hidden_size_,
            detail::ValidateNonZeroDimension("TransformerBlock",
                                             "mlp_hidden_dim", mlp_hidden_dim),
-           hidden_size_, mlp_bias, device) {
+           hidden_size_, mlp_bias, device, mlp_hidden_act) {
   RegisterSubmodule(attention_norm_);
   RegisterSubmodule(self_attention_);
   RegisterSubmodule(ffn_norm_);
@@ -70,8 +71,8 @@ RMSNorm& TransformerBlock::ffn_norm() { return ffn_norm_; }
 
 const RMSNorm& TransformerBlock::ffn_norm() const { return ffn_norm_; }
 
-GatedReLU& TransformerBlock::ffn() { return ffn_; }
+GatedMLP& TransformerBlock::ffn() { return ffn_; }
 
-const GatedReLU& TransformerBlock::ffn() const { return ffn_; }
+const GatedMLP& TransformerBlock::ffn() const { return ffn_; }
 
 }  // namespace deeptiny::nn
