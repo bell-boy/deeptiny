@@ -217,7 +217,6 @@ TEST_CASE("nn::TransformerBlock KV cache behavior") {
   CHECK_THROWS_WITH(block(x1, std::nullopt, /*position_offset=*/1, &cache),
                     doctest::Contains("position_offset"));
 }
-
 TEST_CASE("nn::TransformerBlock supports SiLU MLP hidden activation") {
   deeptiny::nn::TransformerBlock block(
       /*hidden_size=*/4,
