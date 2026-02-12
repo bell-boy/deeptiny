@@ -5,6 +5,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "smollm2_135m_instruct_loader.h"
@@ -16,6 +17,11 @@
 namespace {
 
 using GenerationOptions = transfomer_demo::Transformer::GenerationOptions;
+
+struct ChatMessage {
+  std::string role;
+  std::string content;
+};
 
 void PrintUsage() {
   std::cout << "usage:\n"
@@ -70,11 +76,54 @@ void PrintDecodedIncrement(const std::string& decoded, std::string* emitted) {
   *emitted = decoded;
 }
 
+std::string ApplyChatTemplate(const std::vector<ChatMessage>& messages,
+                              bool add_generation_prompt) {
+  constexpr std::string_view kImStart = "<|im_start|>";
+  constexpr std::string_view kImEnd = "<|im_end|>";
+  constexpr std::string_view kDefaultSystemPrompt =
+      "You are a helpful AI assistant named SmolLM, trained by Hugging Face";
+  std::string result;
+
+  if (!messages.empty() && messages.front().role != "system") {
+    result += kImStart;
+    result += "system\n";
+    result += kDefaultSystemPrompt;
+    result += kImEnd;
+    result += "\n";
+  }
+
+  for (const ChatMessage& message : messages) {
+    result += kImStart;
+    result += message.role;
+    result += "\n";
+    result += message.content;
+    result += kImEnd;
+    result += "\n";
+  }
+
+  if (add_generation_prompt) {
+    result += kImStart;
+    result += "assistant\n";
+  }
+
+  return result;
+}
+
+std::string StripAssistantControlTokens(const std::string& decoded) {
+  constexpr std::string_view kImEnd = "<|im_end|>";
+  const size_t im_end_pos = decoded.find(kImEnd);
+  if (im_end_pos == std::string::npos) {
+    return decoded;
+  }
+  return decoded.substr(0, im_end_pos);
+}
+
 #ifdef TRANSFOMER_DEMO_HAS_TOKENIZERS_CPP
 void RunChatLoop(transfomer_demo::Transformer* model,
                  tokenizers::Tokenizer* tokenizer,
                  const GenerationOptions& options) {
   std::string line;
+  std::vector<ChatMessage> messages;
   std::cout << "chat ready (type 'exit' to quit)\n";
   while (true) {
     std::cout << "in> " << std::flush;
@@ -88,10 +137,14 @@ void RunChatLoop(transfomer_demo::Transformer* model,
       continue;
     }
 
-    const std::vector<int32_t> encoded_prompt_i32 = tokenizer->Encode(line);
+    messages.push_back(ChatMessage{.role = "user", .content = line});
+    const std::string prompt =
+        ApplyChatTemplate(messages, /*add_generation_prompt=*/true);
+    const std::vector<int32_t> encoded_prompt_i32 = tokenizer->Encode(prompt);
     std::vector<int64_t> encoded_prompt(encoded_prompt_i32.begin(),
                                         encoded_prompt_i32.end());
     if (encoded_prompt.empty()) {
+      messages.pop_back();
       std::cout << "out_text:\n";
       continue;
     }
@@ -110,9 +163,15 @@ void RunChatLoop(transfomer_demo::Transformer* model,
       }
       generated_i32.push_back(static_cast<int32_t>(token));
       const std::string decoded = tokenizer->Decode(generated_i32);
-      PrintDecodedIncrement(decoded, &emitted);
+      const std::string decoded_no_control =
+          StripAssistantControlTokens(decoded);
+      PrintDecodedIncrement(decoded_no_control, &emitted);
+      if (decoded_no_control.size() != decoded.size()) {
+        break;
+      }
     }
     token_stream.Join();
+    messages.push_back(ChatMessage{.role = "assistant", .content = emitted});
     std::cout << "\n";
   }
 }
