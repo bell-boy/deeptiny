@@ -16,7 +16,7 @@ namespace {
 // expects out to be zerod out
 bool ReduceContiguous(std::shared_ptr<const TensorImpl> a,
                       std::shared_ptr<TensorImpl> out,
-                      const utils::UInt64IdentityMap<bool>& dims) {
+                      const utils::UInt64IdentitySet& dims) {
   assert(out->isContiguous());
   assert(out->dtype() == DType::Float32);
   if (!a->isContiguous()) {
@@ -55,18 +55,18 @@ void Reduce(std::shared_ptr<const TensorImpl> a,
   assert(out->isContiguous());
   assert(out->dtype() == DType::Float32);
 
-  utils::UInt64IdentityMap<bool> dims_lookup;
+  utils::UInt64IdentitySet dims_lookup;
   dims_lookup.reserve(dims.size());
   for (const auto dim : dims) {
-    dims_lookup.emplace(dim, true);
+    dims_lookup.insert(dim);
   }
 
   memset(out->data(), 0, out->storage()->numel() * out->dtype().size());
   if (ReduceContiguous(a, out, dims_lookup)) return;
   if (keep_dims == false) {
     Shape unsqueezed_shape = a->shape();
-    for (const auto& dim_entry : dims_lookup) {
-      unsqueezed_shape[dim_entry.first] = 1;
+    for (const auto dim : dims_lookup) {
+      unsqueezed_shape[dim] = 1;
     }
     out = std::make_shared<TensorImpl>(
         unsqueezed_shape, utils::GetContinguousStride(unsqueezed_shape), 0,

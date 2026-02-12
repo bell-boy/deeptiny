@@ -18,7 +18,7 @@ namespace deeptiny {
 namespace functional {
 
 namespace {
-using ReduceDimsLookup = utils::UInt64IdentityMap<bool>;
+using ReduceDimsLookup = utils::UInt64IdentitySet;
 
 class ReLUBackward : public Function {
  public:
@@ -173,7 +173,7 @@ Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
   ReduceDimsLookup dims_lookup;
   dims_lookup.reserve(dims.size());
   for (const auto dim : dims) {
-    dims_lookup.emplace(dim, true);
+    dims_lookup.insert(dim);
   }
   auto reduce_impl = dispatch::reduce::OutOfPlace(x, dims, keep_dims);
   auto reduce_meta = std::make_shared<AutogradMeta>(

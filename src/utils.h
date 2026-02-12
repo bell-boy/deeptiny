@@ -5,7 +5,7 @@
 
 #include <initializer_list>
 #include <optional>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "autograd_meta.h"
@@ -23,8 +23,7 @@ struct IdentityHash {
   }
 };
 
-template <typename Value>
-using UInt64IdentityMap = std::unordered_map<uint64_t, Value, IdentityHash>;
+using UInt64IdentitySet = std::unordered_set<uint64_t, IdentityHash>;
 
 struct TensorAccessor {
   static std::shared_ptr<TensorImpl> GetTensorImpl(const Tensor& t);

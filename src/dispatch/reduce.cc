@@ -14,13 +14,13 @@ namespace deeptiny::dispatch::reduce {
 std::shared_ptr<TensorImpl> OutOfPlace(const std::shared_ptr<TensorImpl>& a,
                                        const std::vector<uint64_t>& dims,
                                        bool keep_dims) {
-  utils::UInt64IdentityMap<bool> dims_lookup;
+  utils::UInt64IdentitySet dims_lookup;
   dims_lookup.reserve(dims.size());
   for (const auto dim : dims) {
     if (dim >= a->shape().size()) {
       throw std::runtime_error("Reduce dim out of range");
     }
-    dims_lookup.emplace(dim, true);
+    dims_lookup.insert(dim);
   }
 
   Shape new_shape;
