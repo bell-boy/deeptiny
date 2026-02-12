@@ -1,10 +1,10 @@
 #include <cblas.h>
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <memory>
-#include <unordered_set>
 
 #include "cpu/kernels.h"
 #include "deeptiny/types.h"
@@ -13,10 +13,14 @@
 
 namespace deeptiny::cpu {
 namespace {
+bool IsReducedDim(const std::vector<uint64_t>& dims, uint64_t dim) {
+  return std::binary_search(dims.begin(), dims.end(), dim);
+}
+
 // expects out to be zerod out
 bool ReduceContiguous(std::shared_ptr<const TensorImpl> a,
                       std::shared_ptr<TensorImpl> out,
-                      const std::unordered_set<uint64_t>& dims) {
+                      const std::vector<uint64_t>& dims) {
   assert(out->isContiguous());
   assert(out->dtype() == DType::Float32);
   if (!a->isContiguous()) {
@@ -27,7 +31,7 @@ bool ReduceContiguous(std::shared_ptr<const TensorImpl> a,
   uint64_t step = 1;
   uint64_t numel = 1;
   for (uint64_t i = 0; i < a->shape().size(); ++i) {
-    if (dims.contains(i)) {
+    if (IsReducedDim(dims, i)) {
       earliest_reduced = std::min(earliest_reduced, i);
       step *= a->shape()[i];
     } else {
@@ -50,10 +54,12 @@ bool ReduceContiguous(std::shared_ptr<const TensorImpl> a,
 }  // namespace
 
 void Reduce(std::shared_ptr<const TensorImpl> a,
-            std::shared_ptr<TensorImpl> out,
-            const std::unordered_set<uint64_t>& dims, bool keep_dims) {
+            std::shared_ptr<TensorImpl> out, const std::vector<uint64_t>& dims,
+            bool keep_dims) {
   assert(out->isContiguous());
   assert(out->dtype() == DType::Float32);
+  assert(std::is_sorted(dims.begin(), dims.end()));
+
   memset(out->data(), 0, out->storage()->numel() * out->dtype().size());
   if (ReduceContiguous(a, out, dims)) return;
   if (keep_dims == false) {
@@ -75,7 +81,7 @@ void Reduce(std::shared_ptr<const TensorImpl> a,
                                         int64_t out_offset) -> void {
     for (int64_t i = 0; i < (int64_t)a_shape[dim_idx]; ++i) {
       int64_t new_out_offset = out_offset;
-      if (!dims.contains(dim_idx)) {
+      if (!IsReducedDim(dims, dim_idx)) {
         new_out_offset += i * out_stride[dim_idx];
       }
       int64_t new_a_offset = a_offset + i * a_stride[dim_idx];

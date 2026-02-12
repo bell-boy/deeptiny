@@ -1,11 +1,11 @@
 #include "deeptiny/functional.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <iterator>
 #include <memory>
 #include <stdexcept>
-#include <unordered_set>
 
 #include "autograd_meta.h"
 #include "dispatch/dispatch.h"
@@ -19,6 +19,25 @@ namespace deeptiny {
 namespace functional {
 
 namespace {
+bool IsReducedDim(const std::vector<uint64_t>& dims, uint64_t dim) {
+  return std::binary_search(dims.begin(), dims.end(), dim);
+}
+
+std::vector<uint64_t> NormalizeReduceDims(const std::vector<uint64_t>& dims,
+                                          uint64_t rank) {
+  std::vector<uint64_t> normalized_dims = dims;
+  std::sort(normalized_dims.begin(), normalized_dims.end());
+  normalized_dims.erase(
+      std::unique(normalized_dims.begin(), normalized_dims.end()),
+      normalized_dims.end());
+  for (const auto dim : normalized_dims) {
+    if (dim >= rank) {
+      throw std::runtime_error("Reduce dim out of range");
+    }
+  }
+  return normalized_dims;
+}
+
 class ReLUBackward : public Function {
  public:
   enum struct ContextObjects : uint64_t {
@@ -132,12 +151,12 @@ class SqrtBackward : public Function {
 };
 
 class ReduceBackward : public Function {
-  std::unordered_set<uint64_t> dims_;
+  std::vector<uint64_t> dims_;
   Shape original_shape_;
   bool keep_dims_;
 
  public:
-  ReduceBackward(const Tensor& parent, std::unordered_set<uint64_t> dims,
+  ReduceBackward(const Tensor& parent, std::vector<uint64_t> dims,
                  bool keep_dims)
       : Function({utils::TensorAccessor::GetAutogradMeta(parent)}),
         dims_(std::move(dims)),
@@ -150,7 +169,7 @@ class ReduceBackward : public Function {
     auto old_impl = utils::TensorAccessor::GetTensorImpl(grad);
     for (uint64_t i = 0; i < original_shape_.size(); ++i) {
       unsqueezed_shape.push_back(original_shape_[i]);
-      if (dims_.contains(i)) {
+      if (IsReducedDim(dims_, i)) {
         unsqueezed_stride.push_back(0);
         if (keep_dims_) next_stride++;
       } else {
@@ -170,10 +189,13 @@ class ReduceBackward : public Function {
 
 Tensor Reduce(const Tensor& x, const std::vector<uint64_t>& dims,
               bool keep_dims) {
-  auto reduce_impl = dispatch::reduce::OutOfPlace(x, dims, keep_dims);
-  std::unordered_set<uint64_t> dim_set(dims.begin(), dims.end());
+  auto normalized_dims = NormalizeReduceDims(dims, x.shape().size());
+  auto reduce_impl =
+      dispatch::reduce::OutOfPlace(x, normalized_dims, keep_dims);
   auto reduce_meta = std::make_shared<AutogradMeta>(
-      std::make_shared<ReduceBackward>(x, dim_set, keep_dims), true);
+      std::make_shared<ReduceBackward>(x, std::move(normalized_dims),
+                                       keep_dims),
+      true);
   return utils::TensorAccessor::MakeTensor(reduce_impl, reduce_meta);
 }
 

@@ -97,6 +97,30 @@ TEST_CASE("Elementary out-of-place backward") {
   }
 }
 
+TEST_CASE("Functional Reduce dim normalization") {
+  SUBCASE("Unsorted dims are normalized") {
+    std::vector<float> values(24, 1.0f);
+    deeptiny::Tensor x = MakeTensor({2, 3, 4}, values, true);
+
+    auto out = deeptiny::functional::Reduce(x, {2, 0});
+    REQUIRE(out.shape() == deeptiny::Shape{3});
+    CheckTensorData(out, {8.0f, 8.0f, 8.0f});
+
+    auto loss = deeptiny::functional::Reduce(out, {0});
+    loss.Backward();
+    auto x_grad = x.grad();
+    REQUIRE(x_grad.has_value());
+    CheckTensorData(*x_grad, std::vector<float>(24, 1.0f));
+  }
+
+  SUBCASE("Out-of-range dim throws") {
+    deeptiny::Tensor x = MakeTensor({2, 3, 4}, std::vector<float>(24, 1.0f));
+    CHECK_THROWS_WITH_AS(deeptiny::functional::Reduce(x, {3}),
+                         doctest::Contains("Reduce dim out of range"),
+                         std::runtime_error);
+  }
+}
+
 TEST_CASE("Functional ReLU forward/backward") {
   SUBCASE("Forward") {
     deeptiny::Tensor x =

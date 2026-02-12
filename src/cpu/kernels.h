@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
-#include <unordered_set>
+#include <vector>
 
 #include "tensor_impl.h"
 
@@ -63,8 +63,8 @@ void BatchedMatMul(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b,
  */
 
 void Reduce(std::shared_ptr<const TensorImpl> a,
-            std::shared_ptr<TensorImpl> out,
-            const std::unordered_set<uint64_t>& dims, bool keep_dims);
+            std::shared_ptr<TensorImpl> out, const std::vector<uint64_t>& dims,
+            bool keep_dims);
 
 };  // namespace cpu
 
