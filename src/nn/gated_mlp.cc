@@ -4,6 +4,18 @@
 #include "deeptiny/math.h"
 
 namespace deeptiny::nn {
+namespace {
+
+Tensor ApplyHiddenAct(const Tensor& x, GatedMLP::HiddenAct hidden_act) {
+  switch (hidden_act) {
+    case GatedMLP::HiddenAct::ReLU:
+      return functional::ReLU(x);
+    case GatedMLP::HiddenAct::SiLU:
+      return functional::SiLU(x);
+  }
+}
+
+}  // namespace
 
 GatedMLP::GatedMLP(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
                    bool bias, Device device, HiddenAct hidden_act)
@@ -17,16 +29,7 @@ GatedMLP::GatedMLP(uint64_t in_dim, uint64_t hidden_dim, uint64_t out_dim,
 }
 
 Tensor GatedMLP::operator()(const Tensor& x) const {
-  Tensor gate_input = gate_proj_(x);
-  Tensor gated = gate_input;
-  switch (hidden_act_) {
-    case HiddenAct::ReLU:
-      gated = functional::ReLU(gate_input);
-      break;
-    case HiddenAct::SiLU:
-      gated = functional::SiLU(gate_input);
-      break;
-  }
+  Tensor gated = ApplyHiddenAct(gate_proj_(x), hidden_act_);
   Tensor up = up_proj_(x);
   Tensor hidden = gated * up;
   return down_proj_(hidden);

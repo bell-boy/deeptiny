@@ -16,6 +16,17 @@ using deeptiny::test_utils::CopyTensorData;
 using deeptiny::test_utils::MakeTensor;
 using deeptiny::test_utils::ToVector;
 
+namespace {
+
+void SetMlpWeights(const deeptiny::Tensor& weight,
+                   deeptiny::nn::GatedMLP& mlp) {
+  CopyTensorData(weight, mlp.gate_proj().weight());
+  CopyTensorData(weight, mlp.up_proj().weight());
+  CopyTensorData(weight, mlp.down_proj().weight());
+}
+
+}  // namespace
+
 TEST_CASE("nn::Linear forward preserves leading dimensions") {
   deeptiny::nn::Linear linear(/*in_dim=*/4, /*out_dim=*/6);
 
@@ -138,12 +149,8 @@ TEST_CASE("nn::GatedMLP hidden_act controls negative gate behavior") {
   const auto one_weight = deeptiny::Tensor::FromVector(
       std::vector<float>{1.0f}, deeptiny::Shape{1, 1, 1}, deeptiny::Device::CPU,
       true);
-  CopyTensorData(one_weight, relu_mlp.gate_proj().weight());
-  CopyTensorData(one_weight, relu_mlp.up_proj().weight());
-  CopyTensorData(one_weight, relu_mlp.down_proj().weight());
-  CopyTensorData(one_weight, silu_mlp.gate_proj().weight());
-  CopyTensorData(one_weight, silu_mlp.up_proj().weight());
-  CopyTensorData(one_weight, silu_mlp.down_proj().weight());
+  SetMlpWeights(one_weight, relu_mlp);
+  SetMlpWeights(one_weight, silu_mlp);
 
   const auto x = MakeTensor({1, 1, 1}, {-1.0f});
   const auto relu_out = relu_mlp(x);
