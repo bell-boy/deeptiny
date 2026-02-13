@@ -179,8 +179,8 @@ deeptiny::Tensor BuildRoPERotationMatrices(uint64_t seq_len, uint64_t half_dim,
       const float sin_value = static_cast<float>(std::sin(angle));
       const size_t base = static_cast<size_t>((pos * half_dim + i) * 4);
       rotation_values[base] = cos_value;
-      rotation_values[base + 1] = -sin_value;
-      rotation_values[base + 2] = sin_value;
+      rotation_values[base + 1] = sin_value;
+      rotation_values[base + 2] = -sin_value;
       rotation_values[base + 3] = cos_value;
     }
   }
