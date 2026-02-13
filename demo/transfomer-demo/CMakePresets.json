@@ -14,7 +14,10 @@
     {
       "name": "dev",
       "displayName": "Dev",
-      "inherits": "base"
+      "inherits": "base",
+      "cacheVariables": {
+        "TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP": "ON"
+      }
     },
     {
       "name": "release",
@@ -25,6 +28,7 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
         "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP": "ON",
         "TRANSFOMER_DEMO_BUILD_TESTS": "OFF"
       }
     },
