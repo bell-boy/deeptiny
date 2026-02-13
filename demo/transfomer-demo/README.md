@@ -106,7 +106,8 @@ The benchmark target constructs the SmolLM2-135M model in memory without
 reading `model.safetensors`, starts from exactly one prompt token
 (`bos_token_id`), and generates exactly 128 new tokens.
 
-Configure and build with profiling flags (`-pg`):
+Configure and build with profiling + optimization flags (`-pg`, `-O3` on
+GCC/Clang, `/O2` on MSVC):
 
 ```bash
 cmake --preset bench-pg

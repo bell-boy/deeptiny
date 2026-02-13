@@ -110,8 +110,25 @@ target_compile_features(transfomer_generation_benchmark PRIVATE cxx_std_23)
 target_link_libraries(
   transfomer_generation_benchmark PRIVATE deeptiny nlohmann_json::nlohmann_json
 )
+if(MSVC)
+  target_compile_options(transfomer_generation_benchmark PRIVATE /O2)
+else()
+  target_compile_options(transfomer_generation_benchmark PRIVATE -O3)
+endif()
 
 if(TRANSFOMER_DEMO_ENABLE_PG)
   target_compile_options(transfomer_generation_benchmark PRIVATE -pg)
   target_link_options(transfomer_generation_benchmark PRIVATE -pg)
 endif()
+
+add_executable(
+  transfomer_activation_dump
+  src/activation_dump.cc
+  src/transformer.cc
+  src/smollm2_135m_instruct_loader.cc
+)
+
+target_compile_features(transfomer_activation_dump PRIVATE cxx_std_23)
+target_link_libraries(
+  transfomer_activation_dump PRIVATE deeptiny nlohmann_json::nlohmann_json
+)
