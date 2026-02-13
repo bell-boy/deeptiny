@@ -28,6 +28,12 @@ This demo uses `deeptiny::nn` modules from the main library:
 cmake --preset dev
 ```
 
+Release (optimized, `-O3`):
+
+```bash
+cmake --preset release
+```
+
 `tokenizers-cpp` builds through Cargo, so Rust is required when
 `TRANSFOMER_DEMO_ENABLE_TOKENIZERS_CPP=ON` (default).
 Initialize submodules (including nested ones) before configuring:
@@ -51,6 +57,12 @@ cmake --preset dev-local-openblas
 
 ```bash
 cmake --build --preset dev
+```
+
+Release:
+
+```bash
+cmake --build --preset release
 ```
 
 If you configured with `dev-local-openblas`, build with:
